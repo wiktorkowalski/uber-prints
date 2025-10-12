@@ -4,3 +4,58 @@ GET {{UberPrints.Server_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Get all requests
+GET {{UberPrints.Server_HostAddress}}/api/requests
+Accept: application/json
+
+###
+
+# Create a new request
+POST {{UberPrints.Server_HostAddress}}/api/requests
+Content-Type: application/json
+
+{
+  "requesterName": "John Doe",
+  "modelUrl": "https://example.com/model.stl",
+  "notes": "Test request",
+  "requestDelivery": true,
+  "filamentId": "00000000-0000-0000-0000-000000000000"
+}
+
+###
+
+# Get filaments
+GET {{UberPrints.Server_HostAddress}}/api/filaments
+Accept: application/json
+
+###
+
+# Get filaments in stock only
+GET {{UberPrints.Server_HostAddress}}/api/filaments?inStock=true
+Accept: application/json
+
+###
+
+# Admin: Get all requests
+GET {{UberPrints.Server_HostAddress}}/api/admin/requests
+Accept: application/json
+
+###
+
+# Admin: Create filament
+POST {{UberPrints.Server_HostAddress}}/api/admin/filaments
+Content-Type: application/json
+
+{
+  "name": "PLA White",
+  "material": "PLA",
+  "brand": "Test Brand",
+  "colour": "White",
+  "stockAmount": 1000,
+  "stockUnit": "grams",
+  "link": "https://example.com/pla-white",
+  "photoUrl": "https://example.com/photo.jpg"
+}
+
+###
