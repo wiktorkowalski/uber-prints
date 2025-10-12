@@ -103,11 +103,10 @@ public class RequestsController : ControllerBase
     // Add initial status history
     var statusHistory = new StatusHistory
     {
-      RequestId = request.Id,
       Status = RequestStatusEnum.Pending,
       Timestamp = DateTime.UtcNow
     };
-    _context.StatusHistories.Add(statusHistory);
+    request.StatusHistory.Add(statusHistory);
 
     await _context.SaveChangesAsync();
 
