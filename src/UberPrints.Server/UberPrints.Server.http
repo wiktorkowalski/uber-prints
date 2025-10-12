@@ -1,10 +1,5 @@
 @UberPrints.Server_HostAddress = http://localhost:5203
 
-GET {{UberPrints.Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
-
 # Get all requests
 GET {{UberPrints.Server_HostAddress}}/api/requests
 Accept: application/json
