@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext
 
     // Indexes
     modelBuilder.Entity<User>().HasIndex(u => u.DiscordId).IsUnique();
+    modelBuilder.Entity<User>().HasIndex(u => u.GuestSessionToken).IsUnique();
     modelBuilder.Entity<PrintRequest>().HasIndex(p => p.GuestTrackingToken).IsUnique();
 
   }

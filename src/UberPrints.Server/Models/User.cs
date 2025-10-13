@@ -10,6 +10,9 @@ public class User
   [MaxLength(100)]
   public string? DiscordId { get; set; }
 
+  [MaxLength(255)]
+  public string? GuestSessionToken { get; set; }
+
   [Required]
   [MaxLength(100)]
   public string Username { get; set; } = string.Empty;

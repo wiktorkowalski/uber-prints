@@ -1,0 +1,264 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using UberPrints.Server.Data;
+using UberPrints.Server.DTOs;
+using UberPrints.Server.Models;
+
+namespace UberPrints.Server.Controllers;
+
+[ApiController]
+[Route("api/auth")]
+public class AuthController : ControllerBase
+{
+  private readonly ApplicationDbContext _context;
+  private readonly IConfiguration _configuration;
+
+  public AuthController(ApplicationDbContext context, IConfiguration configuration)
+  {
+    _context = context;
+    _configuration = configuration;
+  }
+
+  [HttpGet("login")]
+  public IActionResult Login([FromQuery] string? returnUrl = null, [FromQuery] string? guestSessionToken = null)
+  {
+    // Store guest session token in temp data if provided
+    if (!string.IsNullOrEmpty(guestSessionToken))
+    {
+      HttpContext.Session.SetString("GuestSessionToken", guestSessionToken);
+    }
+
+    var properties = new AuthenticationProperties
+    {
+      RedirectUri = Url.Action(nameof(DiscordCallback), new { returnUrl })
+    };
+
+    return Challenge(properties, "Discord");
+  }
+
+  [HttpGet("discord/callback")]
+  public async Task<IActionResult> DiscordCallback([FromQuery] string? returnUrl = null)
+  {
+    var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+    if (!result.Succeeded)
+    {
+      return BadRequest("Authentication failed");
+    }
+
+    var discordId = result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var username = result.Principal?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+    var email = result.Principal?.FindFirst(ClaimTypes.Email)?.Value;
+
+    if (string.IsNullOrEmpty(discordId))
+    {
+      return BadRequest("Failed to retrieve Discord user information");
+    }
+
+    // Check if we have a guest session token to link
+    string? guestSessionToken = null;
+    if (HttpContext.Session.Keys.Contains("GuestSessionToken"))
+    {
+      guestSessionToken = HttpContext.Session.GetString("GuestSessionToken");
+      HttpContext.Session.Remove("GuestSessionToken");
+    }
+
+    // Find or create user
+    var user = await _context.Users
+        .Include(u => u.PrintRequests)
+        .FirstOrDefaultAsync(u => u.DiscordId == discordId);
+
+    if (user == null)
+    {
+      // Check if there's a guest user with this session token to convert
+      if (!string.IsNullOrEmpty(guestSessionToken))
+      {
+        user = await _context.Users
+            .Include(u => u.PrintRequests)
+            .FirstOrDefaultAsync(u => u.GuestSessionToken == guestSessionToken);
+
+        if (user != null)
+        {
+          // Convert guest to authenticated user
+          user.DiscordId = discordId;
+          user.Username = username;
+          user.Email = email;
+          // Keep the GuestSessionToken for continuity
+        }
+      }
+
+      // Create new user if still null
+      if (user == null)
+      {
+        user = new User
+        {
+          DiscordId = discordId,
+          Username = username,
+          Email = email,
+          IsAdmin = false,
+          CreatedAt = DateTime.UtcNow
+        };
+        _context.Users.Add(user);
+      }
+
+      await _context.SaveChangesAsync();
+    }
+    else
+    {
+      // Update existing user info
+      user.Username = username;
+      user.Email = email;
+
+      // If guest session token provided, link any guest requests
+      if (!string.IsNullOrEmpty(guestSessionToken))
+      {
+        var guestUser = await _context.Users
+            .Include(u => u.PrintRequests)
+            .FirstOrDefaultAsync(u => u.GuestSessionToken == guestSessionToken && u.DiscordId == null);
+
+        if (guestUser != null && guestUser.Id != user.Id)
+        {
+          // Transfer guest requests to authenticated user
+          foreach (var request in guestUser.PrintRequests)
+          {
+            request.UserId = user.Id;
+          }
+          await _context.SaveChangesAsync();
+        }
+      }
+
+      await _context.SaveChangesAsync();
+    }
+
+    // Generate JWT token
+    var token = GenerateJwtToken(user);
+
+    // Store user info in cookie claims
+    var claims = new List<Claim>
+    {
+      new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+      new Claim(ClaimTypes.Name, user.Username),
+      new Claim("IsAdmin", user.IsAdmin.ToString())
+    };
+
+    if (!string.IsNullOrEmpty(user.Email))
+    {
+      claims.Add(new Claim(ClaimTypes.Email, user.Email));
+    }
+
+    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    var authProperties = new AuthenticationProperties
+    {
+      IsPersistent = true,
+      ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+    };
+
+    await HttpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        new ClaimsPrincipal(claimsIdentity),
+        authProperties);
+
+    // Redirect to frontend with token
+    var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
+    var redirectUrl = !string.IsNullOrEmpty(returnUrl)
+        ? $"{frontendUrl}{returnUrl}?token={token}"
+        : $"{frontendUrl}/auth/callback?token={token}";
+
+    return Redirect(redirectUrl);
+  }
+
+  [HttpGet("me")]
+  [Authorize]
+  public async Task<IActionResult> GetCurrentUser()
+  {
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+    {
+      return Unauthorized();
+    }
+
+    var user = await _context.Users.FindAsync(userId);
+
+    if (user == null)
+    {
+      return NotFound();
+    }
+
+    var userDto = new UserDto
+    {
+      Id = user.Id,
+      DiscordId = user.DiscordId,
+      Username = user.Username,
+      Email = user.Email,
+      IsAdmin = user.IsAdmin,
+      CreatedAt = user.CreatedAt
+    };
+
+    return Ok(userDto);
+  }
+
+  [HttpPost("logout")]
+  public async Task<IActionResult> Logout()
+  {
+    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Ok(new { message = "Logged out successfully" });
+  }
+
+  [HttpPost("guest")]
+  public async Task<IActionResult> CreateGuestSession()
+  {
+    // Generate a unique guest session token
+    var guestSessionToken = GenerateGuestSessionToken();
+
+    // Create guest user
+    var guestUser = new User
+    {
+      GuestSessionToken = guestSessionToken,
+      Username = $"Guest_{guestSessionToken.Substring(0, 8)}",
+      IsAdmin = false,
+      CreatedAt = DateTime.UtcNow
+    };
+
+    _context.Users.Add(guestUser);
+    await _context.SaveChangesAsync();
+
+    return Ok(new { guestSessionToken, userId = guestUser.Id });
+  }
+
+  private string GenerateJwtToken(User user)
+  {
+    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+        _configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey not configured")));
+    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+    var claims = new[]
+    {
+      new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+      new Claim(ClaimTypes.Name, user.Username),
+      new Claim("IsAdmin", user.IsAdmin.ToString())
+    };
+
+    var token = new JwtSecurityToken(
+        issuer: _configuration["Jwt:Issuer"] ?? "UberPrints",
+        audience: _configuration["Jwt:Audience"] ?? "UberPrints",
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:ExpiryHours"] ?? "1")),
+        signingCredentials: credentials
+    );
+
+    return new JwtSecurityTokenHandler().WriteToken(token);
+  }
+
+  private string GenerateGuestSessionToken()
+  {
+    return Guid.NewGuid().ToString("N").ToUpper();
+  }
+}
