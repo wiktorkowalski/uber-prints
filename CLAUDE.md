@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-UberPrints is a 3D print request management system where users can request 3D prints with optional delivery. The backend is an ASP.NET Core 10.0 Web API with PostgreSQL database, designed to eventually support Discord OAuth authentication.
+UberPrints is a 3D print request management system where users can request 3D prints with optional delivery. The system consists of:
+- **Backend**: ASP.NET Core 10.0 Web API with PostgreSQL database and Discord OAuth authentication
+- **Frontend**: React + Vite + TypeScript SPA with Tailwind CSS and shadcn/ui components
 
 ## Build and Test Commands
 
@@ -24,9 +26,16 @@ dotnet restore
 ```bash
 # Run the API server
 dotnet run --project src/UberPrints.Server/UberPrints.Server.csproj
-
 # The API will be available at https://localhost:7001 (or http://localhost:5000)
 # Scalar API documentation available at /scalar in development mode
+
+# Run the frontend dev server (from src/UberPrints.Client/)
+cd src/UberPrints.Client
+npm install  # First time only
+npm run dev  # Starts Vite dev server on http://localhost:5173
+
+# Build frontend for production
+npm run build  # Outputs to dist/ directory
 ```
 
 ### Testing
@@ -72,6 +81,7 @@ The application follows a standard ASP.NET Core Web API architecture:
   - `RequestsController`: Public-facing print request management
   - `FilamentsController`: Public read-only filament catalog
   - `AdminController`: Admin-only operations for managing requests and filaments
+  - `AuthController`: Discord OAuth authentication, JWT token generation, and guest session management
 
 - **Models** (`Models/`): Domain entities that map to database tables
   - Uses Entity Framework Core conventions
@@ -87,12 +97,21 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 ### Key Architectural Patterns
 
-**Authentication Status**: The project has JWT Bearer authentication package installed but NOT yet implemented. Multiple controllers have `TODO` comments indicating where authentication checks should be added:
-- `RequestsController.UpdateRequest` (line 128): needs ownership validation
-- `RequestsController.DeleteRequest` (line 164): needs ownership validation
-- `AdminController` (all endpoints): need admin role verification
+**Authentication**: The system uses Discord OAuth with JWT tokens and cookie-based authentication:
+- Discord OAuth flow handled by `AuthController` with callback at `/api/auth/discord/callback`
+- JWT tokens generated after successful OAuth, returned to frontend via redirect
+- Cookie authentication for session persistence (30-day expiration)
+- Guest sessions supported via `GuestSessionToken` on User model
+- Authentication configured in `Program.cs` with both JWT Bearer and Cookie schemes
+- **TODO**: Admin endpoints in `AdminController` still need `[Authorize(Roles = "Admin")]` attributes
+- **TODO**: Request ownership validation needed in `RequestsController.UpdateRequest` and `DeleteRequest`
 
-**Guest Tracking**: Print requests can be created without authentication using a `GuestTrackingToken` for anonymous users to track their requests via `/api/requests/track/{token}`.
+**Guest Session Flow**:
+- Anonymous users can create guest sessions via `/api/auth/guest` to get a `GuestSessionToken`
+- Guest users can be converted to authenticated users when they log in via Discord
+- Guest print requests are linked via `UserId` relationship
+
+**Guest Tracking**: Print requests have a separate `GuestTrackingToken` (distinct from guest session) for anonymous tracking via `/api/requests/track/{token}` without authentication.
 
 **Status History Pattern**: Print requests maintain an audit trail through `StatusHistory` entities. When status changes, a new history entry is created (see `AdminController.ChangeRequestStatus`).
 
@@ -108,6 +127,12 @@ The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 - `StatusHistory` → one `User` as `ChangedByUser` (optional, for admin tracking)
 
 **Important**: IDs use `uuidv7()` for better database performance with ordered UUIDs. This is configured in `ApplicationDbContext.OnModelCreating`.
+
+**User Model**: Users can exist in two states:
+- **Authenticated**: Has `DiscordId`, `Username`, `Email` populated after Discord OAuth
+- **Guest**: Has only `GuestSessionToken` and auto-generated username like `Guest_12345678`
+- A guest user can be converted to authenticated when they log in via Discord
+- Unique indexes on both `DiscordId` and `GuestSessionToken` fields
 
 **Status Enum**: `RequestStatusEnum` includes: Pending, Accepted, Rejected, OnHold, Paused, WaitingForMaterials, Delivering, WaitingForPickup, Completed.
 
@@ -145,24 +170,56 @@ When writing new tests, follow the existing patterns in controller test files. I
 4. Review generated migration code
 5. Apply migration: `dotnet ef database update --project src/UberPrints.Server`
 
-### Future Authentication Implementation
+### Frontend Development
 
-When implementing Discord OAuth + JWT:
-- Configure authentication in `Program.cs` (package already installed)
-- Add `[Authorize]` attributes to controllers/actions
-- Add `[Authorize(Roles = "Admin")]` for admin endpoints
-- Populate `User.DiscordId` during OAuth flow
-- Set `PrintRequest.UserId` for authenticated users
-- Set `StatusHistory.ChangedByUserId` for admin actions
+The React frontend (`src/UberPrints.Client/`) uses:
+- **React Router** for navigation with protected routes (`ProtectedRoute.tsx`)
+- **AuthContext** (`contexts/AuthContext.tsx`) for global auth state management
+- **Axios** for API communication (configured in `lib/api.ts`)
+- **shadcn/ui** components in `components/ui/` (built on Radix UI)
+- **React Hook Form + Zod** for form handling and validation
+- **Vite proxy** configuration to proxy `/api` requests to backend at `https://localhost:7001`
+
+Key frontend pages:
+- `Home.tsx`: Landing page
+- `NewRequest.tsx`: Form to create print requests
+- `RequestList.tsx`: View all print requests
+- `RequestDetail.tsx`: View single request details
+- `Dashboard.tsx`: User dashboard
+- `AdminDashboard.tsx`: Admin panel (protected)
+- `AuthCallback.tsx`: Handles OAuth callback and JWT token storage
+
+When adding new features:
+1. Create API client functions in `lib/api.ts`
+2. Add new routes in `App.tsx`
+3. Use existing UI components from `components/ui/`
+4. Follow the existing patterns for auth-protected routes
 
 ## Configuration
 
-Connection string is expected in `appsettings.json` or environment variables:
+Backend configuration in `appsettings.json`:
 ```json
-"ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Database=uberprints;Username=postgres;Password=password"
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=uberprints;Username=postgres;Password=password"
+  },
+  "Jwt": {
+    "SecretKey": "your-secret-key-here",
+    "Issuer": "UberPrints",
+    "Audience": "UberPrints",
+    "ExpiryHours": "1"
+  },
+  "Discord": {
+    "ClientId": "your-discord-client-id",
+    "ClientSecret": "your-discord-client-secret"
+  },
+  "Frontend": {
+    "Url": "http://localhost:5173"
+  }
 }
 ```
+
+**Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7001/api/auth/discord/callback`
 
 For local development with Docker:
 ```bash
