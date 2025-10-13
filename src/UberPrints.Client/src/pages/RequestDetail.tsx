@@ -1,0 +1,250 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { api } from '../lib/api';
+import { PrintRequestDto } from '../types/api';
+import { useAuth } from '../contexts/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime } from '../lib/utils';
+import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2 } from 'lucide-react';
+
+export const RequestDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const [request, setRequest] = useState<PrintRequestDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      loadRequest();
+    }
+  }, [id]);
+
+  const loadRequest = async () => {
+    if (!id) return;
+
+    try {
+      setLoading(true);
+      const data = await api.getRequest(id);
+      setRequest(data);
+    } catch (err: any) {
+      console.error('Error loading request:', err);
+      setError(err.response?.status === 404 ? 'Request not found' : 'Failed to load request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!request || !window.confirm('Are you sure you want to delete this request?')) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      await api.deleteRequest(request.id);
+      navigate('/dashboard');
+    } catch (err: any) {
+      console.error('Error deleting request:', err);
+      alert(err.response?.data?.message || 'Failed to delete request');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const canDelete = isAuthenticated && user && request?.userId === user.id;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading request...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !request) {
+    return (
+      <div className="text-center py-12">
+        <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <h2 className="text-2xl font-bold mb-2">{error || 'Request not found'}</h2>
+        <p className="text-muted-foreground mb-6">
+          The request you're looking for doesn't exist or has been removed.
+        </p>
+        <Link to="/requests">
+          <Button>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Requests
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+
+        {canDelete && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4 mr-2" />
+            )}
+            Delete
+          </Button>
+        )}
+      </div>
+
+      {/* Main Details Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-2xl">Request Details</CardTitle>
+              <CardDescription>
+                Submitted {formatRelativeTime(request.createdAt)}
+              </CardDescription>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                request.currentStatus
+              )}`}
+            >
+              {getStatusLabel(request.currentStatus)}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">Requester</h3>
+              <p className="text-lg">{request.requesterName}</p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">Filament</h3>
+              <p className="text-lg">{request.filamentName || 'Not specified'}</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">Model URL</h3>
+            <a
+              href={request.modelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center text-primary hover:underline break-all"
+            >
+              <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
+              {request.modelUrl}
+            </a>
+          </div>
+
+          {request.notes && (
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Notes</h3>
+              <p className="text-sm whitespace-pre-wrap">{request.notes}</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {request.requestDelivery ? (
+                <span className="text-sm">🚚 Delivery requested</span>
+              ) : (
+                <span className="text-sm">📦 Pickup only</span>
+              )}
+            </div>
+          </div>
+
+          {request.guestTrackingToken && !isAuthenticated && (
+            <div className="bg-muted p-4 rounded-lg">
+              <h3 className="text-sm font-medium mb-2">Tracking Token</h3>
+              <code className="text-sm bg-background px-2 py-1 rounded">
+                {request.guestTrackingToken}
+              </code>
+              <p className="text-xs text-muted-foreground mt-2">
+                Save this token to track your request later
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Status History Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Status History
+          </CardTitle>
+          <CardDescription>
+            Complete timeline of status changes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {request.statusHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No status changes yet
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {request.statusHistory
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                .map((history, index) => (
+                  <div
+                    key={history.id}
+                    className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary" />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                            history.status
+                          )}`}
+                        >
+                          {getStatusLabel(history.status)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(history.timestamp)}
+                        </span>
+                      </div>
+                      {history.changedByUsername && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Changed by {history.changedByUsername}
+                        </p>
+                      )}
+                      {history.adminNotes && (
+                        <p className="text-sm mt-2 p-3 bg-muted rounded-lg">
+                          {history.adminNotes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

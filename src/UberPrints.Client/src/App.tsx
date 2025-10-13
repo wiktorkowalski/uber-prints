@@ -1,42 +1,63 @@
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { Layout } from './components/layout/Layout';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Home } from './pages/Home';
+import { AuthCallback } from './pages/AuthCallback';
+import { RequestList } from './pages/RequestList';
+import { RequestDetail } from './pages/RequestDetail';
+import { NewRequest } from './pages/NewRequest';
+import { Dashboard } from './pages/Dashboard';
+import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="container mx-auto p-4">
-        <div className="max-w-2xl mx-auto text-center space-y-8">
-          <h1 className="text-4xl font-bold text-foreground">
-            UberPrints 3D Request System
-          </h1>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/requests" element={<Layout><RequestList /></Layout>} />
+          <Route path="/request/:id" element={<Layout><RequestDetail /></Layout>} />
+          <Route path="/request/new" element={<Layout><NewRequest /></Layout>} />
 
-          <div className="p-8 bg-card rounded-lg border shadow-sm">
-            <p className="text-lg text-muted-foreground mb-6">
-              Welcome to the UberPrints client application. The setup is complete!
-            </p>
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout><Dashboard /></Layout>
+              </ProtectedRoute>
+            }
+          />
 
-            <div className="space-y-4">
-              <button
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                onClick={() => setCount((count) => count + 1)}
-              >
-                Count is {count}
-              </button>
+          {/* Admin routes - require admin role */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout><AdminDashboard /></Layout>
+              </ProtectedRoute>
+            }
+          />
 
-              <p className="text-sm text-muted-foreground">
-                This is a placeholder page. Run <code className="bg-muted px-2 py-1 rounded">npm install</code> in the Client directory to get started.
-              </p>
-            </div>
-          </div>
-
-          <div className="text-sm text-muted-foreground">
-            <p>Built with React 18 + TypeScript + Vite + shadcn/ui</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+          {/* 404 page */}
+          <Route
+            path="*"
+            element={
+              <Layout>
+                <div className="text-center py-12">
+                  <h1 className="text-4xl font-bold mb-4">404</h1>
+                  <p className="text-muted-foreground">Page not found</p>
+                </div>
+              </Layout>
+            }
+          />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

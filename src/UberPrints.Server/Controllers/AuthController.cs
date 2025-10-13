@@ -165,11 +165,9 @@ public class AuthController : ControllerBase
         new ClaimsPrincipal(claimsIdentity),
         authProperties);
 
-    // Redirect to frontend with token
+    // Redirect to frontend auth callback with token
     var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
-    var redirectUrl = !string.IsNullOrEmpty(returnUrl)
-        ? $"{frontendUrl}{returnUrl}?token={token}"
-        : $"{frontendUrl}/auth/callback?token={token}";
+    var redirectUrl = $"{frontendUrl}/auth/callback?token={token}";
 
     return Redirect(redirectUrl);
   }
