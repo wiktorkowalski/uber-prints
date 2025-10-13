@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
@@ -17,6 +18,8 @@ public class TestBase
     protected readonly RequestsController RequestsController;
     protected readonly AdminController AdminController;
     protected readonly FilamentsController FilamentsController;
+    protected readonly AuthController AuthController;
+    protected readonly IConfiguration Configuration;
 
     public TestBase()
     {
@@ -27,10 +30,27 @@ public class TestBase
 
         Context = new ApplicationDbContext(options);
 
+        // Create test configuration
+        var configData = new Dictionary<string, string>
+        {
+            {"Jwt:SecretKey", "ThisIsATestSecretKeyWith32Characters!!"},
+            {"Jwt:Issuer", "UberPrintsTest"},
+            {"Jwt:Audience", "UberPrintsTest"},
+            {"Jwt:ExpiryHours", "1"},
+            {"Frontend:Url", "http://localhost:5173"},
+            {"Discord:ClientId", "test-client-id"},
+            {"Discord:ClientSecret", "test-client-secret"}
+        };
+
+        Configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData!)
+            .Build();
+
         // Create controllers with the real context
         RequestsController = new RequestsController(Context);
         AdminController = new AdminController(Context);
         FilamentsController = new FilamentsController(Context);
+        AuthController = new AuthController(Context, Configuration);
     }
 }
 
