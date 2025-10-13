@@ -131,10 +131,10 @@ public class AdminControllerTests : TestBase
   public async Task CreateFilament_ThrowsNullReferenceException_WhenDtoIsNull()
   {
     // Arrange
-    CreateFilamentDto createDto = null;
+    CreateFilamentDto? createDto = null;
 
     // Act & Assert
-    await Assert.ThrowsAsync<NullReferenceException>(() => AdminController.CreateFilament(createDto));
+    await Assert.ThrowsAsync<NullReferenceException>(() => AdminController.CreateFilament(createDto!));
   }
 
   [Fact]
