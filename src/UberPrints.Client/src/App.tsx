@@ -8,6 +8,9 @@ import { AuthCallback } from './pages/AuthCallback';
 import { RequestList } from './pages/RequestList';
 import { RequestDetail } from './pages/RequestDetail';
 import { NewRequest } from './pages/NewRequest';
+import { EditRequest } from './pages/EditRequest';
+import { TrackRequest } from './pages/TrackRequest';
+import { Filaments } from './pages/Filaments';
 import { Dashboard } from './pages/Dashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 
@@ -22,17 +25,11 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/requests" element={<Layout><RequestList /></Layout>} />
           <Route path="/request/:id" element={<Layout><RequestDetail /></Layout>} />
+          <Route path="/request/:id/edit" element={<Layout><EditRequest /></Layout>} />
           <Route path="/request/new" element={<Layout><NewRequest /></Layout>} />
-
-          {/* Protected routes - require authentication */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Layout><Dashboard /></Layout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/track" element={<Layout><TrackRequest /></Layout>} />
+          <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
 
           {/* Admin routes - require admin role */}
           <Route

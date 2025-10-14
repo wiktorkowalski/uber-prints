@@ -7,23 +7,23 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
-import { Package, Plus, ExternalLink, User } from 'lucide-react';
+import { Package, Plus, ExternalLink, User, AlertCircle } from 'lucide-react';
 
 export const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [requests, setRequests] = useState<PrintRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadMyRequests();
-  }, []);
+  }, [user]);
 
   const loadMyRequests = async () => {
     try {
       setLoading(true);
       const allRequests = await api.getRequests();
-      // Filter to only show user's requests
+      // Filter to only show user's requests (both authenticated and guest)
       const myRequests = allRequests.filter(r => r.userId === user?.id);
       setRequests(myRequests);
     } catch (err) {
@@ -48,7 +48,9 @@ export const Dashboard = () => {
             My Dashboard
           </h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back, {user?.username}!
+            {isAuthenticated
+              ? `Welcome back, ${user?.username}!`
+              : 'Your print requests from this browser'}
           </p>
         </div>
         <Link to="/request/new">
@@ -58,6 +60,31 @@ export const Dashboard = () => {
           </Button>
         </Link>
       </div>
+
+      {/* Guest User Notice */}
+      {!isAuthenticated && (
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  You're using a guest session
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                  Your requests are saved to this browser only. Sign in with Discord to access your requests from any device and get notifications about status updates.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => window.location.href = api.getDiscordLoginUrl()}
+                >
+                  Sign in with Discord
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-4">

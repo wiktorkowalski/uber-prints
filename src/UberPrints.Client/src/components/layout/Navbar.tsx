@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { User, LogOut, Settings, Home, List, Plus } from 'lucide-react';
+import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard } from 'lucide-react';
 import { api } from '../../lib/api';
 
 export const Navbar = () => {
@@ -40,6 +40,18 @@ export const Navbar = () => {
                   Home
                 </Button>
               </Link>
+              <Link to="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Link to="/filaments">
+                <Button variant="ghost" size="sm">
+                  <Palette className="w-4 h-4 mr-2" />
+                  Filaments
+                </Button>
+              </Link>
               <Link to="/requests">
                 <Button variant="ghost" size="sm">
                   <List className="w-4 h-4 mr-2" />
@@ -50,6 +62,12 @@ export const Navbar = () => {
                 <Button variant="ghost" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   New Request
+                </Button>
+              </Link>
+              <Link to="/track">
+                <Button variant="ghost" size="sm">
+                  <Search className="w-4 h-4 mr-2" />
+                  Track
                 </Button>
               </Link>
             </div>

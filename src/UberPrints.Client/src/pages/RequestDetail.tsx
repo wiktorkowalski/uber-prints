@@ -5,10 +5,11 @@ import { PrintRequestDto } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime } from '../lib/utils';
-import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2 } from 'lucide-react';
 
 export const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -101,28 +102,67 @@ export const RequestDetail = () => {
         </Button>
 
         {canDelete && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Trash2 className="w-4 h-4 mr-2" />
-            )}
-            Delete
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/request/${request.id}/edit`)}
+            >
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Delete
+            </Button>
+          </div>
         )}
       </div>
+
+      {/* Ownership Info Alert */}
+      {user && request.userId === user.id && (
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <User className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  This is your request
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  {isAuthenticated
+                    ? "You can track the status of your request here. You'll be notified of any updates."
+                    : "You're viewing this request as a guest. Sign in with Discord to access it from any device and get notifications."}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Details Card */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">Request Details</CardTitle>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <CardTitle className="text-2xl">Request Details</CardTitle>
+                {user && request.userId === user.id && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Your request
+                  </Badge>
+                )}
+              </div>
               <CardDescription>
                 Submitted {formatRelativeTime(request.createdAt)}
               </CardDescription>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { PrintRequestDto, RequestStatusEnum } from '../types/api';
+import { PrintRequestDto, RequestStatusEnum, FilamentDto, CreateFilamentDto, UpdateFilamentDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
+import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
-import { Shield, Package, Loader2, ExternalLink, Edit2 } from 'lucide-react';
+import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle } from 'lucide-react';
 
 // Define all status values explicitly for type safety
 const ALL_STATUS_VALUES: RequestStatusEnum[] = [
@@ -39,6 +40,23 @@ export const AdminDashboard = () => {
   const [newStatus, setNewStatus] = useState<RequestStatusEnum | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [updating, setUpdating] = useState(false);
+
+  // Filament management
+  const [filaments, setFilaments] = useState<FilamentDto[]>([]);
+  const [filamentsLoading, setFilamentsLoading] = useState(false);
+  const [filamentDialogOpen, setFilamentDialogOpen] = useState(false);
+  const [editingFilament, setEditingFilament] = useState<FilamentDto | null>(null);
+  const [filamentFormData, setFilamentFormData] = useState<CreateFilamentDto>({
+    name: '',
+    material: '',
+    brand: '',
+    colour: '',
+    stockAmount: 0,
+    stockUnit: 'g',
+    link: '',
+    photoUrl: '',
+  });
+  const [filamentSubmitting, setFilamentSubmitting] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -102,6 +120,109 @@ export const AdminDashboard = () => {
     return requests.filter(r => r.currentStatus === status);
   };
 
+  // Filament management functions
+  const loadFilaments = async () => {
+    try {
+      setFilamentsLoading(true);
+      const data = await api.getFilaments();
+      setFilaments(data);
+    } catch (err) {
+      console.error('Error loading filaments:', err);
+      toast({
+        title: "Failed to load filaments",
+        description: "Could not load filament inventory",
+        variant: "destructive",
+      });
+    } finally {
+      setFilamentsLoading(false);
+    }
+  };
+
+  const openCreateFilamentDialog = () => {
+    setEditingFilament(null);
+    setFilamentFormData({
+      name: '',
+      material: '',
+      brand: '',
+      colour: '',
+      stockAmount: 0,
+      stockUnit: 'g',
+      link: '',
+      photoUrl: '',
+    });
+    setFilamentDialogOpen(true);
+  };
+
+  const openEditFilamentDialog = (filament: FilamentDto) => {
+    setEditingFilament(filament);
+    setFilamentFormData({
+      name: filament.name,
+      material: filament.material,
+      brand: filament.brand,
+      colour: filament.colour,
+      stockAmount: filament.stockAmount,
+      stockUnit: filament.stockUnit,
+      link: filament.link || '',
+      photoUrl: filament.photoUrl || '',
+    });
+    setFilamentDialogOpen(true);
+  };
+
+  const handleFilamentSubmit = async () => {
+    try {
+      setFilamentSubmitting(true);
+      if (editingFilament) {
+        await api.updateFilament(editingFilament.id, filamentFormData as UpdateFilamentDto);
+        toast({
+          title: "Filament updated",
+          description: "Filament has been updated successfully",
+          variant: "success",
+        });
+      } else {
+        await api.createFilament(filamentFormData);
+        toast({
+          title: "Filament created",
+          description: "New filament has been added to inventory",
+          variant: "success",
+        });
+      }
+      setFilamentDialogOpen(false);
+      await loadFilaments();
+    } catch (err: any) {
+      console.error('Error saving filament:', err);
+      toast({
+        title: "Failed to save filament",
+        description: err.response?.data?.message || 'Could not save filament',
+        variant: "destructive",
+      });
+    } finally {
+      setFilamentSubmitting(false);
+    }
+  };
+
+  const handleDeleteFilament = async (filament: FilamentDto) => {
+    if (!window.confirm(`Are you sure you want to delete ${filament.name}?`)) {
+      return;
+    }
+
+    try {
+      await api.deleteFilament(filament.id);
+      toast({
+        title: "Filament deleted",
+        description: "Filament has been removed from inventory",
+        variant: "success",
+      });
+      await loadFilaments();
+    } catch (err: any) {
+      console.error('Error deleting filament:', err);
+      toast({
+        title: "Failed to delete filament",
+        description: err.response?.data?.message || 'Could not delete filament',
+        variant: "destructive",
+      });
+    }
+  };
+
   const pendingCount = getRequestsByStatus(RequestStatusEnum.Pending).length;
   const activeCount = requests.filter(r =>
     [RequestStatusEnum.Accepted, RequestStatusEnum.Paused, RequestStatusEnum.OnHold,
@@ -156,7 +277,11 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs defaultValue="all" className="space-y-4" onValueChange={(value) => {
+        if (value === 'filaments' && filaments.length === 0 && !filamentsLoading) {
+          loadFilaments();
+        }
+      }}>
         <TabsList>
           <TabsTrigger value="all">All Requests</TabsTrigger>
           <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
@@ -208,13 +333,100 @@ export const AdminDashboard = () => {
         <TabsContent value="filaments" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Filament Management</CardTitle>
-              <CardDescription>Manage filament inventory (Coming Soon)</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Filament Management</CardTitle>
+                  <CardDescription>Manage filament inventory and stock levels</CardDescription>
+                </div>
+                <Button onClick={openCreateFilamentDialog}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Filament
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Filament management interface will be available soon
-              </p>
+              {filamentsLoading ? (
+                <LoadingSpinner message="Loading filaments..." />
+              ) : filaments.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No filaments yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Add filaments to your inventory to start accepting print requests
+                  </p>
+                  <Button onClick={openCreateFilamentDialog}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add First Filament
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {filaments.map((filament) => (
+                    <div
+                      key={filament.id}
+                      className="border rounded-lg p-4 flex items-start gap-4"
+                    >
+                      {filament.photoUrl && (
+                        <img
+                          src={filament.photoUrl}
+                          alt={filament.name}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold">{filament.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {filament.brand} • {filament.material} • {filament.colour}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {filament.stockAmount <= 0 ? (
+                              <Badge variant="destructive" className="flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                Out of Stock
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                {filament.stockAmount} {filament.stockUnit}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {filament.link && (
+                          <a
+                            href={filament.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Product Link
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditFilamentDialog(filament)}
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteFilament(filament)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -272,6 +484,136 @@ export const AdminDashboard = () => {
             <Button onClick={handleStatusChange} disabled={updating || newStatus === null}>
               {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Update Status
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Filament Create/Edit Dialog */}
+      <Dialog open={filamentDialogOpen} onOpenChange={setFilamentDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingFilament ? 'Edit Filament' : 'Add New Filament'}</DialogTitle>
+            <DialogDescription>
+              {editingFilament
+                ? 'Update filament details and stock levels'
+                : 'Add a new filament to your inventory'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={filamentFormData.name}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, name: e.target.value })}
+                  placeholder="e.g., PLA Black 1kg"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="material">Material *</Label>
+                <Input
+                  id="material"
+                  value={filamentFormData.material}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, material: e.target.value })}
+                  placeholder="e.g., PLA, PETG, ABS"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="brand">Brand *</Label>
+                <Input
+                  id="brand"
+                  value={filamentFormData.brand}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, brand: e.target.value })}
+                  placeholder="e.g., Prusa, eSun"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="colour">Colour *</Label>
+                <Input
+                  id="colour"
+                  value={filamentFormData.colour}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, colour: e.target.value })}
+                  placeholder="e.g., Black, Red, White"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stockAmount">Stock Amount *</Label>
+                <Input
+                  id="stockAmount"
+                  type="number"
+                  min="0"
+                  value={filamentFormData.stockAmount}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, stockAmount: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stockUnit">Stock Unit *</Label>
+                <Input
+                  id="stockUnit"
+                  value={filamentFormData.stockUnit}
+                  onChange={(e) => setFilamentFormData({ ...filamentFormData, stockUnit: e.target.value })}
+                  placeholder="g, kg, m"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="link">Product Link (Optional)</Label>
+              <Input
+                id="link"
+                type="url"
+                value={filamentFormData.link}
+                onChange={(e) => setFilamentFormData({ ...filamentFormData, link: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="photoUrl">Photo URL (Optional)</Label>
+              <Input
+                id="photoUrl"
+                type="url"
+                value={filamentFormData.photoUrl}
+                onChange={(e) => setFilamentFormData({ ...filamentFormData, photoUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setFilamentDialogOpen(false)}
+              disabled={filamentSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleFilamentSubmit}
+              disabled={
+                filamentSubmitting ||
+                !filamentFormData.name ||
+                !filamentFormData.material ||
+                !filamentFormData.brand ||
+                !filamentFormData.colour ||
+                !filamentFormData.stockUnit
+              }
+            >
+              {filamentSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {editingFilament ? 'Update Filament' : 'Add Filament'}
             </Button>
           </DialogFooter>
         </DialogContent>
