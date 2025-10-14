@@ -162,7 +162,7 @@ public class AuthControllerTests : TestBase
     Assert.Equal(10, tokens.Distinct().Count());
 
     // All tokens should exist in database
-    var users = await Context.Users.ToListAsync();
-    Assert.Equal(10, users.Count);
+    var guestUsers = await Context.Users.Where(u => u.GuestSessionToken != null && u.DiscordId == null).ToListAsync();
+    Assert.Equal(10, guestUsers.Count);
   }
 }

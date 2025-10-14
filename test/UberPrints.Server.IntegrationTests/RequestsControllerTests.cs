@@ -140,6 +140,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    filamentResponse.EnsureSuccessStatusCode(); // Add explicit check
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
     Assert.NotNull(filament);
     var createDto = new CreatePrintRequestDto

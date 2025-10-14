@@ -27,20 +27,18 @@ public class RequestsControllerTests : TestBase
   public async Task GetRequests_ReturnsAllRequests_WhenRequestsExist()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament();
     var testRequest1 = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament,
         requesterName: "John Doe"
     );
     var testRequest2 = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament,
         requesterName: "Jane Smith"
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddRangeAsync(testRequest1, testRequest2);
     await Context.SaveChangesAsync();
@@ -76,17 +74,15 @@ public class RequestsControllerTests : TestBase
   public async Task GetRequest_ReturnsRequest_WhenRequestExists()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament();
     var testRequest = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament,
         requesterName: "Test User",
         modelUrl: "https://example.com/model.stl",
         notes: "Test print request"
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddAsync(testRequest);
     await Context.SaveChangesAsync();
@@ -124,15 +120,13 @@ public class RequestsControllerTests : TestBase
   public async Task TrackRequest_ReturnsRequest_WhenValidTokenProvided()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament();
     var testRequest = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament,
         guestTrackingToken: "VALIDTOKEN123"
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddAsync(testRequest);
     await Context.SaveChangesAsync();
@@ -168,10 +162,8 @@ public class RequestsControllerTests : TestBase
   public async Task CreateRequest_CreatesRequest_WhenValidDataProvided()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament(stockAmount: 1000);
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.SaveChangesAsync();
 
@@ -224,14 +216,12 @@ public class RequestsControllerTests : TestBase
   public async Task UpdateRequest_ReturnsBadRequest_WhenFilamentOutOfStock()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament(stockAmount: 0); // Out of stock
     var testRequest = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddAsync(testRequest);
     await Context.SaveChangesAsync();
@@ -253,14 +243,12 @@ public class RequestsControllerTests : TestBase
   public async Task UpdateRequest_UpdatesRequest_WhenRequestExistsAndFilamentInStock()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament(stockAmount: 1000); // In stock
     var testRequest = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddAsync(testRequest);
     await Context.SaveChangesAsync();
@@ -306,14 +294,12 @@ public class RequestsControllerTests : TestBase
   public async Task DeleteRequest_DeletesRequest_WhenRequestExists()
   {
     // Arrange
-    var testUser = TestDataFactory.CreateTestUser();
     var testFilament = TestDataFactory.CreateTestFilament();
     var testRequest = TestDataFactory.CreateTestPrintRequest(
-        userId: testUser.Id,
+        userId: TestAuthenticatedUser.Id,
         filament: testFilament
     );
 
-    await Context.Users.AddAsync(testUser);
     await Context.Filaments.AddAsync(testFilament);
     await Context.PrintRequests.AddAsync(testRequest);
     await Context.SaveChangesAsync();

@@ -151,6 +151,7 @@ public class RequestsController : ControllerBase
     }
 
     // Validate ownership - user must own the request to update it
+    // Check for authenticated user via JWT
     var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
     {
@@ -161,8 +162,28 @@ public class RequestsController : ControllerBase
     }
     else
     {
-      // No valid user claim - user is not authenticated
-      return Unauthorized(); // 401 Unauthorized
+      // Check for guest session token in header
+      if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+      {
+        var guestToken = guestTokenHeader.ToString();
+        if (!string.IsNullOrEmpty(guestToken))
+        {
+          var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+          if (user == null || request.UserId != user.Id)
+          {
+            return Forbid(); // Guest session exists but doesn't own this request
+          }
+          // Guest owns the request, continue
+        }
+        else
+        {
+          return Unauthorized(); // No valid session
+        }
+      }
+      else
+      {
+        return Unauthorized(); // No authentication provided
+      }
     }
 
     // Validate filament exists and has stock
@@ -200,6 +221,7 @@ public class RequestsController : ControllerBase
     }
 
     // Validate ownership - user must own the request to delete it
+    // Check for authenticated user via JWT
     var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
     {
@@ -210,8 +232,28 @@ public class RequestsController : ControllerBase
     }
     else
     {
-      // No valid user claim - user is not authenticated
-      return Unauthorized(); // 401 Unauthorized
+      // Check for guest session token in header
+      if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+      {
+        var guestToken = guestTokenHeader.ToString();
+        if (!string.IsNullOrEmpty(guestToken))
+        {
+          var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+          if (user == null || request.UserId != user.Id)
+          {
+            return Forbid(); // Guest session exists but doesn't own this request
+          }
+          // Guest owns the request, continue
+        }
+        else
+        {
+          return Unauthorized(); // No valid session
+        }
+      }
+      else
+      {
+        return Unauthorized(); // No authentication provided
+      }
     }
 
     _context.PrintRequests.Remove(request);

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +22,7 @@ public class TestBase
     protected readonly FilamentsController FilamentsController;
     protected readonly AuthController AuthController;
     protected readonly IConfiguration Configuration;
+    protected User TestAuthenticatedUser;
 
     public TestBase()
     {
@@ -46,11 +49,47 @@ public class TestBase
             .AddInMemoryCollection(configData!)
             .Build();
 
+        // Create a test authenticated user and add to database
+        TestAuthenticatedUser = new User
+        {
+            Id = Guid.NewGuid(),
+            DiscordId = "123456789",
+            Username = "TestUser",
+            Email = "test@example.com"
+        };
+        Context.Users.Add(TestAuthenticatedUser);
+        Context.SaveChanges();
+
         // Create controllers with the real context
         RequestsController = new RequestsController(Context);
         AdminController = new AdminController(Context);
         FilamentsController = new FilamentsController(Context);
         AuthController = new AuthController(Context, Configuration);
+
+        // Set up authentication for RequestsController
+        SetupControllerContext(RequestsController, TestAuthenticatedUser.Id);
+        SetupControllerContext(AdminController, TestAuthenticatedUser.Id);
+    }
+
+    protected void SetupControllerContext(ControllerBase controller, Guid userId)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, "TestUser")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        var httpContext = new DefaultHttpContext
+        {
+            User = claimsPrincipal
+        };
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
     }
 }
 
