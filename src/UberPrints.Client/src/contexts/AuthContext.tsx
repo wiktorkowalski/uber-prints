@@ -51,65 +51,122 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const guestSession = await api.createGuestSession();
         api.setGuestSessionToken(guestSession.guestSessionToken);
       } catch (error) {
-        console.error('Failed to create guest session:', error);
+        // Surface error to user - guest session is needed for creating requests
+        toast({
+          title: "Connection Error",
+          description: "Unable to establish session. Please check your internet connection and try again.",
+          variant: "destructive",
+        });
+        throw error; // Re-throw so caller knows it failed
       }
     }
   };
 
   useEffect(() => {
-    const token = api.getToken();
-    if (token) {
-      fetchUser();
-    } else {
-      // Ensure guest session exists for unauthenticated users
-      ensureGuestSession();
-      setLoading(false);
-    }
+    let isMounted = true; // Track if component is still mounted
 
-    // Listen for unauthorized events from API interceptor
-    const handleUnauthorized = () => {
+    const initializeAuth = async () => {
+      const token = api.getToken();
+      if (token) {
+        await fetchUser();
+      } else {
+        // Ensure guest session exists for unauthenticated users
+        try {
+          await ensureGuestSession();
+        } catch {
+          // Error already shown to user in ensureGuestSession
+        }
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Listen for API error events from interceptor
+    const handleUnauthorized = async () => {
+      if (!isMounted) return;
+
       setUser(null);
       api.clearToken();
       api.clearGuestSessionToken();
-      // Show toast notification
       toast({
         title: "Session expired",
         description: "Your session has expired. Please log in again.",
         variant: "destructive",
       });
       // Ensure new guest session is created
-      ensureGuestSession();
-    };
-
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-
-    // Set up automatic token refresh check
-    const checkTokenRefresh = async () => {
-      const token = api.getToken();
-      if (!token) return;
-
-      if (api.isTokenExpiringSoon()) {
-        try {
-          await api.refreshToken();
-          console.log('Token refreshed successfully');
-        } catch (error) {
-          console.error('Failed to refresh token:', error);
-          // Token refresh failed, will be handled by 401 interceptor
-        }
+      try {
+        await ensureGuestSession();
+      } catch {
+        // Error already shown to user
       }
     };
 
-    // Check immediately
-    checkTokenRefresh();
+    const handleForbidden = (event: Event) => {
+      if (!isMounted) return;
+      const customEvent = event as CustomEvent;
+      toast({
+        title: "Access Denied",
+        description: customEvent.detail?.message || "You don't have permission to perform this action.",
+        variant: "destructive",
+      });
+    };
 
-    // Check every hour
+    const handleServerError = (event: Event) => {
+      if (!isMounted) return;
+      const customEvent = event as CustomEvent;
+      toast({
+        title: "Server Error",
+        description: customEvent.detail?.message || "Something went wrong. Please try again later.",
+        variant: "destructive",
+      });
+    };
+
+    const handleNetworkError = (event: Event) => {
+      if (!isMounted) return;
+      const customEvent = event as CustomEvent;
+      toast({
+        title: "Network Error",
+        description: customEvent.detail?.message || "Please check your internet connection.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    window.addEventListener('auth:forbidden', handleForbidden as EventListener);
+    window.addEventListener('api:server-error', handleServerError as EventListener);
+    window.addEventListener('api:network-error', handleNetworkError as EventListener);
+
+    // Set up automatic token refresh check
+    const checkTokenRefresh = async () => {
+      if (!isMounted) return;
+
+      const token = api.getToken();
+      if (!token) return;
+
+      try {
+        // Attempt to refresh token - backend will determine if needed
+        await api.refreshToken();
+      } catch (error) {
+        // Token refresh failed, will be handled by 401 interceptor
+      }
+    };
+
+    // Initialize authentication
+    initializeAuth();
+
+    // Check token refresh every hour
     const refreshInterval = setInterval(checkTokenRefresh, 60 * 60 * 1000);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      window.removeEventListener('auth:forbidden', handleForbidden as EventListener);
+      window.removeEventListener('api:server-error', handleServerError as EventListener);
+      window.removeEventListener('api:network-error', handleNetworkError as EventListener);
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   const login = async (token: string) => {
     api.setToken(token);

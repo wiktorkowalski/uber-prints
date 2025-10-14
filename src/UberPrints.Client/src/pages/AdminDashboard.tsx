@@ -13,7 +13,7 @@ import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
+import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle } from 'lucide-react';
 
 // Define all status values explicitly for type safety
@@ -44,6 +44,7 @@ export const AdminDashboard = () => {
   // Filament management
   const [filaments, setFilaments] = useState<FilamentDto[]>([]);
   const [filamentsLoading, setFilamentsLoading] = useState(false);
+  const [filamentsLoaded, setFilamentsLoaded] = useState(false);
   const [filamentDialogOpen, setFilamentDialogOpen] = useState(false);
   const [editingFilament, setEditingFilament] = useState<FilamentDto | null>(null);
   const [filamentFormData, setFilamentFormData] = useState<CreateFilamentDto>({
@@ -122,12 +123,14 @@ export const AdminDashboard = () => {
 
   // Filament management functions
   const loadFilaments = async () => {
+    if (filamentsLoaded) return; // Prevent duplicate loads
+
     try {
       setFilamentsLoading(true);
       const data = await api.getFilaments();
       setFilaments(data);
+      setFilamentsLoaded(true);
     } catch (err) {
-      console.error('Error loading filaments:', err);
       toast({
         title: "Failed to load filaments",
         description: "Could not load filament inventory",
@@ -278,7 +281,7 @@ export const AdminDashboard = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="all" className="space-y-4" onValueChange={(value) => {
-        if (value === 'filaments' && filaments.length === 0 && !filamentsLoading) {
+        if (value === 'filaments' && !filamentsLoaded && !filamentsLoading) {
           loadFilaments();
         }
       }}>
@@ -695,7 +698,7 @@ const RequestsTable = ({ requests, onStatusChange, error, onRetry }: RequestsTab
               <div className="flex items-center text-muted-foreground">
                 <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
                 <a
-                  href={request.modelUrl}
+                  href={sanitizeUrl(request.modelUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary truncate"

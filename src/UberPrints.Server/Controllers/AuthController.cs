@@ -175,6 +175,12 @@ public class AuthController : ControllerBase
     var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
     var redirectUrl = $"{frontendUrl}/auth/callback?token={token}";
 
+    // Append returnUrl if provided
+    if (!string.IsNullOrEmpty(returnUrl))
+    {
+      redirectUrl += $"&returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
+
     return Redirect(redirectUrl);
   }
 

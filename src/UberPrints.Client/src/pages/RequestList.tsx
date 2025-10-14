@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
+import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ExternalLink, Package, User } from 'lucide-react';
 
 export const RequestList = () => {
@@ -128,7 +128,7 @@ export const RequestList = () => {
             <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
               <ExternalLink className="w-4 h-4 mr-2" />
               <a
-                href={request.modelUrl}
+                href={sanitizeUrl(request.modelUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary truncate"

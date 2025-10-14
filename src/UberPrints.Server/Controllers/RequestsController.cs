@@ -150,8 +150,20 @@ public class RequestsController : ControllerBase
       return NotFound();
     }
 
-    // For now, allow updates without authentication check
-    // TODO: Add authentication and ownership validation
+    // Validate ownership - user must own the request to update it
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+    {
+      if (request.UserId != userId)
+      {
+        return Forbid(); // 403 Forbidden - authenticated but not authorized
+      }
+    }
+    else
+    {
+      // No valid user claim - user is not authenticated
+      return Unauthorized(); // 401 Unauthorized
+    }
 
     // Validate filament exists and has stock
     var filament = await _context.Filaments.FindAsync(dto.FilamentId);
@@ -187,8 +199,20 @@ public class RequestsController : ControllerBase
       return NotFound();
     }
 
-    // For now, allow deletion without authentication check
-    // TODO: Add authentication and ownership validation
+    // Validate ownership - user must own the request to delete it
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+    {
+      if (request.UserId != userId)
+      {
+        return Forbid(); // 403 Forbidden - authenticated but not authorized
+      }
+    }
+    else
+    {
+      // No valid user claim - user is not authenticated
+      return Unauthorized(); // 401 Unauthorized
+    }
 
     _context.PrintRequests.Remove(request);
     await _context.SaveChangesAsync();

@@ -62,3 +62,23 @@ export function formatRelativeTime(dateString: string): string {
 
   return formatDate(dateString);
 }
+
+export function sanitizeUrl(url: string): string {
+  if (!url) return '#';
+
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return url;
+    }
+    return '#';
+  } catch {
+    // Invalid URL
+    return '#';
+  }
+}
+
+export function isSafeUrl(url: string): boolean {
+  return sanitizeUrl(url) !== '#';
+}

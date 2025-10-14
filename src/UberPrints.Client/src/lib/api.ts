@@ -42,16 +42,50 @@ class ApiClient {
       return config;
     });
 
-    // Handle 401 responses
+    // Handle HTTP error responses
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
-          this.clearToken();
-          this.clearGuestSessionToken();
-          // Dispatch custom event for AuthContext to handle logout gracefully
-          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        const status = error.response?.status;
+
+        // Handle different error types
+        switch (status) {
+          case 401:
+            // Unauthorized - clear auth and dispatch event
+            this.clearToken();
+            this.clearGuestSessionToken();
+            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            break;
+
+          case 403:
+            // Forbidden - user doesn't have permission
+            window.dispatchEvent(new CustomEvent('auth:forbidden', {
+              detail: { message: error.response?.data?.message || 'Access denied' }
+            }));
+            break;
+
+          case 404:
+            // Not found - could be a deleted resource
+            break;
+
+          case 500:
+          case 502:
+          case 503:
+            // Server errors - could implement retry logic here
+            window.dispatchEvent(new CustomEvent('api:server-error', {
+              detail: { status, message: 'Server error. Please try again later.' }
+            }));
+            break;
+
+          default:
+            // Network error or other issues
+            if (!error.response) {
+              window.dispatchEvent(new CustomEvent('api:network-error', {
+                detail: { message: 'Network error. Please check your connection.' }
+              }));
+            }
         }
+
         return Promise.reject(error);
       }
     );
@@ -184,19 +218,16 @@ class ApiClient {
     return newToken;
   }
 
-  // Check if token is about to expire (within 1 day)
-  isTokenExpiringSoon(): boolean {
+  async shouldRefreshToken(): Promise<boolean> {
     const token = this.getToken();
     if (!token) return false;
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiryTime = payload.exp * 1000; // Convert to milliseconds
-      const now = Date.now();
-      const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day
-
-      return (expiryTime - now) < oneDayInMs;
-    } catch {
+      // Try to refresh - backend will validate token expiry securely
+      await this.refreshToken();
+      return true;
+    } catch (error) {
+      // If refresh fails, token is invalid or expired
       return false;
     }
   }

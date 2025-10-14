@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime } from '../lib/utils';
+import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2 } from 'lucide-react';
 
 export const RequestDetail = () => {
@@ -192,7 +192,7 @@ export const RequestDetail = () => {
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">Model URL</h3>
             <a
-              href={request.modelUrl}
+              href={sanitizeUrl(request.modelUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center text-primary hover:underline break-all"

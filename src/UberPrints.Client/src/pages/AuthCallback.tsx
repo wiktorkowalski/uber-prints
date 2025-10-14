@@ -11,6 +11,7 @@ export const AuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       const token = searchParams.get('token');
+      const returnUrl = searchParams.get('returnUrl');
 
       if (!token) {
         setError('No authentication token received');
@@ -20,7 +21,8 @@ export const AuthCallback = () => {
 
       try {
         await login(token);
-        navigate('/dashboard');
+        // Navigate to returnUrl if provided, otherwise go to dashboard
+        navigate(returnUrl || '/dashboard');
       } catch (err) {
         console.error('Login error:', err);
         setError('Authentication failed. Please try again.');
