@@ -1,0 +1,86 @@
+# Example GitHub Actions workflow for running Playwright E2E tests
+# Copy this to .github/workflows/playwright.yml to use it
+
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres_test_pwd
+          POSTGRES_DB: uberprints_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build backend
+        run: dotnet build src/UberPrints.Server/UberPrints.Server.csproj --no-restore
+
+      - name: Install frontend dependencies
+        working-directory: src/UberPrints.Client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: src/UberPrints.Client
+        run: npm run build
+
+      - name: Install Playwright dependencies
+        working-directory: test/UberPrints.Client.Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: test/UberPrints.Client.Playwright
+        env:
+          CI: true
+        run: npm test
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: test/UberPrints.Client.Playwright/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test/UberPrints.Client.Playwright/test-results/
+          retention-days: 30

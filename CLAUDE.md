@@ -138,17 +138,28 @@ The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 
 ### Testing Strategy
 
-The project uses xUnit with two test projects:
+The project uses multiple testing approaches:
 
 **Unit Tests** (`test/UberPrints.Server.UnitTests/`):
 - Test individual controller methods with mocked dependencies
 - Fast execution, no external dependencies
+- Run with: `dotnet test test/UberPrints.Server.UnitTests`
 
 **Integration Tests** (`test/UberPrints.Server.IntegrationTests/`):
 - Use `Microsoft.AspNetCore.Mvc.Testing` for full API testing
 - Use Testcontainers.PostgreSql for isolated database per test run
 - Inherit from `IntegrationTestBase` which provides test factory and HTTP client
 - Tests demonstrate full request/response cycles including database operations
+- Run with: `dotnet test test/UberPrints.Server.IntegrationTests`
+
+**End-to-End Tests** (`test/UberPrints.Client.Playwright/`):
+- Use Playwright for browser-based E2E testing
+- Test complete user workflows across frontend and backend
+- Support multiple browsers (Chromium, Firefox, WebKit) and mobile devices
+- Automatically start backend and frontend servers
+- Setup: `cd test/UberPrints.Client.Playwright && npm install && npx playwright install`
+- Run with: `npm test` (in Playwright directory)
+- See `test/UberPrints.Client.Playwright/README.md` for detailed documentation
 
 When writing new tests, follow the existing patterns in controller test files. Integration tests use `TestDataFactory` helper for creating test DTOs.
 
