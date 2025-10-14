@@ -43,6 +43,18 @@ builder.Services.AddAuthentication(options =>
         : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
+
+    // Return 401 instead of redirecting for API requests
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return Task.CompletedTask;
+    };
 })
 .AddJwtBearer(options =>
 {

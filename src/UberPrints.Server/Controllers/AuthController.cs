@@ -154,6 +154,11 @@ public class AuthController : ControllerBase
       new Claim("IsAdmin", user.IsAdmin.ToString())
     };
 
+    if (user.IsAdmin)
+    {
+      claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+    }
+
     if (!string.IsNullOrEmpty(user.Email))
     {
       claims.Add(new Claim(ClaimTypes.Email, user.Email));
@@ -273,12 +278,17 @@ public class AuthController : ControllerBase
         _configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey not configured")));
     var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-    var claims = new[]
+    var claims = new List<Claim>
     {
       new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
       new Claim(ClaimTypes.Name, user.Username),
       new Claim("IsAdmin", user.IsAdmin.ToString())
     };
+
+    if (user.IsAdmin)
+    {
+      claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+    }
 
     var token = new JwtSecurityToken(
         issuer: _configuration["Jwt:Issuer"] ?? "UberPrints",
