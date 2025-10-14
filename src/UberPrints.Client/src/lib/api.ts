@@ -175,6 +175,31 @@ class ApiClient {
   async deleteFilament(id: string): Promise<void> {
     await this.client.delete(`/api/admin/filaments/${id}`);
   }
+
+  // Token refresh
+  async refreshToken(): Promise<string> {
+    const response = await this.client.post<{ token: string }>('/api/auth/refresh');
+    const newToken = response.data.token;
+    this.setToken(newToken);
+    return newToken;
+  }
+
+  // Check if token is about to expire (within 1 day)
+  isTokenExpiringSoon(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiryTime = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day
+
+      return (expiryTime - now) < oneDayInMs;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export const api = new ApiClient();

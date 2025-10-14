@@ -237,6 +237,30 @@ public class AuthController : ControllerBase
     return Ok(new { guestSessionToken, userId = guestUser.Id });
   }
 
+  [HttpPost("refresh")]
+  [Authorize]
+  public async Task<IActionResult> RefreshToken()
+  {
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+    {
+      return Unauthorized();
+    }
+
+    var user = await _context.Users.FindAsync(userId);
+
+    if (user == null)
+    {
+      return NotFound();
+    }
+
+    // Generate a new JWT token
+    var newToken = GenerateJwtToken(user);
+
+    return Ok(new { token = newToken });
+  }
+
   private string GenerateJwtToken(User user)
   {
     var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -254,7 +278,7 @@ public class AuthController : ControllerBase
         issuer: _configuration["Jwt:Issuer"] ?? "UberPrints",
         audience: _configuration["Jwt:Audience"] ?? "UberPrints",
         claims: claims,
-        expires: DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:ExpiryHours"] ?? "1")),
+        expires: DateTime.UtcNow.AddHours(double.Parse(_configuration["Jwt:ExpiryHours"] ?? "1")),
         signingCredentials: credentials
     );
 

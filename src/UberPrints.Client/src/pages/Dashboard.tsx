@@ -15,10 +15,6 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadMyRequests();
-  }, [user]);
-
   const loadMyRequests = async () => {
     try {
       setLoading(true);
@@ -33,6 +29,11 @@ export const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadMyRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (loading) {
     return <LoadingSpinner message="Loading your requests..." />;

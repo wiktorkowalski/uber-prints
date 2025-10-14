@@ -82,8 +82,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    // Set up automatic token refresh check
+    const checkTokenRefresh = async () => {
+      const token = api.getToken();
+      if (!token) return;
+
+      if (api.isTokenExpiringSoon()) {
+        try {
+          await api.refreshToken();
+          console.log('Token refreshed successfully');
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          // Token refresh failed, will be handled by 401 interceptor
+        }
+      }
+    };
+
+    // Check immediately
+    checkTokenRefresh();
+
+    // Check every hour
+    const refreshInterval = setInterval(checkTokenRefresh, 60 * 60 * 1000);
+
     return () => {
       window.removeEventListener('auth:unauthorized', handleUnauthorized);
+      clearInterval(refreshInterval);
     };
   }, []);
 
