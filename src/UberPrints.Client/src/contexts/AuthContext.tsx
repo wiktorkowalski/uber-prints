@@ -90,6 +90,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (token: string) => {
     api.setToken(token);
     await fetchUser();
+    // Clear guest session token after successful login since user is now authenticated
+    api.clearGuestSessionToken();
   };
 
   const logout = async () => {
@@ -100,6 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     setUser(null);
     api.clearToken();
+    api.clearGuestSessionToken();
+    // Create a new guest session for the logged-out user
+    await ensureGuestSession();
   };
 
   const refreshUser = async () => {

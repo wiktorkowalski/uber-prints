@@ -119,17 +119,23 @@ public class AuthController : ControllerBase
       // If guest session token provided, link any guest requests
       if (!string.IsNullOrEmpty(guestSessionToken))
       {
+        // Find guest user - could be a pure guest (no DiscordId) or this same user from a previous session
         var guestUser = await _context.Users
             .Include(u => u.PrintRequests)
-            .FirstOrDefaultAsync(u => u.GuestSessionToken == guestSessionToken && u.DiscordId == null);
+            .FirstOrDefaultAsync(u => u.GuestSessionToken == guestSessionToken);
 
-        if (guestUser != null && guestUser.Id != user.Id)
+        // Only transfer if it's a different user (pure guest account)
+        if (guestUser != null && guestUser.Id != user.Id && guestUser.DiscordId == null)
         {
           // Transfer guest requests to authenticated user
           foreach (var request in guestUser.PrintRequests)
           {
             request.UserId = user.Id;
           }
+
+          // Optionally delete the now-empty guest account
+          _context.Users.Remove(guestUser);
+
           await _context.SaveChangesAsync();
         }
       }

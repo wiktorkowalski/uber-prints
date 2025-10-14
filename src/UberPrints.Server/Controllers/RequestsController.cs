@@ -85,6 +85,32 @@ public class RequestsController : ControllerBase
       return BadRequest("Selected filament is out of stock.");
     }
 
+    // Determine the user (authenticated or guest)
+    User? user = null;
+
+    // Check if user is authenticated via JWT
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
+    {
+      user = await _context.Users.FindAsync(userId);
+    }
+
+    // If not authenticated, check for guest session token in header
+    if (user == null && Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+    {
+      var guestToken = guestTokenHeader.ToString();
+      if (!string.IsNullOrEmpty(guestToken))
+      {
+        user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+      }
+    }
+
+    // If still no user found, require guest session
+    if (user == null)
+    {
+      return BadRequest("No user session found. Please create a guest session first.");
+    }
+
     var request = new PrintRequest
     {
       RequesterName = dto.RequesterName,
@@ -92,6 +118,7 @@ public class RequestsController : ControllerBase
       Notes = dto.Notes,
       RequestDelivery = dto.RequestDelivery,
       FilamentId = dto.FilamentId,
+      UserId = user.Id,  // Associate request with user
       CurrentStatus = RequestStatusEnum.Pending,
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow,
