@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserDto } from '../types/api';
 import { api } from '../lib/api';
+import { toast } from '../hooks/use-toast';
 
 interface AuthContextType {
   user: UserDto | null;
@@ -64,6 +65,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       ensureGuestSession();
       setLoading(false);
     }
+
+    // Listen for unauthorized events from API interceptor
+    const handleUnauthorized = () => {
+      setUser(null);
+      api.clearToken();
+      api.clearGuestSessionToken();
+      // Show toast notification
+      toast({
+        title: "Session expired",
+        description: "Your session has expired. Please log in again.",
+        variant: "destructive",
+      });
+      // Ensure new guest session is created
+      ensureGuestSession();
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = async (token: string) => {

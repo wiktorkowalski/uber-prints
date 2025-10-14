@@ -12,7 +12,9 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/use-toast';
 import { Loader2, Package } from 'lucide-react';
 
 const formSchema = z.object({
@@ -28,6 +30,7 @@ type FormValues = z.infer<typeof formSchema>;
 export const NewRequest = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [filaments, setFilaments] = useState<FilamentDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -68,15 +71,6 @@ export const NewRequest = () => {
     try {
       setSubmitting(true);
 
-      // Ensure guest session token exists before creating request
-      if (!isAuthenticated) {
-        const guestToken = api.getGuestSessionToken();
-        if (!guestToken) {
-          const guestSession = await api.createGuestSession();
-          api.setGuestSessionToken(guestSession.guestSessionToken);
-        }
-      }
-
       const request = await api.createRequest({
         requesterName: values.requesterName,
         modelUrl: values.modelUrl,
@@ -85,25 +79,27 @@ export const NewRequest = () => {
         filamentId: values.filamentId,
       });
 
+      toast({
+        title: "Request submitted successfully!",
+        description: "Your print request has been created.",
+        variant: "success",
+      });
       navigate(`/request/${request.id}`);
     } catch (error: any) {
       console.error('Error creating request:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit request. Please try again.';
-      alert(errorMessage);
+      toast({
+        title: "Failed to submit request",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading form...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading form..." />;
   }
 
   if (filaments.length === 0) {

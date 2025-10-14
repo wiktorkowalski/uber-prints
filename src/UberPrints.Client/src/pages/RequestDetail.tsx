@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime } from '../lib/utils';
 import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2 } from 'lucide-react';
 
@@ -12,6 +14,7 @@ export const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [request, setRequest] = useState<PrintRequestDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +49,19 @@ export const RequestDetail = () => {
     try {
       setDeleting(true);
       await api.deleteRequest(request.id);
+      toast({
+        title: "Request deleted",
+        description: "Your print request has been deleted successfully.",
+        variant: "success",
+      });
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Error deleting request:', err);
-      alert(err.response?.data?.message || 'Failed to delete request');
+      toast({
+        title: "Failed to delete request",
+        description: err.response?.data?.message || 'Failed to delete request',
+        variant: "destructive",
+      });
     } finally {
       setDeleting(false);
     }
@@ -58,14 +70,7 @@ export const RequestDetail = () => {
   const canDelete = isAuthenticated && user && request?.userId === user.id;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading request...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading request..." />;
   }
 
   if (error || !request) {

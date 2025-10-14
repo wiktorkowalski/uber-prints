@@ -48,7 +48,9 @@ class ApiClient {
       (error) => {
         if (error.response?.status === 401) {
           this.clearToken();
-          window.location.href = '/';
+          this.clearGuestSessionToken();
+          // Dispatch custom event for AuthContext to handle logout gracefully
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
         }
         return Promise.reject(error);
       }
@@ -95,10 +97,9 @@ class ApiClient {
     return response.data;
   }
 
-  getDiscordLoginUrl(returnUrl?: string): string {
+  getDiscordLoginUrl(): string {
     const guestToken = this.getGuestSessionToken();
     const params = new URLSearchParams();
-    if (returnUrl) params.append('returnUrl', returnUrl);
     if (guestToken) params.append('guestSessionToken', guestToken);
     return `${this.baseURL}/api/auth/login${params.toString() ? '?' + params.toString() : ''}`;
   }

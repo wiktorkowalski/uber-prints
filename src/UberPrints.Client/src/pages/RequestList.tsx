@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto } from '../types/api';
 import { Button } from '../components/ui/button';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
 import { ExternalLink, Package } from 'lucide-react';
 
@@ -29,14 +30,7 @@ export const RequestList = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading requests...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading requests..." />;
   }
 
   if (error) {
@@ -74,59 +68,60 @@ export const RequestList = () => {
       ) : (
         <div className="grid gap-4">
           {requests.map((request) => (
-            <Link
+            <div
               key={request.id}
-              to={`/request/${request.id}`}
-              className="block border rounded-lg p-6 hover:border-primary transition-colors"
+              className="border rounded-lg p-6 hover:border-primary transition-colors"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">
-                    {request.requesterName}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {formatRelativeTime(request.createdAt)}
-                  </p>
-                </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    request.currentStatus
-                  )}`}
-                >
-                  {getStatusLabel(request.currentStatus)}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center text-muted-foreground">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  <a
-                    href={request.modelUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary truncate"
-                    onClick={(e) => e.stopPropagation()}
+              <Link to={`/request/${request.id}`} className="block">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">
+                      {request.requesterName}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {formatRelativeTime(request.createdAt)}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      request.currentStatus
+                    )}`}
                   >
-                    {request.modelUrl}
-                  </a>
+                    {getStatusLabel(request.currentStatus)}
+                  </span>
                 </div>
-                {request.filamentName && (
-                  <div className="text-muted-foreground">
-                    Filament: <span className="font-medium">{request.filamentName}</span>
-                  </div>
-                )}
-                {request.requestDelivery && (
-                  <div className="text-muted-foreground">
-                    🚚 Delivery requested
-                  </div>
-                )}
-                {request.notes && (
-                  <p className="text-muted-foreground line-clamp-2 mt-2">
-                    {request.notes}
-                  </p>
-                )}
+
+                <div className="space-y-2 text-sm">
+                  {request.filamentName && (
+                    <div className="text-muted-foreground">
+                      Filament: <span className="font-medium">{request.filamentName}</span>
+                    </div>
+                  )}
+                  {request.requestDelivery && (
+                    <div className="text-muted-foreground">
+                      🚚 Delivery requested
+                    </div>
+                  )}
+                  {request.notes && (
+                    <p className="text-muted-foreground line-clamp-2 mt-2">
+                      {request.notes}
+                    </p>
+                  )}
+                </div>
+              </Link>
+
+              <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                <a
+                  href={request.modelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary truncate"
+                >
+                  {request.modelUrl}
+                </a>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { PrintRequestDto } from '../types/api';
+import { PrintRequestDto, RequestStatusEnum } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
-import { Package, Plus, ExternalLink, Loader2, User } from 'lucide-react';
+import { Package, Plus, ExternalLink, User } from 'lucide-react';
 
 export const Dashboard = () => {
   const { user } = useAuth();
@@ -34,14 +35,7 @@ export const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading your requests...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading your requests..." />;
   }
 
   return (
@@ -77,7 +71,7 @@ export const Dashboard = () => {
           <CardHeader className="pb-3">
             <CardDescription>Pending/In Progress</CardDescription>
             <CardTitle className="text-3xl">
-              {requests.filter(r => ![8, 2].includes(r.currentStatus)).length}
+              {requests.filter(r => ![RequestStatusEnum.Completed, RequestStatusEnum.Rejected].includes(r.currentStatus)).length}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -85,7 +79,7 @@ export const Dashboard = () => {
           <CardHeader className="pb-3">
             <CardDescription>Completed</CardDescription>
             <CardTitle className="text-3xl">
-              {requests.filter(r => r.currentStatus === 8).length}
+              {requests.filter(r => r.currentStatus === RequestStatusEnum.Completed).length}
             </CardTitle>
           </CardHeader>
         </Card>

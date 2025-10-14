@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto, RequestStatusEnum } from '../types/api';
+import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -10,10 +11,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Badge } from '../components/ui/badge';
+import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
 import { Shield, Package, Loader2, ExternalLink, Edit2 } from 'lucide-react';
 
+// Define all status values explicitly for type safety
+const ALL_STATUS_VALUES: RequestStatusEnum[] = [
+  RequestStatusEnum.Pending,
+  RequestStatusEnum.Accepted,
+  RequestStatusEnum.Rejected,
+  RequestStatusEnum.OnHold,
+  RequestStatusEnum.Paused,
+  RequestStatusEnum.WaitingForMaterials,
+  RequestStatusEnum.Delivering,
+  RequestStatusEnum.WaitingForPickup,
+  RequestStatusEnum.Completed,
+];
+
 export const AdminDashboard = () => {
+  const { toast } = useToast();
   const [requests, setRequests] = useState<PrintRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,13 +70,23 @@ export const AdminDashboard = () => {
       // Reload requests
       await loadRequests();
 
+      toast({
+        title: "Status updated",
+        description: "Request status has been updated successfully.",
+        variant: "success",
+      });
+
       // Close dialog and reset
       setSelectedRequest(null);
       setNewStatus(null);
       setAdminNotes('');
     } catch (err: any) {
       console.error('Error updating status:', err);
-      alert(err.response?.data?.message || 'Failed to update status');
+      toast({
+        title: "Failed to update status",
+        description: err.response?.data?.message || 'Failed to update status',
+        variant: "destructive",
+      });
     } finally {
       setUpdating(false);
     }
@@ -85,14 +111,7 @@ export const AdminDashboard = () => {
   const completedCount = getRequestsByStatus(RequestStatusEnum.Completed).length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading admin panel...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading admin panel..." />;
   }
 
   return (
@@ -222,13 +241,11 @@ export const AdminDashboard = () => {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(RequestStatusEnum)
-                    .filter(v => typeof v === 'number')
-                    .map((status) => (
-                      <SelectItem key={status} value={status.toString()}>
-                        {getStatusLabel(status as RequestStatusEnum)}
-                      </SelectItem>
-                    ))}
+                  {ALL_STATUS_VALUES.map((status) => (
+                    <SelectItem key={status} value={status.toString()}>
+                      {getStatusLabel(status)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

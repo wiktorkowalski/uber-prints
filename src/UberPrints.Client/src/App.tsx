@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { Toaster } from './components/ui/toaster';
 import { Home } from './pages/Home';
 import { AuthCallback } from './pages/AuthCallback';
 import { RequestList } from './pages/RequestList';
@@ -14,6 +15,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster />
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Layout><Home /></Layout>} />
