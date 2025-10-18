@@ -41,8 +41,8 @@ services:
       Discord__ClientId: ${DISCORD_CLIENT_ID}
       Discord__ClientSecret: ${DISCORD_CLIENT_SECRET}
 
-      # Frontend URL (not needed when serving from same origin)
-      Frontend__Url: "https://uber-prints.vicio.ovh"
+      # Frontend URL (only needed for CORS in development)
+      Frontend__Url: ${FRONTEND_URL:-http://localhost:8080}
 
       # ASP.NET Core
       ASPNETCORE_URLS: "http://+:8080"

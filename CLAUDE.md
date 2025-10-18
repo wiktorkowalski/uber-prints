@@ -229,21 +229,38 @@ When adding new features:
 
 ## Configuration
 
-Backend configuration in `appsettings.json`:
+### Environment Variables
+
+The application uses **DotNetEnv** to load configuration from a `.env` file for local development. Secrets are loaded from environment variables, never committed to git.
+
+**Setup for local development:**
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env with your actual secrets
+# Required variables:
+# - DISCORD_CLIENT_ID
+# - DISCORD_CLIENT_SECRET
+# - JWT_SECRET_KEY (minimum 32 characters)
+# - POSTGRES_PASSWORD
+```
+
+**appsettings.json structure** (no secrets here):
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Database=uberprints;Username=postgres;Password=password"
   },
   "Jwt": {
-    "SecretKey": "your-secret-key-here",
+    "SecretKey": "",  // Loaded from JWT_SECRET_KEY env var
     "Issuer": "UberPrints",
     "Audience": "UberPrints",
-    "ExpiryHours": "1"
+    "ExpiryHours": "168"
   },
   "Discord": {
-    "ClientId": "your-discord-client-id",
-    "ClientSecret": "your-discord-client-secret"
+    "ClientId": "",  // Loaded from DISCORD_CLIENT_ID env var
+    "ClientSecret": ""  // Loaded from DISCORD_CLIENT_SECRET env var
   },
   "Frontend": {
     "Url": "http://localhost:5173"
@@ -252,6 +269,19 @@ Backend configuration in `appsettings.json`:
 ```
 
 **Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7001/api/auth/discord/callback`
+
+**How environment variables work:**
+- Local development: `Program.cs` uses DotNetEnv to load `.env` file automatically
+- Docker: Environment variables passed via `docker-compose.yml` from `.env` file
+- Production: Environment variables set by hosting platform or docker-compose
+
+**Configuration Validation:**
+The application uses ASP.NET Core's Options pattern with data annotation validation:
+- Configuration classes in `Configuration/` folder (DiscordOptions, JwtOptions, FrontendOptions)
+- Validation attributes enforce required fields and constraints (e.g., JWT secret minimum 32 characters)
+- `ValidateOnStart()` ensures invalid configuration is caught at startup, not runtime
+- Application will fail to start with clear error messages if configuration is invalid or missing
+- Example: If JWT SecretKey is less than 32 characters, you'll see: "JWT SecretKey must be at least 32 characters long"
 
 For local development with Docker:
 ```bash

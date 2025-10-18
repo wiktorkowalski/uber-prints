@@ -1,3 +1,4 @@
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -5,17 +6,45 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
+using UberPrints.Server.Configuration;
 using UberPrints.Server.Data;
 
+// Load environment variables from .env file (for local development)
+// Looks for .env in the project root (2 levels up from bin/Debug/net10.0)
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
+Env.Load(envPath, new LoadOptions(
+    setEnvVars: true,           // Set environment variables
+    clobberExistingVars: false, // Don't override existing env vars (they take precedence)
+    onlyExactPath: true         // Only load if file exists at exact path
+));
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add environment variables to configuration
+// This allows accessing env vars through IConfiguration
+builder.Configuration.AddEnvironmentVariables();
+
+// Configure strongly-typed configuration with validation
+// These will be validated on startup and injected via IOptions<T>
+builder.Services.AddOptions<DiscordOptions>()
+    .Bind(builder.Configuration.GetSection(DiscordOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services.AddOptions<FrontendOptions>()
+    .Bind(builder.Configuration.GetSection(FrontendOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Trust all proxies (Cloudflare Tunnel)
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
 });
 
 // Add services to the container.
@@ -35,7 +64,13 @@ builder.Services.AddSession(options =>
 });
 
 // Configure Authentication with both Cookie and JWT Bearer support
-var jwtKey = builder.Configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is not configured");
+// Bind configuration to strongly-typed options for use during setup
+// Note: Validation happens on startup via ValidateOnStart()
+var jwtOptions = new JwtOptions();
+builder.Configuration.GetSection(JwtOptions.SectionName).Bind(jwtOptions);
+
+var discordOptions = new DiscordOptions();
+builder.Configuration.GetSection(DiscordOptions.SectionName).Bind(discordOptions);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -74,15 +109,15 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "UberPrints",
-        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "UberPrints",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        ValidIssuer = jwtOptions.Issuer,
+        ValidAudience = jwtOptions.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
     };
 })
 .AddDiscord(options =>
 {
-    options.ClientId = builder.Configuration["Discord:ClientId"] ?? throw new InvalidOperationException("Discord:ClientId is not configured");
-    options.ClientSecret = builder.Configuration["Discord:ClientSecret"] ?? throw new InvalidOperationException("Discord:ClientSecret is not configured");
+    options.ClientId = discordOptions.ClientId;
+    options.ClientSecret = discordOptions.ClientSecret;
     options.Scope.Add("identify");
     options.Scope.Add("email");
     options.SaveTokens = true;
@@ -91,12 +126,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Configure CORS
+// Configure CORS using FrontendOptions
+var frontendOptions = new FrontendOptions();
+builder.Configuration.GetSection(FrontendOptions.SectionName).Bind(frontendOptions);
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(builder.Configuration["Frontend:Url"] ?? "http://localhost:5173")
+        policy.WithOrigins(frontendOptions.Url)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -132,7 +170,3 @@ app.MapControllers();
 app.MapFallbackToFile("index.html");
 
 app.Run();
-
-
-// Make the implicit Program class public for integration testing
-public partial class Program { }

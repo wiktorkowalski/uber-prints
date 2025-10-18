@@ -5,6 +5,15 @@
 
 # dotenv files
 .env
+.env.local
+.env.*.local
+
+# Environment-specific appsettings (contains secrets)
+appsettings.Production.json
+appsettings.*.json
+# But allow Testing and Development appsettings (no real secrets)
+!appsettings.Testing.json
+!appsettings.Development.json
 
 # User-specific files
 *.rsuser
