@@ -1,0 +1,27 @@
+# Development docker-compose file
+# Use this for local development - only runs the database
+# Run backend and frontend manually with dotnet run and npm run dev
+
+services:
+  # PostgreSQL Database for development
+  database:
+    image: postgres:18-alpine
+    container_name: uberprints-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: uberprints
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-dev-data:
+    driver: local

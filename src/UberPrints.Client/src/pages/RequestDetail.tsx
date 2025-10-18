@@ -253,7 +253,7 @@ export const RequestDetail = () => {
             <div className="space-y-4">
               {request.statusHistory
                 .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                .map((history, index) => (
+                .map((history) => (
                   <div
                     key={history.id}
                     className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"

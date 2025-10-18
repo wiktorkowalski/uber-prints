@@ -34,9 +34,26 @@ cd src/UberPrints.Client
 npm install  # First time only
 npm run dev  # Starts Vite dev server on http://localhost:5173
 
-# Build frontend for production
-npm run build  # Outputs to dist/ directory
+# Build frontend for production (outputs to ../UberPrints.Server/wwwroot/)
+npm run build
 ```
+
+### Deployment
+```bash
+# Build and run with Docker Compose (includes database, server, cloudflared)
+docker compose up -d --build
+
+# Run database migrations (for Docker deployment)
+./scripts/migrate-database.sh docker
+
+# View logs
+docker compose logs -f server
+
+# Stop services
+docker compose down
+```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide with Cloudflare Tunnel setup.
 
 ### Testing
 ```bash
@@ -189,7 +206,11 @@ The React frontend (`src/UberPrints.Client/`) uses:
 - **Axios** for API communication (configured in `lib/api.ts`)
 - **shadcn/ui** components in `components/ui/` (built on Radix UI)
 - **React Hook Form + Zod** for form handling and validation
-- **Vite proxy** configuration to proxy `/api` requests to backend at `https://localhost:7001`
+- **Vite proxy** configuration to proxy `/api` requests to backend at `https://localhost:7001` (dev only)
+- **Production build** outputs to `src/UberPrints.Server/wwwroot/` and is served by ASP.NET Core
+
+In development, run frontend and backend separately (frontend uses Vite proxy for API calls).
+In production, ASP.NET Core serves the built React app from wwwroot using `UseStaticFiles()` and `MapFallbackToFile()`.
 
 Key frontend pages:
 - `Home.tsx`: Landing page

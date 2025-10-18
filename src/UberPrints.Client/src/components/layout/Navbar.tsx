@@ -16,7 +16,7 @@ export const Navbar = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   const handleLogin = () => {
-    window.location.href = api.getDiscordLoginUrl(window.location.pathname);
+    window.location.href = api.getDiscordLoginUrl();
   };
 
   const handleLogout = async () => {

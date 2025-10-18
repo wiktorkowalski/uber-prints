@@ -1,0 +1,83 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:18-alpine
+    container_name: uberprints-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: uberprints
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-strong-password-here}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - uberprints-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ASP.NET Core Server (API + Frontend)
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: uberprints-server
+    restart: unless-stopped
+    environment:
+      # Database connection
+      ConnectionStrings__DefaultConnection: "Host=database;Database=uberprints;Username=postgres;Password=${POSTGRES_PASSWORD:-your-strong-password-here}"
+
+      # JWT Configuration
+      Jwt__SecretKey: ${JWT_SECRET_KEY:-your-secret-key-minimum-32-characters-long-change-this}
+      Jwt__Issuer: "UberPrints"
+      Jwt__Audience: "UberPrints"
+      Jwt__ExpiryHours: "1"
+
+      # Discord OAuth
+      Discord__ClientId: ${DISCORD_CLIENT_ID}
+      Discord__ClientSecret: ${DISCORD_CLIENT_SECRET}
+
+      # Frontend URL (not needed when serving from same origin)
+      Frontend__Url: "https://uber-prints.vicio.ovh"
+
+      # ASP.NET Core
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - uberprints-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/filaments"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: uberprints-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - server
+    networks:
+      - uberprints-network
+
+networks:
+  uberprints-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local

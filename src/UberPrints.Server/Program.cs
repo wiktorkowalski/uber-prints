@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -7,6 +8,15 @@ using System.Text;
 using UberPrints.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Trust all proxies (Cloudflare Tunnel)
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -104,12 +114,22 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+// Use forwarded headers (must be before other middleware)
+app.UseForwardedHeaders();
+
 app.UseCors();
 app.UseSession();
+
+// Serve static files from wwwroot
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Fallback to index.html for SPA routing (must be after MapControllers)
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
