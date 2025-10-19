@@ -21,13 +21,20 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
   const { toast } = useToast();
   const [filaments, setFilaments] = useState<FilamentDto[]>([]);
   const [filamentsLoading, setFilamentsLoading] = useState(false);
-  const [editFormData, setEditFormData] = useState({
+  const [editFormData, setEditFormData] = useState<{
+    requesterName: string;
+    modelUrl: string;
+    notes: string;
+    requestDelivery: boolean;
+    isPublic: boolean;
+    filamentId?: string;
+  }>({
     requesterName: '',
     modelUrl: '',
     notes: '',
     requestDelivery: false,
     isPublic: true,
-    filamentId: '',
+    filamentId: undefined,
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -120,18 +127,19 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
           </div>
 
           <div className="space-y-2">
-            <Label>Filament</Label>
+            <Label>Filament (Optional)</Label>
             {filamentsLoading ? (
               <div className="text-sm text-muted-foreground">Loading filaments...</div>
             ) : (
               <Select
-                value={editFormData.filamentId}
-                onValueChange={(value) => setEditFormData({ ...editFormData, filamentId: value })}
+                value={editFormData.filamentId || 'none'}
+                onValueChange={(value) => setEditFormData({ ...editFormData, filamentId: value === 'none' ? undefined : value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select filament" />
+                  <SelectValue placeholder="Select filament (optional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No filament selected</SelectItem>
                   {filaments.map((filament) => (
                     <SelectItem key={filament.id} value={filament.id}>
                       {filament.name} - {filament.material} ({filament.colour}) - {filament.stockAmount}{filament.stockUnit}

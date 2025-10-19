@@ -20,6 +20,5 @@ public class CreatePrintRequestDto
 
   public bool IsPublic { get; set; } = true;
 
-  [Required]
-  public Guid FilamentId { get; set; }
+  public Guid? FilamentId { get; set; }
 }

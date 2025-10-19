@@ -23,7 +23,7 @@ const formSchema = z.object({
   notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional().or(z.literal('')),
   requestDelivery: z.boolean(),
   isPublic: z.boolean(),
-  filamentId: z.string().min(1, 'Please select a filament'),
+  filamentId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -79,7 +79,7 @@ export const NewRequest = () => {
         notes: values.notes || undefined,
         requestDelivery: values.requestDelivery,
         isPublic: values.isPublic,
-        filamentId: values.filamentId,
+        filamentId: values.filamentId || undefined,
       });
 
       toast({
@@ -198,14 +198,18 @@ export const NewRequest = () => {
                 name="filamentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Filament *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>Filament (Optional)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                      defaultValue={field.value || 'none'}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a filament" />
+                          <SelectValue placeholder="Select a filament (optional - admin will assign if not selected)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="none">No preference - Let admin choose</SelectItem>
                         {filaments.filter(f => f.isAvailable && f.stockAmount > 0).length > 0 && (
                           <>
                             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
@@ -245,7 +249,7 @@ export const NewRequest = () => {
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      Choose the filament material and color for your print
+                      Choose the filament material and color for your print, or leave blank if you're not sure
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

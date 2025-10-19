@@ -84,11 +84,14 @@ public class AdminController : ControllerBase
       return NotFound();
     }
 
-    // Validate filament exists
-    var filament = await _context.Filaments.FindAsync(dto.FilamentId);
-    if (filament == null)
+    // Validate filament exists if provided
+    if (dto.FilamentId.HasValue)
     {
-      return BadRequest("Invalid filament selected.");
+      var filament = await _context.Filaments.FindAsync(dto.FilamentId.Value);
+      if (filament == null)
+      {
+        return BadRequest("Invalid filament selected.");
+      }
     }
 
     // Update request fields

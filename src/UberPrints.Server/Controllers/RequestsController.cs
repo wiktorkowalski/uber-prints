@@ -124,15 +124,18 @@ public class RequestsController : ControllerBase
   [HttpPost]
   public async Task<IActionResult> CreateRequest(CreatePrintRequestDto dto)
   {
-    // Validate filament exists
-    var filament = await _context.Filaments.FindAsync(dto.FilamentId);
-    if (filament == null)
+    // Validate filament exists if provided
+    if (dto.FilamentId.HasValue)
     {
-      return BadRequest("Invalid filament selected.");
+      var filament = await _context.Filaments.FindAsync(dto.FilamentId.Value);
+      if (filament == null)
+      {
+        return BadRequest("Invalid filament selected.");
+      }
     }
 
-    // Allow requests with out-of-stock or pending filaments
-    // Admin will handle these appropriately
+    // Allow requests without filament - admin will assign one later
+    // Also allow requests with out-of-stock or pending filaments
 
     // Determine the user (authenticated or guest)
     User? user = null;
@@ -236,15 +239,18 @@ public class RequestsController : ControllerBase
       }
     }
 
-    // Validate filament exists
-    var filament = await _context.Filaments.FindAsync(dto.FilamentId);
-    if (filament == null)
+    // Validate filament exists if provided
+    if (dto.FilamentId.HasValue)
     {
-      return BadRequest("Invalid filament selected.");
+      var filament = await _context.Filaments.FindAsync(dto.FilamentId.Value);
+      if (filament == null)
+      {
+        return BadRequest("Invalid filament selected.");
+      }
     }
 
-    // Allow requests with out-of-stock or pending filaments
-    // Admin will handle these appropriately
+    // Allow requests without filament - admin will assign one later
+    // Also allow requests with out-of-stock or pending filaments
 
     request.RequesterName = dto.RequesterName;
     request.ModelUrl = dto.ModelUrl;
@@ -324,7 +330,7 @@ public class RequestsController : ControllerBase
       RequestDelivery = request.RequestDelivery,
       IsPublic = request.IsPublic,
       FilamentId = request.FilamentId,
-      FilamentName = request.Filament?.Name ?? string.Empty,
+      FilamentName = request.Filament?.Name,
       CurrentStatus = request.CurrentStatus,
       CreatedAt = request.CreatedAt,
       UpdatedAt = request.UpdatedAt,

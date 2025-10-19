@@ -10,8 +10,8 @@ public class PrintRequestDto
   public string? Notes { get; set; }
   public bool RequestDelivery { get; set; }
   public bool IsPublic { get; set; }
-  public Guid FilamentId { get; set; }
-  public string FilamentName { get; set; } = string.Empty;
+  public Guid? FilamentId { get; set; }
+  public string? FilamentName { get; set; }
   public Models.RequestStatusEnum CurrentStatus { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }

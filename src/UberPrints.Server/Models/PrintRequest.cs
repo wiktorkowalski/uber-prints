@@ -28,8 +28,7 @@ public class PrintRequest
 
   public bool IsPublic { get; set; } = true;
 
-  [Required]
-  public Guid FilamentId { get; set; }
+  public Guid? FilamentId { get; set; }
 
   [Required]
   public RequestStatusEnum CurrentStatus { get; set; }
@@ -40,7 +39,7 @@ public class PrintRequest
 
   public User? User { get; set; }
 
-  public Filament Filament { get; set; } = null!;
+  public Filament? Filament { get; set; }
 
   public List<StatusHistory> StatusHistory { get; set; } = new();
 }

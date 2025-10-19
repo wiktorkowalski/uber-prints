@@ -20,6 +20,5 @@ public class UpdatePrintRequestAdminDto
 
   public bool IsPublic { get; set; }
 
-  [Required]
-  public Guid FilamentId { get; set; }
+  public Guid? FilamentId { get; set; }
 }
