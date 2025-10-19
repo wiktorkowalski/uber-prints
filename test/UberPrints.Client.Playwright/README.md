@@ -21,6 +21,21 @@ npx playwright install
 
 **IMPORTANT**: Before running tests, you need to have both the backend and frontend servers running.
 
+### Automatic Test Data Seeding
+
+The tests will **automatically seed the database** with test filaments if none exist. The global setup:
+1. Checks if filaments exist in the database
+2. If none found, automatically runs the SQL seed script
+3. Tries Docker first (`docker exec ... psql`), then falls back to `psql`
+4. Verifies the seeding was successful
+
+**No manual intervention required!** Just make sure your database is running.
+
+If automatic seeding fails, you can manually seed with:
+```bash
+docker exec -i uberprints-db psql -U postgres -d uberprints < test/UberPrints.Client.Playwright/seed-testdata.sql
+```
+
 ### Option 1: Manual Server Start (Recommended)
 
 In separate terminal windows:
@@ -34,7 +49,7 @@ dotnet run
 cd src/UberPrints.Client
 npm run dev
 
-# Terminal 3: Run tests
+# Terminal 3: Run tests (will auto-seed database if needed)
 cd test/UberPrints.Client.Playwright
 npm test
 ```

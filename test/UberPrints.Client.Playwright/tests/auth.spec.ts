@@ -86,7 +86,7 @@ test.describe('Authentication', () => {
     await expect(page.getByRole('heading', { name: /available filaments/i })).toBeVisible();
 
     await page.goto('/requests');
-    await expect(page.getByRole('heading', { name: /all print requests|requests/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'All Print Requests', level: 1 })).toBeVisible();
 
     await page.goto('/request/new');
     await page.waitForTimeout(1000);

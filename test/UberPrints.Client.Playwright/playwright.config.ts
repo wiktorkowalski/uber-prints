@@ -6,6 +6,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
 
+  /* Global setup to seed test data */
+  globalSetup: require.resolve('./global-setup'),
+
   /* Run tests in files in parallel */
   fullyParallel: true,
 

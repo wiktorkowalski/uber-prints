@@ -8,7 +8,7 @@ test.describe('End-to-End User Workflows', () => {
   }) => {
     // Step 1: Browse available filaments
     await navigateAndVerify(page, '/filaments');
-    await expect(page.getByRole('heading', { name: /filaments/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Available Filaments', level: 1 })).toBeVisible();
 
     // Step 2: Navigate to create a new request
     if (!isMobile) {
@@ -96,15 +96,15 @@ test.describe('End-to-End User Workflows', () => {
   test('user navigates through all main pages', async ({ page }) => {
     // Test complete navigation flow
     const pages = [
-      { path: '/', heading: /3D Print|UberPrints|Home/i },
-      { path: '/filaments', heading: /filaments/i },
-      { path: '/request/new', heading: /new.*request/i },
-      { path: '/requests', heading: /requests/i },
+      { path: '/', heading: /3D Print|UberPrints|Home/i, level: 1 },
+      { path: '/filaments', heading: 'Available Filaments', level: 1 },
+      { path: '/request/new', heading: /new.*request/i, level: 1 },
+      { path: '/requests', heading: 'All Print Requests', level: 1 },
     ];
 
     for (const pageInfo of pages) {
       await navigateAndVerify(page, pageInfo.path);
-      const heading = page.getByRole('heading', { name: pageInfo.heading });
+      const heading = page.getByRole('heading', { name: pageInfo.heading, level: pageInfo.level });
       await expect(heading).toBeVisible();
     }
   });

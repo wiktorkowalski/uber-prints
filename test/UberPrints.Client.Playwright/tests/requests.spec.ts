@@ -16,7 +16,7 @@ test.describe('View Requests', () => {
     await page.waitForLoadState('networkidle');
 
     // Page should load successfully with heading
-    await expect(page.getByRole('heading', { name: /all print requests|requests/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'All Print Requests', level: 1 })).toBeVisible();
 
     // Page should show either requests or tabs
     const hasTabs = await page.getByRole('tab').count() > 0;
@@ -106,7 +106,7 @@ test.describe('View Requests', () => {
 
     if (isMobile) {
       // Check that the page is usable on mobile
-      const heading = page.getByRole('heading', { name: /requests/i });
+      const heading = page.getByRole('heading', { name: 'All Print Requests', level: 1 });
       await expect(heading).toBeVisible();
 
       // Request cards should stack vertically
