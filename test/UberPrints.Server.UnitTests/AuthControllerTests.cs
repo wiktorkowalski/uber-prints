@@ -101,7 +101,8 @@ public class AuthControllerTests : TestBase
 
     Assert.NotNull(savedUser);
     Assert.Null(savedUser.DiscordId);
-    Assert.Null(savedUser.Email);
+    Assert.Null(savedUser.GlobalName);
+    Assert.Null(savedUser.AvatarHash);
     Assert.False(savedUser.IsAdmin);
     Assert.True(savedUser.CreatedAt <= DateTime.UtcNow);
     Assert.True(savedUser.CreatedAt > DateTime.UtcNow.AddMinutes(-1));

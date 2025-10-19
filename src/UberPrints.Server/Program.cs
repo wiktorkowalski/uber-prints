@@ -119,7 +119,6 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = discordOptions.ClientId;
     options.ClientSecret = discordOptions.ClientSecret;
     options.Scope.Add("identify");
-    options.Scope.Add("email");
     options.SaveTokens = true;
     options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 });

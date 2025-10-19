@@ -17,9 +17,11 @@ public class User
   [MaxLength(100)]
   public string Username { get; set; } = string.Empty;
 
-  [EmailAddress]
+  [MaxLength(100)]
+  public string? GlobalName { get; set; }
+
   [MaxLength(255)]
-  public string? Email { get; set; }
+  public string? AvatarHash { get; set; }
 
   public bool IsAdmin { get; set; }
 

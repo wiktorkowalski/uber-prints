@@ -6,6 +6,8 @@ import {
   UpdatePrintRequestAdminDto,
   FilamentDto,
   UserDto,
+  ProfileDto,
+  UpdateDisplayNameDto,
   ChangeStatusDto,
   CreateFilamentDto,
   UpdateFilamentDto,
@@ -277,6 +279,17 @@ class ApiClient {
       // If refresh fails, token is invalid or expired
       return false;
     }
+  }
+
+  // Profile endpoints
+  async getProfile(): Promise<ProfileDto> {
+    const response = await this.client.get<ProfileDto>('/api/profile');
+    return response.data;
+  }
+
+  async updateDisplayName(data: UpdateDisplayNameDto): Promise<ProfileDto> {
+    const response = await this.client.put<ProfileDto>('/api/profile/display-name', data);
+    return response.data;
   }
 }
 

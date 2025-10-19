@@ -13,6 +13,7 @@ import { TrackRequest } from './pages/TrackRequest';
 import { Filaments } from './pages/Filaments';
 import { FilamentRequests } from './pages/FilamentRequests';
 import { Dashboard } from './pages/Dashboard';
+import { Profile } from './pages/Profile';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
@@ -32,6 +33,16 @@ function App() {
           <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
           <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+
+          {/* Protected routes - require authentication */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout><Profile /></Layout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* Admin routes - require admin role */}
           <Route

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { getStatusLabel, getStatusColor, formatRelativeTime } from '../lib/utils';
+import { getStatusLabel, getStatusColor, formatRelativeTime, getDisplayName } from '../lib/utils';
 import { Package, Plus, ExternalLink, User, AlertCircle } from 'lucide-react';
 
 export const Dashboard = () => {
@@ -50,7 +50,7 @@ export const Dashboard = () => {
           </h1>
           <p className="text-muted-foreground mt-1">
             {isAuthenticated
-              ? `Welcome back, ${user?.username}!`
+              ? `Welcome back, ${getDisplayName(user)}!`
               : 'Your print requests from this browser'}
           </p>
         </div>

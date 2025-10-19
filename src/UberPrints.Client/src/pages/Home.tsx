@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Package, Search, User, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { getDisplayName } from '../lib/utils';
 
 export const Home = () => {
   const { isAuthenticated, user } = useAuth();
@@ -69,7 +70,7 @@ export const Home = () => {
       {isAuthenticated && user ? (
         <section className="bg-primary/5 rounded-lg p-8 text-center space-y-4">
           <h2 className="text-2xl font-semibold">
-            Welcome back, {user.username}!
+            Welcome back, {getDisplayName(user)}!
           </h2>
           <p className="text-muted-foreground">
             {user.isAdmin

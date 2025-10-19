@@ -55,7 +55,8 @@ public class TestBase
             Id = Guid.NewGuid(),
             DiscordId = "123456789",
             Username = "TestUser",
-            Email = "test@example.com"
+            GlobalName = "Test User",
+            AvatarHash = "abcd1234"
         };
         Context.Users.Add(TestAuthenticatedUser);
         Context.SaveChanges();

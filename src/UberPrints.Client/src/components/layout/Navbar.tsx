@@ -11,6 +11,7 @@ import {
 } from '../ui/dropdown-menu';
 import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard, PackagePlus } from 'lucide-react';
 import { api } from '../../lib/api';
+import { getDisplayName } from '../../lib/utils';
 
 export const Navbar = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
@@ -95,15 +96,21 @@ export const Navbar = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
                       <User className="w-4 h-4 mr-2" />
-                      {user.username}
+                      {getDisplayName(user)}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="cursor-pointer">
+                      <Link to="/profile" className="cursor-pointer">
                         <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard" className="cursor-pointer">
+                        <LayoutDashboard className="w-4 h-4 mr-2" />
                         Dashboard
                       </Link>
                     </DropdownMenuItem>

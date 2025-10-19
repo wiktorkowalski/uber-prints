@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
+import { getDisplayName } from '../lib/utils';
 
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -72,8 +73,8 @@ export const FilamentRequests = () => {
   }, []);
 
   useEffect(() => {
-    if (user?.username) {
-      form.setValue('requesterName', user.username);
+    if (user) {
+      form.setValue('requesterName', getDisplayName(user));
     }
   }, [user, form]);
 

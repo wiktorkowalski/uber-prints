@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { RequestStatusEnum } from "../types/api"
+import { RequestStatusEnum, UserDto } from "../types/api"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -81,4 +81,15 @@ export function sanitizeUrl(url: string): string {
 
 export function isSafeUrl(url: string): boolean {
   return sanitizeUrl(url) !== '#';
+}
+
+/**
+ * Gets the display name for a user.
+ * Prefers globalName (Discord display name) over username.
+ * @param user - The user object
+ * @returns The display name to show in the UI
+ */
+export function getDisplayName(user: UserDto | null | undefined): string {
+  if (!user) return 'Unknown';
+  return user.globalName || user.username || 'Unknown';
 }

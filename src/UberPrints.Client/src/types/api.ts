@@ -24,9 +24,25 @@ export interface UserDto {
   id: string;
   discordId?: string;
   username: string;
-  email?: string;
+  globalName?: string;
+  avatarHash?: string;
   isAdmin: boolean;
   createdAt: string;
+}
+
+export interface ProfileDto {
+  id: string;
+  discordId?: string;
+  username: string;
+  globalName?: string;
+  avatarHash?: string;
+  avatarUrl?: string;
+  isAdmin: boolean;
+  createdAt: string;
+}
+
+export interface UpdateDisplayNameDto {
+  displayName: string;
 }
 
 export interface FilamentDto {

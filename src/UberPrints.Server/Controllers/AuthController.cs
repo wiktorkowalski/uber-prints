@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
@@ -55,7 +56,37 @@ public class AuthController : ControllerBase
 
     var discordId = result.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var username = result.Principal?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-    var email = result.Principal?.FindFirst(ClaimTypes.Email)?.Value;
+
+    // Fetch additional user data from Discord API using the access token
+    string? globalName = null;
+    string? avatarHash = null;
+
+    var accessToken = await HttpContext.GetTokenAsync(CookieAuthenticationDefaults.AuthenticationScheme, "access_token");
+
+    if (!string.IsNullOrEmpty(accessToken))
+    {
+      try
+      {
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+
+        var response = await httpClient.GetAsync("https://discord.com/api/users/@me");
+
+        if (response.IsSuccessStatusCode)
+        {
+          var userData = await response.Content.ReadFromJsonAsync<DiscordUserResponse>();
+          if (userData != null)
+          {
+            globalName = userData.GlobalName;
+            avatarHash = userData.Avatar;
+          }
+        }
+      }
+      catch
+      {
+        // If we fail to fetch additional data, we'll continue with what we have from claims
+      }
+    }
 
     if (string.IsNullOrEmpty(discordId))
     {
@@ -89,7 +120,8 @@ public class AuthController : ControllerBase
           // Convert guest to authenticated user
           user.DiscordId = discordId;
           user.Username = username;
-          user.Email = email;
+          user.GlobalName = globalName;
+          user.AvatarHash = avatarHash;
           // Keep the GuestSessionToken for continuity
         }
       }
@@ -101,7 +133,8 @@ public class AuthController : ControllerBase
         {
           DiscordId = discordId,
           Username = username,
-          Email = email,
+          GlobalName = globalName,
+          AvatarHash = avatarHash,
           IsAdmin = false,
           CreatedAt = DateTime.UtcNow
         };
@@ -114,7 +147,8 @@ public class AuthController : ControllerBase
     {
       // Update existing user info
       user.Username = username;
-      user.Email = email;
+      user.GlobalName = globalName;
+      user.AvatarHash = avatarHash;
 
       // If guest session token provided, link any guest requests
       if (!string.IsNullOrEmpty(guestSessionToken))
@@ -157,11 +191,6 @@ public class AuthController : ControllerBase
     if (user.IsAdmin)
     {
       claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-    }
-
-    if (!string.IsNullOrEmpty(user.Email))
-    {
-      claims.Add(new Claim(ClaimTypes.Email, user.Email));
     }
 
     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -212,7 +241,8 @@ public class AuthController : ControllerBase
       Id = user.Id,
       DiscordId = user.DiscordId,
       Username = user.Username,
-      Email = user.Email,
+      GlobalName = user.GlobalName,
+      AvatarHash = user.AvatarHash,
       IsAdmin = user.IsAdmin,
       CreatedAt = user.CreatedAt
     };
@@ -304,5 +334,24 @@ public class AuthController : ControllerBase
   private string GenerateGuestSessionToken()
   {
     return Guid.NewGuid().ToString("N").ToUpper();
+  }
+
+  // DTO for Discord API user response
+  private class DiscordUserResponse
+  {
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+
+    [JsonPropertyName("username")]
+    public string? Username { get; set; }
+
+    [JsonPropertyName("avatar")]
+    public string? Avatar { get; set; }
+
+    [JsonPropertyName("discriminator")]
+    public string? Discriminator { get; set; }
+
+    [JsonPropertyName("global_name")]
+    public string? GlobalName { get; set; }
   }
 }
