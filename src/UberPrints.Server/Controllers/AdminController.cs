@@ -69,6 +69,43 @@ public class AdminController : ControllerBase
     return Ok(responseDto);
   }
 
+  [HttpPut("requests/{id}")]
+  public async Task<IActionResult> UpdateRequest(Guid id, UpdatePrintRequestAdminDto dto)
+  {
+    var request = await _context.PrintRequests
+        .Include(r => r.Filament)
+        .Include(r => r.User)
+        .Include(r => r.StatusHistory)
+            .ThenInclude(sh => sh.ChangedByUser)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    if (request == null)
+    {
+      return NotFound();
+    }
+
+    // Validate filament exists
+    var filament = await _context.Filaments.FindAsync(dto.FilamentId);
+    if (filament == null)
+    {
+      return BadRequest("Invalid filament selected.");
+    }
+
+    // Update request fields
+    request.RequesterName = dto.RequesterName;
+    request.ModelUrl = dto.ModelUrl;
+    request.Notes = dto.Notes;
+    request.RequestDelivery = dto.RequestDelivery;
+    request.IsPublic = dto.IsPublic;
+    request.FilamentId = dto.FilamentId;
+    request.UpdatedAt = DateTime.UtcNow;
+
+    await _context.SaveChangesAsync();
+
+    var responseDto = MapToDto(request);
+    return Ok(responseDto);
+  }
+
   [HttpPost("filaments")]
   public async Task<IActionResult> CreateFilament(CreateFilamentDto dto)
   {

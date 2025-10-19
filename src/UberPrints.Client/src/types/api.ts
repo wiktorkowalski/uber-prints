@@ -89,6 +89,15 @@ export interface UpdatePrintRequestDto {
   filamentId: string;
 }
 
+export interface UpdatePrintRequestAdminDto {
+  requesterName: string;
+  modelUrl: string;
+  notes?: string;
+  requestDelivery: boolean;
+  isPublic: boolean;
+  filamentId: string;
+}
+
 export interface ChangeStatusDto {
   status: RequestStatusEnum;
   adminNotes?: string;

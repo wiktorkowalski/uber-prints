@@ -3,6 +3,7 @@ import {
   PrintRequestDto,
   CreatePrintRequestDto,
   UpdatePrintRequestDto,
+  UpdatePrintRequestAdminDto,
   FilamentDto,
   UserDto,
   ChangeStatusDto,
@@ -193,6 +194,11 @@ class ApiClient {
 
   async changeRequestStatus(id: string, data: ChangeStatusDto): Promise<PrintRequestDto> {
     const response = await this.client.put<PrintRequestDto>(`/api/admin/requests/${id}/status`, data);
+    return response.data;
+  }
+
+  async updateAdminRequest(id: string, data: UpdatePrintRequestAdminDto): Promise<PrintRequestDto> {
+    const response = await this.client.put<PrintRequestDto>(`/api/admin/requests/${id}`, data);
     return response.data;
   }
 

@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2 } from 'lucide-react';
+import { EditRequestDialog } from '../components/admin/EditRequestDialog';
+import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
 export const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +22,8 @@ export const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [statusDialogRequest, setStatusDialogRequest] = useState<PrintRequestDto | null>(null);
+  const [editDialogRequest, setEditDialogRequest] = useState<PrintRequestDto | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -68,6 +72,10 @@ export const RequestDetail = () => {
     }
   };
 
+  const handleDialogSuccess = async () => {
+    await loadRequest();
+  };
+
   const canDelete = isAuthenticated && user && request?.userId === user.id;
 
   if (loading) {
@@ -101,31 +109,53 @@ export const RequestDetail = () => {
           Back
         </Button>
 
-        {canDelete && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/request/${request.id}/edit`)}
-            >
-              <Edit2 className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
-              {deleting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Trash2 className="w-4 h-4 mr-2" />
-              )}
-              Delete
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          {user?.isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditDialogRequest(request)}
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit Request
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStatusDialogRequest(request)}
+              >
+                Change Status
+              </Button>
+            </>
+          )}
+
+          {canDelete && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/request/${request.id}/edit`)}
+              >
+                <Edit2 className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4 mr-2" />
+                )}
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Ownership Info Alert */}
@@ -290,6 +320,21 @@ export const RequestDetail = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Admin Dialogs */}
+      <EditRequestDialog
+        request={editDialogRequest}
+        open={editDialogRequest !== null}
+        onOpenChange={(open) => !open && setEditDialogRequest(null)}
+        onSuccess={handleDialogSuccess}
+      />
+
+      <ChangeStatusDialog
+        request={statusDialogRequest}
+        open={statusDialogRequest !== null}
+        onOpenChange={(open) => !open && setStatusDialogRequest(null)}
+        onSuccess={handleDialogSuccess}
+      />
     </div>
   );
 };

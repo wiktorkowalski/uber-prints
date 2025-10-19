@@ -18,6 +18,19 @@ import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircl
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
+// Define all status values explicitly for type safety
+const ALL_STATUS_VALUES: RequestStatusEnum[] = [
+  RequestStatusEnum.Pending,
+  RequestStatusEnum.Accepted,
+  RequestStatusEnum.Rejected,
+  RequestStatusEnum.OnHold,
+  RequestStatusEnum.Paused,
+  RequestStatusEnum.WaitingForMaterials,
+  RequestStatusEnum.Delivering,
+  RequestStatusEnum.WaitingForPickup,
+  RequestStatusEnum.Completed,
+];
+
 const ALL_FILAMENT_REQUEST_STATUS_VALUES: FilamentRequestStatusEnum[] = [
   FilamentRequestStatusEnum.Pending,
   FilamentRequestStatusEnum.Approved,
@@ -645,20 +658,160 @@ export const AdminDashboard = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Request Management Dialogs */}
-      <ChangeStatusDialog
-        request={statusDialogRequest}
-        open={statusDialogRequest !== null}
-        onOpenChange={(open) => !open && setStatusDialogRequest(null)}
-        onSuccess={handleDialogSuccess}
-      />
+      {/* Status Change Dialog */}
+      <Dialog open={selectedRequest !== null} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Request Status</DialogTitle>
+            <DialogDescription>
+              Update the status for request by {selectedRequest?.requesterName}
+            </DialogDescription>
+          </DialogHeader>
 
-      <EditRequestDialog
-        request={editDialogRequest}
-        open={editDialogRequest !== null}
-        onOpenChange={(open) => !open && setEditDialogRequest(null)}
-        onSuccess={handleDialogSuccess}
-      />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>New Status</Label>
+              <Select
+                value={newStatus?.toString()}
+                onValueChange={(value) => setNewStatus(parseInt(value) as RequestStatusEnum)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_STATUS_VALUES.map((status) => (
+                    <SelectItem key={status} value={status.toString()}>
+                      {getStatusLabel(status)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Admin Notes (Optional)</Label>
+              <Textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder="Add any notes for the user..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedRequest(null)}
+              disabled={updating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleStatusChange} disabled={updating || newStatus === null}>
+              {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update Status
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Request Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Print Request</DialogTitle>
+            <DialogDescription>
+              Update request details for {editingRequest?.requesterName}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Requester Name</Label>
+              <Input
+                value={editFormData.requesterName}
+                onChange={(e) => setEditFormData({ ...editFormData, requesterName: e.target.value })}
+                placeholder="John Doe"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Model URL</Label>
+              <Input
+                value={editFormData.modelUrl}
+                onChange={(e) => setEditFormData({ ...editFormData, modelUrl: e.target.value })}
+                placeholder="https://www.thingiverse.com/thing:123456"
+                type="url"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Filament</Label>
+              <Select
+                value={editFormData.filamentId}
+                onValueChange={(value) => setEditFormData({ ...editFormData, filamentId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select filament" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filaments.map((filament) => (
+                    <SelectItem key={filament.id} value={filament.id}>
+                      {filament.name} - {filament.material} ({filament.colour}) - {filament.stockAmount}{filament.stockUnit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Textarea
+                value={editFormData.notes}
+                onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                placeholder="Any special instructions..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="requestDelivery"
+                checked={editFormData.requestDelivery}
+                onChange={(e) => setEditFormData({ ...editFormData, requestDelivery: e.target.checked })}
+                className="rounded"
+              />
+              <Label htmlFor="requestDelivery">Request Delivery</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isPublic"
+                checked={editFormData.isPublic}
+                onChange={(e) => setEditFormData({ ...editFormData, isPublic: e.target.checked })}
+                className="rounded"
+              />
+              <Label htmlFor="isPublic">Make request public</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={editSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditRequest} disabled={editSubmitting}>
+              {editSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Filament Create/Edit Dialog */}
       <Dialog open={filamentDialogOpen} onOpenChange={setFilamentDialogOpen}>
