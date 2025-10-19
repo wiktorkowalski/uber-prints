@@ -15,7 +15,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
-import { Loader2, Package } from 'lucide-react';
+import { Loader2, Package, Clock, CheckCircle2 } from 'lucide-react';
 
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -58,7 +58,7 @@ export const NewRequest = () => {
 
   const loadFilaments = async () => {
     try {
-      const data = await api.getFilaments(true); // Only get in-stock filaments
+      const data = await api.getFilaments(); // Get all filaments (including pending)
       setFilaments(data);
     } catch (error) {
       console.error('Error loading filaments:', error);
@@ -203,11 +203,42 @@ export const NewRequest = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {filaments.map((filament) => (
-                          <SelectItem key={filament.id} value={filament.id}>
-                            {filament.name} - {filament.material} ({filament.colour}) - {filament.stockAmount}{filament.stockUnit} available
-                          </SelectItem>
-                        ))}
+                        {filaments.filter(f => f.isAvailable && f.stockAmount > 0).length > 0 && (
+                          <>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                              ✓ Available Now
+                            </div>
+                            {filaments
+                              .filter(f => f.isAvailable && f.stockAmount > 0)
+                              .map((filament) => (
+                                <SelectItem key={filament.id} value={filament.id}>
+                                  <span className="flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    {filament.name} - {filament.material} ({filament.colour}) - {filament.stockAmount}{filament.stockUnit}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                          </>
+                        )}
+                        {filaments.filter(f => !f.isAvailable || f.stockAmount === 0).length > 0 && (
+                          <>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                              ⏳ Pending / Out of Stock
+                            </div>
+                            {filaments
+                              .filter(f => !f.isAvailable || f.stockAmount === 0)
+                              .map((filament) => (
+                                <SelectItem key={filament.id} value={filament.id}>
+                                  <span className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock className="w-4 h-4 text-yellow-500" />
+                                    {filament.name} - {filament.material} ({filament.colour})
+                                    {!filament.isAvailable && <span className="text-xs">(Pending approval)</span>}
+                                    {filament.isAvailable && filament.stockAmount === 0 && <span className="text-xs">(Out of stock)</span>}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormDescription>

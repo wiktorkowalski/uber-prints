@@ -12,6 +12,14 @@ export enum RequestStatusEnum {
   Completed = 8
 }
 
+export enum FilamentRequestStatusEnum {
+  Pending = 0,
+  Approved = 1,
+  Rejected = 2,
+  Ordered = 3,
+  Received = 4
+}
+
 export interface UserDto {
   id: string;
   discordId?: string;
@@ -31,6 +39,7 @@ export interface FilamentDto {
   stockUnit: string;
   link?: string;
   photoUrl?: string;
+  isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,4 +125,45 @@ export interface AuthResponseDto {
 export interface GuestSessionResponse {
   guestSessionToken: string;
   userId: string;
+}
+
+export interface FilamentRequestStatusHistoryDto {
+  id: string;
+  status: FilamentRequestStatusEnum;
+  reason?: string;
+  changedByUserId?: string;
+  changedByUsername?: string;
+  createdAt: string;
+}
+
+export interface FilamentRequestDto {
+  id: string;
+  userId?: string;
+  requesterName: string;
+  material: string;
+  brand: string;
+  colour: string;
+  link?: string;
+  notes?: string;
+  currentStatus: FilamentRequestStatusEnum;
+  filamentId?: string;
+  filamentName?: string;
+  createdAt: string;
+  updatedAt: string;
+  statusHistory: FilamentRequestStatusHistoryDto[];
+}
+
+export interface CreateFilamentRequestDto {
+  requesterName: string;
+  material: string;
+  brand: string;
+  colour: string;
+  link?: string;
+  notes?: string;
+}
+
+export interface ChangeFilamentRequestStatusDto {
+  status: FilamentRequestStatusEnum;
+  reason?: string;
+  filamentId?: string;
 }

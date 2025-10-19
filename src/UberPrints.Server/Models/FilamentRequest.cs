@@ -2,14 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace UberPrints.Server.Models;
 
-public class Filament
+public class FilamentRequest
 {
   [Key]
   public Guid Id { get; set; }
 
+  public Guid? UserId { get; set; }
+
   [Required]
   [MaxLength(100)]
-  public string Name { get; set; } = string.Empty;
+  public string RequesterName { get; set; } = string.Empty;
 
   [Required]
   [MaxLength(50)]
@@ -23,27 +25,25 @@ public class Filament
   [MaxLength(50)]
   public string Colour { get; set; } = string.Empty;
 
-  [Range(0, double.MaxValue)]
-  public decimal StockAmount { get; set; }
-
-  [MaxLength(20)]
-  public string StockUnit { get; set; } = "grams";
-
   [Url]
   [MaxLength(500)]
   public string? Link { get; set; }
 
-  [Url]
-  [MaxLength(500)]
-  public string? PhotoUrl { get; set; }
+  [MaxLength(1000)]
+  public string? Notes { get; set; }
 
-  public bool IsAvailable { get; set; } = true;
+  [Required]
+  public FilamentRequestStatusEnum CurrentStatus { get; set; }
+
+  public Guid? FilamentId { get; set; }
 
   public DateTime CreatedAt { get; set; }
 
   public DateTime UpdatedAt { get; set; }
 
-  public List<PrintRequest> PrintRequests { get; set; } = new();
+  public User? User { get; set; }
 
-  public List<FilamentRequest> FilamentRequests { get; set; } = new();
+  public Filament? Filament { get; set; }
+
+  public List<FilamentRequestStatusHistory> StatusHistory { get; set; } = new();
 }

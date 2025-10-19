@@ -10,6 +10,9 @@ import {
   UpdateFilamentDto,
   UpdateStockDto,
   GuestSessionResponse,
+  FilamentRequestDto,
+  CreateFilamentRequestDto,
+  ChangeFilamentRequestStatusDto,
 } from '../types/api';
 
 class ApiClient {
@@ -210,6 +213,42 @@ class ApiClient {
 
   async deleteFilament(id: string): Promise<void> {
     await this.client.delete(`/api/admin/filaments/${id}`);
+  }
+
+  // Filament Request endpoints
+  async getFilamentRequests(): Promise<FilamentRequestDto[]> {
+    const response = await this.client.get<FilamentRequestDto[]>('/api/filamentrequests');
+    return response.data;
+  }
+
+  async getFilamentRequest(id: string): Promise<FilamentRequestDto> {
+    const response = await this.client.get<FilamentRequestDto>(`/api/filamentrequests/${id}`);
+    return response.data;
+  }
+
+  async getMyFilamentRequests(): Promise<FilamentRequestDto[]> {
+    const response = await this.client.get<FilamentRequestDto[]>('/api/filamentrequests/my-requests');
+    return response.data;
+  }
+
+  async createFilamentRequest(data: CreateFilamentRequestDto): Promise<FilamentRequestDto> {
+    const response = await this.client.post<FilamentRequestDto>('/api/filamentrequests', data);
+    return response.data;
+  }
+
+  async deleteFilamentRequest(id: string): Promise<void> {
+    await this.client.delete(`/api/filamentrequests/${id}`);
+  }
+
+  // Admin Filament Request endpoints
+  async getAdminFilamentRequests(): Promise<FilamentRequestDto[]> {
+    const response = await this.client.get<FilamentRequestDto[]>('/api/admin/filament-requests');
+    return response.data;
+  }
+
+  async changeFilamentRequestStatus(id: string, data: ChangeFilamentRequestStatusDto): Promise<FilamentRequestDto> {
+    const response = await this.client.put<FilamentRequestDto>(`/api/admin/filament-requests/${id}/status`, data);
+    return response.data;
   }
 
   // Token refresh

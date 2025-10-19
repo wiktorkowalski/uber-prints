@@ -41,6 +41,7 @@ public class FilamentsController : ControllerBase
       StockUnit = f.StockUnit,
       Link = f.Link,
       PhotoUrl = f.PhotoUrl,
+      IsAvailable = f.IsAvailable,
       CreatedAt = f.CreatedAt,
       UpdatedAt = f.UpdatedAt
     }).ToList();
@@ -69,6 +70,7 @@ public class FilamentsController : ControllerBase
       StockUnit = filament.StockUnit,
       Link = filament.Link,
       PhotoUrl = filament.PhotoUrl,
+      IsAvailable = filament.IsAvailable,
       CreatedAt = filament.CreatedAt,
       UpdatedAt = filament.UpdatedAt
     };

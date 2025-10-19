@@ -11,6 +11,7 @@ import { NewRequest } from './pages/NewRequest';
 import { EditRequest } from './pages/EditRequest';
 import { TrackRequest } from './pages/TrackRequest';
 import { Filaments } from './pages/Filaments';
+import { FilamentRequests } from './pages/FilamentRequests';
 import { Dashboard } from './pages/Dashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/request/new" element={<Layout><NewRequest /></Layout>} />
           <Route path="/track" element={<Layout><TrackRequest /></Layout>} />
           <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
+          <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
 
           {/* Admin routes - require admin role */}

@@ -103,6 +103,7 @@ public class AdminController : ControllerBase
       StockUnit = filament.StockUnit,
       Link = filament.Link,
       PhotoUrl = filament.PhotoUrl,
+      IsAvailable = filament.IsAvailable,
       CreatedAt = filament.CreatedAt,
       UpdatedAt = filament.UpdatedAt
     };
@@ -145,6 +146,7 @@ public class AdminController : ControllerBase
       StockUnit = filament.StockUnit,
       Link = filament.Link,
       PhotoUrl = filament.PhotoUrl,
+      IsAvailable = filament.IsAvailable,
       CreatedAt = filament.CreatedAt,
       UpdatedAt = filament.UpdatedAt
     };
@@ -180,6 +182,7 @@ public class AdminController : ControllerBase
       StockUnit = filament.StockUnit,
       Link = filament.Link,
       PhotoUrl = filament.PhotoUrl,
+      IsAvailable = filament.IsAvailable,
       CreatedAt = filament.CreatedAt,
       UpdatedAt = filament.UpdatedAt
     };
@@ -235,11 +238,81 @@ public class AdminController : ControllerBase
       StockUnit = filament.StockUnit,
       Link = filament.Link,
       PhotoUrl = filament.PhotoUrl,
+      IsAvailable = filament.IsAvailable,
       CreatedAt = filament.CreatedAt,
       UpdatedAt = filament.UpdatedAt
     };
 
     return Ok(dto);
+  }
+
+  [HttpGet("filament-requests")]
+  public async Task<IActionResult> GetAllFilamentRequests()
+  {
+    var requests = await _context.FilamentRequests
+        .Include(r => r.Filament)
+        .Include(r => r.User)
+        .Include(r => r.StatusHistory)
+            .ThenInclude(sh => sh.ChangedByUser)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToListAsync();
+
+    var dtos = requests.Select(MapFilamentRequestToDto).ToList();
+    return Ok(dtos);
+  }
+
+  [HttpPut("filament-requests/{id}/status")]
+  public async Task<IActionResult> ChangeFilamentRequestStatus(Guid id, ChangeFilamentRequestStatusDto dto)
+  {
+    var request = await _context.FilamentRequests
+        .Include(r => r.StatusHistory)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    if (request == null)
+    {
+      return NotFound();
+    }
+
+    // Get admin user ID from claims
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    Guid? adminUserId = null;
+    if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
+    {
+      adminUserId = userId;
+    }
+
+    request.CurrentStatus = dto.Status;
+    request.UpdatedAt = DateTime.UtcNow;
+
+    // If approved and filament is being created/linked
+    if (dto.Status == FilamentRequestStatusEnum.Approved && dto.FilamentId.HasValue)
+    {
+      request.FilamentId = dto.FilamentId.Value;
+    }
+
+    // Add status history entry
+    var statusHistory = new FilamentRequestStatusHistory
+    {
+      FilamentRequestId = request.Id,
+      Status = dto.Status,
+      Reason = dto.Reason,
+      ChangedByUserId = adminUserId,
+      CreatedAt = DateTime.UtcNow
+    };
+    _context.FilamentRequestStatusHistories.Add(statusHistory);
+
+    await _context.SaveChangesAsync();
+
+    // Reload with all includes for complete response
+    var updatedRequest = await _context.FilamentRequests
+        .Include(r => r.Filament)
+        .Include(r => r.User)
+        .Include(r => r.StatusHistory)
+            .ThenInclude(sh => sh.ChangedByUser)
+        .FirstOrDefaultAsync(r => r.Id == id);
+
+    var responseDto = MapFilamentRequestToDto(updatedRequest!);
+    return Ok(responseDto);
   }
 
   private PrintRequestDto MapToDto(PrintRequest request)
@@ -267,6 +340,35 @@ public class AdminController : ControllerBase
         ChangedByUsername = sh.ChangedByUser?.Username,
         AdminNotes = sh.AdminNotes,
         Timestamp = sh.Timestamp
+      }).ToList()
+    };
+  }
+
+  private FilamentRequestDto MapFilamentRequestToDto(FilamentRequest request)
+  {
+    return new FilamentRequestDto
+    {
+      Id = request.Id,
+      UserId = request.UserId,
+      RequesterName = request.RequesterName,
+      Material = request.Material,
+      Brand = request.Brand,
+      Colour = request.Colour,
+      Link = request.Link,
+      Notes = request.Notes,
+      CurrentStatus = request.CurrentStatus,
+      FilamentId = request.FilamentId,
+      FilamentName = request.Filament?.Name,
+      CreatedAt = request.CreatedAt,
+      UpdatedAt = request.UpdatedAt,
+      StatusHistory = request.StatusHistory.Select(sh => new FilamentRequestStatusHistoryDto
+      {
+        Id = sh.Id,
+        Status = sh.Status,
+        Reason = sh.Reason,
+        ChangedByUserId = sh.ChangedByUserId,
+        ChangedByUsername = sh.ChangedByUser?.Username,
+        CreatedAt = sh.CreatedAt
       }).ToList()
     };
   }

@@ -11,6 +11,7 @@ public class FilamentDto
   public string StockUnit { get; set; } = "grams";
   public string? Link { get; set; }
   public string? PhotoUrl { get; set; }
+  public bool IsAvailable { get; set; }
   public DateTime CreatedAt { get; set; }
   public DateTime UpdatedAt { get; set; }
 }

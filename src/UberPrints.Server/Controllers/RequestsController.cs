@@ -73,17 +73,15 @@ public class RequestsController : ControllerBase
   [HttpPost]
   public async Task<IActionResult> CreateRequest(CreatePrintRequestDto dto)
   {
-    // Validate filament exists and has stock
+    // Validate filament exists
     var filament = await _context.Filaments.FindAsync(dto.FilamentId);
     if (filament == null)
     {
       return BadRequest("Invalid filament selected.");
     }
 
-    if (filament.StockAmount <= 0)
-    {
-      return BadRequest("Selected filament is out of stock.");
-    }
+    // Allow requests with out-of-stock or pending filaments
+    // Admin will handle these appropriately
 
     // Determine the user (authenticated or guest)
     User? user = null;
@@ -186,17 +184,15 @@ public class RequestsController : ControllerBase
       }
     }
 
-    // Validate filament exists and has stock
+    // Validate filament exists
     var filament = await _context.Filaments.FindAsync(dto.FilamentId);
     if (filament == null)
     {
       return BadRequest("Invalid filament selected.");
     }
 
-    if (filament.StockAmount <= 0)
-    {
-      return BadRequest("Selected filament is out of stock.");
-    }
+    // Allow requests with out-of-stock or pending filaments
+    // Admin will handle these appropriately
 
     request.RequesterName = dto.RequesterName;
     request.ModelUrl = dto.ModelUrl;

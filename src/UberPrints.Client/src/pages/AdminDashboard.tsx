@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { PrintRequestDto, RequestStatusEnum, FilamentDto, CreateFilamentDto, UpdateFilamentDto } from '../types/api';
+import { PrintRequestDto, RequestStatusEnum, FilamentDto, CreateFilamentDto, UpdateFilamentDto, FilamentRequestDto, FilamentRequestStatusEnum, ChangeFilamentRequestStatusDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -28,6 +28,35 @@ const ALL_STATUS_VALUES: RequestStatusEnum[] = [
   RequestStatusEnum.WaitingForPickup,
   RequestStatusEnum.Completed,
 ];
+
+const ALL_FILAMENT_REQUEST_STATUS_VALUES: FilamentRequestStatusEnum[] = [
+  FilamentRequestStatusEnum.Pending,
+  FilamentRequestStatusEnum.Approved,
+  FilamentRequestStatusEnum.Rejected,
+  FilamentRequestStatusEnum.Ordered,
+  FilamentRequestStatusEnum.Received,
+];
+
+const getFilamentRequestStatusLabel = (status: FilamentRequestStatusEnum) => {
+  return FilamentRequestStatusEnum[status];
+};
+
+const getFilamentRequestStatusColor = (status: FilamentRequestStatusEnum) => {
+  switch (status) {
+    case FilamentRequestStatusEnum.Pending:
+      return 'bg-yellow-500';
+    case FilamentRequestStatusEnum.Approved:
+      return 'bg-green-500';
+    case FilamentRequestStatusEnum.Rejected:
+      return 'bg-red-500';
+    case FilamentRequestStatusEnum.Ordered:
+      return 'bg-blue-500';
+    case FilamentRequestStatusEnum.Received:
+      return 'bg-purple-500';
+    default:
+      return 'bg-gray-500';
+  }
+};
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
@@ -58,6 +87,16 @@ export const AdminDashboard = () => {
     photoUrl: '',
   });
   const [filamentSubmitting, setFilamentSubmitting] = useState(false);
+
+  // Filament request management
+  const [filamentRequests, setFilamentRequests] = useState<FilamentRequestDto[]>([]);
+  const [filamentRequestsLoading, setFilamentRequestsLoading] = useState(false);
+  const [filamentRequestsLoaded, setFilamentRequestsLoaded] = useState(false);
+  const [selectedFilamentRequest, setSelectedFilamentRequest] = useState<FilamentRequestDto | null>(null);
+  const [newFilamentRequestStatus, setNewFilamentRequestStatus] = useState<FilamentRequestStatusEnum | null>(null);
+  const [filamentRequestReason, setFilamentRequestReason] = useState('');
+  const [selectedFilamentForRequest, setSelectedFilamentForRequest] = useState<string>('');
+  const [updatingFilamentRequest, setUpdatingFilamentRequest] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -203,6 +242,100 @@ export const AdminDashboard = () => {
     }
   };
 
+  // Filament request management functions
+  const loadFilamentRequests = async () => {
+    if (filamentRequestsLoaded) return;
+
+    try {
+      setFilamentRequestsLoading(true);
+      const data = await api.getAdminFilamentRequests();
+      setFilamentRequests(data);
+      setFilamentRequestsLoaded(true);
+    } catch (err) {
+      toast({
+        title: "Failed to load filament requests",
+        description: "Could not load filament requests",
+        variant: "destructive",
+      });
+    } finally {
+      setFilamentRequestsLoading(false);
+    }
+  };
+
+  const openFilamentRequestStatusDialog = async (request: FilamentRequestDto) => {
+    setSelectedFilamentRequest(request);
+    setNewFilamentRequestStatus(request.currentStatus);
+    setFilamentRequestReason('');
+    setSelectedFilamentForRequest(request.filamentId || '');
+    // Load filaments if not already loaded (needed for linking)
+    if (!filamentsLoaded && !filamentsLoading) {
+      await loadFilaments();
+    }
+  };
+
+  const createFilamentFromRequest = (request: FilamentRequestDto) => {
+    // Pre-fill filament form with request data
+    const filamentName = `${request.brand} ${request.material} ${request.colour}`;
+    setFilamentFormData({
+      name: filamentName,
+      material: request.material,
+      brand: request.brand,
+      colour: request.colour,
+      stockAmount: 0,
+      stockUnit: 'g',
+      link: request.link || '',
+      photoUrl: '',
+    });
+    setEditingFilament(null);
+    setFilamentDialogOpen(true);
+    // Close the status dialog
+    setSelectedFilamentRequest(null);
+  };
+
+  const handleFilamentRequestStatusChange = async () => {
+    if (!selectedFilamentRequest || newFilamentRequestStatus === null) return;
+
+    try {
+      setUpdatingFilamentRequest(true);
+      const statusData: ChangeFilamentRequestStatusDto = {
+        status: newFilamentRequestStatus,
+        reason: filamentRequestReason || undefined,
+      };
+
+      // If approving and a filament is selected, include it
+      if (newFilamentRequestStatus === FilamentRequestStatusEnum.Approved && selectedFilamentForRequest) {
+        statusData.filamentId = selectedFilamentForRequest;
+      }
+
+      await api.changeFilamentRequestStatus(selectedFilamentRequest.id, statusData);
+
+      // Reload filament requests
+      setFilamentRequestsLoaded(false);
+      await loadFilamentRequests();
+
+      toast({
+        title: "Status updated",
+        description: "Filament request status has been updated successfully.",
+        variant: "success",
+      });
+
+      // Close dialog and reset
+      setSelectedFilamentRequest(null);
+      setNewFilamentRequestStatus(null);
+      setFilamentRequestReason('');
+      setSelectedFilamentForRequest('');
+    } catch (err: any) {
+      console.error('Error updating filament request status:', err);
+      toast({
+        title: "Failed to update status",
+        description: err.response?.data?.message || 'Failed to update status',
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingFilamentRequest(false);
+    }
+  };
+
   const handleDeleteFilament = async (filament: FilamentDto) => {
     if (!window.confirm(`Are you sure you want to delete ${filament.name}?`)) {
       return;
@@ -284,6 +417,9 @@ export const AdminDashboard = () => {
         if (value === 'filaments' && !filamentsLoaded && !filamentsLoading) {
           loadFilaments();
         }
+        if (value === 'filament-requests' && !filamentRequestsLoaded && !filamentRequestsLoading) {
+          loadFilamentRequests();
+        }
       }}>
         <TabsList>
           <TabsTrigger value="all">All Requests</TabsTrigger>
@@ -291,6 +427,7 @@ export const AdminDashboard = () => {
           <TabsTrigger value="active">Active ({activeCount})</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
           <TabsTrigger value="filaments">Filaments</TabsTrigger>
+          <TabsTrigger value="filament-requests">Filament Requests</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -424,6 +561,125 @@ export const AdminDashboard = () => {
                           onClick={() => handleDeleteFilament(filament)}
                         >
                           <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="filament-requests" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Filament Requests
+              </CardTitle>
+              <CardDescription>
+                Review and manage user filament requests
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filamentRequestsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSpinner className="w-6 h-6" />
+                </div>
+              ) : filamentRequests.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No filament requests yet
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filamentRequests.map((request) => (
+                    <div
+                      key={request.id}
+                      className="border rounded-lg p-4 flex items-start justify-between gap-4"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold">
+                              {request.brand} - {request.material} ({request.colour})
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              Requested by {request.requesterName} • {formatRelativeTime(request.createdAt)}
+                            </p>
+                          </div>
+                          <Badge className={getFilamentRequestStatusColor(request.currentStatus)}>
+                            {getFilamentRequestStatusLabel(request.currentStatus)}
+                          </Badge>
+                        </div>
+                        {request.link && (
+                          <a
+                            href={request.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Product Link
+                          </a>
+                        )}
+                        {request.notes && (
+                          <p className="text-sm text-muted-foreground mb-2">{request.notes}</p>
+                        )}
+                        {request.filamentName && (
+                          <p className="text-sm text-green-600">
+                            Linked to filament: {request.filamentName}
+                          </p>
+                        )}
+                        {request.statusHistory.length > 1 && (
+                          <details className="mt-2">
+                            <summary className="text-sm cursor-pointer text-muted-foreground hover:text-foreground">
+                              Status History ({request.statusHistory.length})
+                            </summary>
+                            <div className="mt-2 space-y-1 pl-4 border-l-2">
+                              {request.statusHistory.map((history) => (
+                                <div key={history.id} className="text-sm">
+                                  <Badge variant="outline" className="mr-2">
+                                    {getFilamentRequestStatusLabel(history.status)}
+                                  </Badge>
+                                  {history.changedByUsername && (
+                                    <span className="text-muted-foreground">
+                                      by {history.changedByUsername}
+                                    </span>
+                                  )}
+                                  {' • '}
+                                  <span className="text-muted-foreground">
+                                    {formatRelativeTime(history.createdAt)}
+                                  </span>
+                                  {history.reason && (
+                                    <p className="text-muted-foreground italic mt-1">
+                                      {history.reason}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        {!request.filamentId && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => createFilamentFromRequest(request)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Filament
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openFilamentRequestStatusDialog(request)}
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Update Status
                         </Button>
                       </div>
                     </div>
@@ -617,6 +873,99 @@ export const AdminDashboard = () => {
             >
               {filamentSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {editingFilament ? 'Update Filament' : 'Add Filament'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Filament Request Status Change Dialog */}
+      <Dialog open={selectedFilamentRequest !== null} onOpenChange={(open) => !open && setSelectedFilamentRequest(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Filament Request Status</DialogTitle>
+            <DialogDescription>
+              Update the status for filament request: {selectedFilamentRequest?.brand} - {selectedFilamentRequest?.material} ({selectedFilamentRequest?.colour})
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>New Status</Label>
+              <Select
+                value={newFilamentRequestStatus?.toString()}
+                onValueChange={(value) => setNewFilamentRequestStatus(parseInt(value) as FilamentRequestStatusEnum)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALL_FILAMENT_REQUEST_STATUS_VALUES.map((status) => (
+                    <SelectItem key={status} value={status.toString()}>
+                      {getFilamentRequestStatusLabel(status)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newFilamentRequestStatus === FilamentRequestStatusEnum.Approved && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Link to Filament (Optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectedFilamentRequest && createFilamentFromRequest(selectedFilamentRequest)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New
+                  </Button>
+                </div>
+                <Select
+                  value={selectedFilamentForRequest}
+                  onValueChange={setSelectedFilamentForRequest}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select filament or leave empty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None - Create manually later</SelectItem>
+                    {filaments.map((filament) => (
+                      <SelectItem key={filament.id} value={filament.id}>
+                        {filament.name} ({filament.brand})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Link this request to an existing filament, or click "Create New" to add it to inventory now.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Reason / Notes (Optional)</Label>
+              <Textarea
+                value={filamentRequestReason}
+                onChange={(e) => setFilamentRequestReason(e.target.value)}
+                placeholder="Add any notes for the requester..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedFilamentRequest(null)}
+              disabled={updatingFilamentRequest}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleFilamentRequestStatusChange} disabled={updatingFilamentRequest || newFilamentRequestStatus === null}>
+              {updatingFilamentRequest && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update Status
             </Button>
           </DialogFooter>
         </DialogContent>
