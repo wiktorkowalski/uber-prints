@@ -62,6 +62,7 @@ export interface PrintRequestDto {
   modelUrl: string;
   notes?: string;
   requestDelivery: boolean;
+  isPublic: boolean;
   filamentId: string;
   filamentName: string;
   currentStatus: RequestStatusEnum;
@@ -75,6 +76,7 @@ export interface CreatePrintRequestDto {
   modelUrl: string;
   notes?: string;
   requestDelivery: boolean;
+  isPublic?: boolean;
   filamentId: string;
 }
 
@@ -83,6 +85,7 @@ export interface UpdatePrintRequestDto {
   modelUrl: string;
   notes?: string;
   requestDelivery: boolean;
+  isPublic: boolean;
   filamentId: string;
 }
 

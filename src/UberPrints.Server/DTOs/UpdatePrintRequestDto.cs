@@ -18,6 +18,8 @@ public class UpdatePrintRequestDto
 
   public bool RequestDelivery { get; set; }
 
+  public bool IsPublic { get; set; }
+
   [Required]
   public Guid FilamentId { get; set; }
 }

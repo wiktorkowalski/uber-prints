@@ -20,11 +20,32 @@ public class RequestsController : ControllerBase
   [HttpGet]
   public async Task<IActionResult> GetRequests()
   {
+    // Get current user ID if authenticated
+    Guid? currentUserId = null;
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+    {
+      currentUserId = userId;
+    }
+    else if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+    {
+      var guestToken = guestTokenHeader.ToString();
+      if (!string.IsNullOrEmpty(guestToken))
+      {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+        if (user != null)
+        {
+          currentUserId = user.Id;
+        }
+      }
+    }
+
     var requests = await _context.PrintRequests
         .Include(r => r.Filament)
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
+        .Where(r => r.IsPublic || r.UserId == currentUserId)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
 
@@ -45,6 +66,36 @@ public class RequestsController : ControllerBase
     if (request == null)
     {
       return NotFound();
+    }
+
+    // Check privacy: allow if public or user owns the request
+    if (!request.IsPublic)
+    {
+      // Get current user ID if authenticated
+      Guid? currentUserId = null;
+      var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+      if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+      {
+        currentUserId = userId;
+      }
+      else if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+      {
+        var guestToken = guestTokenHeader.ToString();
+        if (!string.IsNullOrEmpty(guestToken))
+        {
+          var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+          if (user != null)
+          {
+            currentUserId = user.Id;
+          }
+        }
+      }
+
+      // If request is private and user doesn't own it, return NotFound (not Forbidden to avoid info leak)
+      if (request.UserId != currentUserId)
+      {
+        return NotFound();
+      }
     }
 
     var dto = MapToDto(request);
@@ -115,6 +166,7 @@ public class RequestsController : ControllerBase
       ModelUrl = dto.ModelUrl,
       Notes = dto.Notes,
       RequestDelivery = dto.RequestDelivery,
+      IsPublic = dto.IsPublic,
       FilamentId = dto.FilamentId,
       UserId = user.Id,  // Associate request with user
       CurrentStatus = RequestStatusEnum.Pending,
@@ -198,6 +250,7 @@ public class RequestsController : ControllerBase
     request.ModelUrl = dto.ModelUrl;
     request.Notes = dto.Notes;
     request.RequestDelivery = dto.RequestDelivery;
+    request.IsPublic = dto.IsPublic;
     request.FilamentId = dto.FilamentId;
     request.UpdatedAt = DateTime.UtcNow;
 
@@ -269,6 +322,7 @@ public class RequestsController : ControllerBase
       ModelUrl = request.ModelUrl,
       Notes = request.Notes,
       RequestDelivery = request.RequestDelivery,
+      IsPublic = request.IsPublic,
       FilamentId = request.FilamentId,
       FilamentName = request.Filament?.Name ?? string.Empty,
       CurrentStatus = request.CurrentStatus,

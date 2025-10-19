@@ -326,6 +326,7 @@ public class AdminController : ControllerBase
       ModelUrl = request.ModelUrl,
       Notes = request.Notes,
       RequestDelivery = request.RequestDelivery,
+      IsPublic = request.IsPublic,
       FilamentId = request.FilamentId,
       FilamentName = request.Filament?.Name ?? string.Empty,
       CurrentStatus = request.CurrentStatus,

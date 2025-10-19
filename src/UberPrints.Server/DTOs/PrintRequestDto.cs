@@ -9,6 +9,7 @@ public class PrintRequestDto
   public string ModelUrl { get; set; } = string.Empty;
   public string? Notes { get; set; }
   public bool RequestDelivery { get; set; }
+  public bool IsPublic { get; set; }
   public Guid FilamentId { get; set; }
   public string FilamentName { get; set; } = string.Empty;
   public Models.RequestStatusEnum CurrentStatus { get; set; }

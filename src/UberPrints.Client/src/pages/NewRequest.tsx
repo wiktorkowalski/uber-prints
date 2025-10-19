@@ -22,6 +22,7 @@ const formSchema = z.object({
   modelUrl: z.string().url('Must be a valid URL').max(500, 'URL must be less than 500 characters'),
   notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional().or(z.literal('')),
   requestDelivery: z.boolean(),
+  isPublic: z.boolean(),
   filamentId: z.string().min(1, 'Please select a filament'),
 });
 
@@ -42,6 +43,7 @@ export const NewRequest = () => {
       modelUrl: '',
       notes: '',
       requestDelivery: false,
+      isPublic: true,
       filamentId: '',
     },
   });
@@ -76,6 +78,7 @@ export const NewRequest = () => {
         modelUrl: values.modelUrl,
         notes: values.notes || undefined,
         requestDelivery: values.requestDelivery,
+        isPublic: values.isPublic,
         filamentId: values.filamentId,
       });
 
@@ -288,6 +291,29 @@ export const NewRequest = () => {
                       </FormLabel>
                       <FormDescription>
                         Check this if you need the print delivered to you
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isPublic"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Make request public
+                      </FormLabel>
+                      <FormDescription>
+                        Public requests are visible to everyone. Uncheck to make this request private (only you and admins can view it)
                       </FormDescription>
                     </div>
                   </FormItem>
