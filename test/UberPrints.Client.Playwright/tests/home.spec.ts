@@ -1,63 +1,43 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-fixtures';
 
 test.describe('Home Page', () => {
-  test('should load home page successfully', async ({ page }) => {
-    await page.goto('/');
-
-    // Check that the page title is correct
-    await expect(page).toHaveTitle(/UberPrints/);
-
-    // Check for main heading - "Welcome to UberPrints"
-    await expect(page.getByRole('heading', { name: /welcome to uberprints/i })).toBeVisible();
+  test('should load home page successfully', async ({ homePage }) => {
+    await homePage.goto();
+    await homePage.verifyHeadingVisible();
   });
 
-  test('should display navigation links', async ({ page, isMobile }) => {
-    await page.goto('/');
-
-    if (!isMobile) {
-      // Check navigation links (visible on desktop only)
-      await expect(page.getByRole('link', { name: /^home$/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: /new request/i }).first()).toBeVisible();
-      await expect(page.getByRole('link', { name: /all requests/i }).first()).toBeVisible();
-      await expect(page.getByRole('link', { name: /filaments/i }).first()).toBeVisible();
-    } else {
-      // On mobile, check that main action buttons are visible
-      await expect(page.getByRole('button', { name: /submit request/i })).toBeVisible();
-    }
+  test('should display navigation links', async ({ homePage, isMobile }) => {
+    await homePage.goto();
+    await homePage.verifyNavigationLinks(isMobile);
   });
 
-  test('should navigate to different pages', async ({ page, isMobile }) => {
+  test('should navigate to different pages', async ({ homePage, isMobile }) => {
     test.skip(isMobile, 'Navigation test is desktop-only');
 
-    await page.goto('/');
+    await homePage.goto();
 
     // Navigate to New Request page
-    await page.getByRole('link', { name: /new request/i }).first().click();
-    await expect(page).toHaveURL(/.*\/request\/new/);
+    await homePage.navigateToNewRequest();
 
     // Navigate to All Requests page
-    await page.goto('/');
-    await page.getByRole('link', { name: /all requests/i }).first().click();
-    await expect(page).toHaveURL(/.*\/requests/);
+    await homePage.goto();
+    await homePage.navigateToAllRequests();
 
     // Navigate to Filaments page
-    await page.goto('/');
-    await page.getByRole('link', { name: /filaments/i }).first().click();
-    await expect(page).toHaveURL(/.*\/filaments/);
+    await homePage.goto();
+    await homePage.navigateToFilaments();
   });
 
-  test('should display call-to-action buttons', async ({ page }) => {
-    await page.goto('/');
+  test('should display call-to-action buttons', async ({ homePage }) => {
+    await homePage.goto();
+    await homePage.verifyCallToActionButtons();
 
-    // Check for CTA buttons on home page
-    const submitRequestButton = page.getByRole('link', { name: /submit request/i });
-    const viewAllRequestsButton = page.getByRole('link', { name: /view all requests/i });
+    // Verify submit button is clickable and navigates correctly
+    await homePage.clickSubmitRequest();
+  });
 
-    await expect(submitRequestButton).toBeVisible();
-    await expect(viewAllRequestsButton).toBeVisible();
-
-    // Verify submit button is clickable
-    await submitRequestButton.click();
-    await expect(page).toHaveURL(/.*\/request\/new/);
+  test('should show guest section when not logged in', async ({ homePage }) => {
+    await homePage.goto();
+    await homePage.verifyGuestMode();
   });
 });

@@ -2,10 +2,53 @@
 
 End-to-end tests for the UberPrints client application using Playwright.
 
+## 🚀 Two Test Configurations Available
+
+### 1. **Standard** (Default) - Manual Setup
+- ✅ Fast test startup
+- ❌ Requires manual backend/database setup
+- Best for: Active development
+
+### 2. **Full Orchestration** (Recommended for CI) - **NEW!**
+- ✅ **Zero manual setup - just Docker!**
+- ✅ Automatic PostgreSQL (Testcontainers)
+- ✅ Automatic migrations & seeding
+- ✅ Automatic backend & frontend
+- Best for: CI/CD, first-time setup
+
+**See [FULL_ORCHESTRATION.md](./FULL_ORCHESTRATION.md) for complete details**
+
+## Quick Start
+
+### Option A: Full Orchestration (Zero Setup Required!)
+
+```bash
+# 1. Ensure Docker is running
+docker ps
+
+# 2. Install dependencies
+npm install
+npx playwright install
+
+# 3. Run tests - everything starts automatically!
+npm run test:full
+```
+
+That's it! PostgreSQL, backend, frontend - all handled automatically.
+
+### Option B: Standard (Manual Setup)
+
+Requires you to start servers manually first (see below).
+
 ## Prerequisites
 
+**For Full Orchestration:**
 - Node.js 18 or higher
-- npm or yarn
+- Docker (for Testcontainers)
+
+**For Standard:**
+- Node.js 18 or higher
+- PostgreSQL database
 - UberPrints backend server (ASP.NET Core)
 - UberPrints frontend client (React + Vite)
 
@@ -19,7 +62,32 @@ npx playwright install
 
 ## Running Tests
 
-**IMPORTANT**: Before running tests, you need to have both the backend and frontend servers running.
+### 🎯 Recommended: Full Orchestration
+
+**No manual setup required! Just run:**
+
+```bash
+npm run test:full          # Run all tests
+npm run test:full:ui       # Run with UI mode
+npm run test:full:headed   # Run in headed mode
+```
+
+The test runner will:
+1. Start PostgreSQL container (Testcontainers)
+2. Run database migrations
+3. Seed test data
+4. Start backend server
+5. Start frontend server
+6. Run all tests
+7. Clean up everything
+
+**See [FULL_ORCHESTRATION.md](./FULL_ORCHESTRATION.md) for details**
+
+---
+
+### Standard Mode (Manual Setup)
+
+**IMPORTANT**: Before running tests in standard mode, you need to have both the backend and frontend servers running.
 
 ### Automatic Test Data Seeding
 
@@ -354,9 +422,16 @@ page.getByText(/success/i)
 - Use `--project` to run single browser
 - Disable video/trace in config for faster runs
 
+## Documentation
+
+- **[FULL_ORCHESTRATION.md](./FULL_ORCHESTRATION.md)** - Complete guide to full test orchestration with Testcontainers
+- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Practical guide for writing tests with Page Objects
+- **[TEST_IMPROVEMENTS.md](./TEST_IMPROVEMENTS.md)** - Technical overview of test improvements
+
 ## Resources
 
 - [Playwright Documentation](https://playwright.dev)
 - [Playwright Best Practices](https://playwright.dev/docs/best-practices)
 - [Playwright Test Generator](https://playwright.dev/docs/codegen)
 - [Playwright Trace Viewer](https://playwright.dev/docs/trace-viewer)
+- [Testcontainers](https://testcontainers.com/)

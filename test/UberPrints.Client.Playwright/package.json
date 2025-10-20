@@ -7,6 +7,9 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
+    "test:manual": "playwright test --config=playwright.config.manual.ts",
+    "test:manual:ui": "playwright test --config=playwright.config.manual.ts --ui",
+    "test:manual:headed": "playwright test --config=playwright.config.manual.ts --headed",
     "report": "playwright show-report",
     "codegen": "playwright codegen http://localhost:5173"
   },
@@ -15,6 +18,8 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.47.0",
-    "@types/node": "^22.5.0"
+    "@types/node": "^22.5.0",
+    "testcontainers": "^10.13.2",
+    "wait-on": "^8.0.1"
   }
 }

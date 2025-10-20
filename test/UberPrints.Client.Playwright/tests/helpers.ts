@@ -1,6 +1,9 @@
 import { Page, expect } from '@playwright/test';
+import { NewRequestPage } from '../pages/NewRequestPage';
+import { BasePage } from '../pages/BasePage';
 
 /**
+ * @deprecated Use NewRequestPage.submitRequest() instead
  * Helper function to create a test print request
  */
 export async function createPrintRequest(
@@ -12,54 +15,29 @@ export async function createPrintRequest(
     requestDelivery?: boolean;
   }
 ) {
-  await page.goto('/request/new');
-
-  // Wait for form to load
-  await page.waitForTimeout(1000);
-
-  // Fill required fields using placeholders
-  await page.getByPlaceholder(/john doe/i).fill(data.requesterName);
-  await page.getByPlaceholder(/thingiverse/i).fill(data.modelUrl);
-
-  // Select first available filament
-  const filamentSelect = page.getByRole('combobox').first();
-  await filamentSelect.click();
-  await page.waitForTimeout(500);
-
-  const firstOption = page.getByRole('option').first();
-  if (await firstOption.isVisible()) {
-    await firstOption.click();
-  }
-
-  // Fill optional fields
-  if (data.notes) {
-    const notesField = page.getByPlaceholder(/additional details/i);
-    if (await notesField.isVisible()) {
-      await notesField.fill(data.notes);
-    }
-  }
-
-  if (data.requestDelivery) {
-    const deliveryCheckbox = page.getByRole('checkbox', { name: /delivery/i });
-    if (await deliveryCheckbox.isVisible()) {
-      await deliveryCheckbox.check();
-    }
-  }
-
-  // Submit form
-  await page.getByRole('button', { name: /submit/i }).click();
-  await page.waitForTimeout(2000);
+  const newRequestPage = new NewRequestPage(page);
+  await newRequestPage.submitRequest({
+    requesterName: data.requesterName,
+    modelUrl: data.modelUrl,
+    notes: data.notes,
+    requestDelivery: data.requestDelivery,
+  });
 }
 
 /**
  * Helper function to wait for API calls to complete
  */
-export async function waitForApiResponse(page: Page, urlPattern: string | RegExp) {
+export async function waitForApiResponse(
+  page: Page,
+  urlPattern: string | RegExp,
+  expectedStatus: number = 200
+) {
   return page.waitForResponse(
     (response) =>
       (typeof urlPattern === 'string'
         ? response.url().includes(urlPattern)
-        : urlPattern.test(response.url())) && response.status() === 200
+        : urlPattern.test(response.url())) && response.status() === expectedStatus,
+    { timeout: 10000 }
   );
 }
 
@@ -67,41 +45,52 @@ export async function waitForApiResponse(page: Page, urlPattern: string | RegExp
  * Helper function to check if user is on error page
  */
 export async function isOnErrorPage(page: Page): Promise<boolean> {
-  const errorTexts = [
-    /error/i,
-    /something went wrong/i,
-    /not found/i,
-    /404/i,
-    /500/i,
-  ];
-
-  for (const pattern of errorTexts) {
-    if (await page.getByText(pattern).isVisible().catch(() => false)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Helper to create a guest session explicitly
- */
-export async function createGuestSession(page: Page) {
-  // Make API call to create guest session
-  const response = await page.request.post('/api/auth/guest');
-  const data = await response.json();
-  return data.guestSessionToken;
+  const basePage = new BasePage(page);
+  return basePage.isErrorPage();
 }
 
 /**
  * Helper to navigate and verify page loaded successfully
  */
 export async function navigateAndVerify(page: Page, path: string) {
-  await page.goto(path);
-  await page.waitForLoadState('networkidle');
+  const basePage = new BasePage(page);
+  await basePage.goto(path);
+  await basePage.waitForNavigation();
+  await basePage.verifyNoErrors();
+}
 
-  // Verify no error occurred
-  const hasError = await isOnErrorPage(page);
-  expect(hasError).toBeFalsy();
+/**
+ * Helper to wait for element with timeout
+ */
+export async function waitForElement(
+  page: Page,
+  selector: string,
+  options: { timeout?: number; state?: 'visible' | 'hidden' | 'attached' } = {}
+) {
+  const timeout = options.timeout || 5000;
+  const state = options.state || 'visible';
+
+  await page.locator(selector).waitFor({ state, timeout });
+}
+
+/**
+ * Helper to safely check if element exists without throwing
+ */
+export async function elementExists(page: Page, selector: string): Promise<boolean> {
+  try {
+    const count = await page.locator(selector).count();
+    return count > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Helper to take screenshot for debugging
+ */
+export async function takeDebugScreenshot(page: Page, name: string) {
+  await page.screenshot({
+    path: `test-results/debug-${name}-${Date.now()}.png`,
+    fullPage: true,
+  });
 }

@@ -1,24 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration with full test orchestration
- *
- * This config uses Testcontainers to:
- * - Start PostgreSQL container
- * - Run database migrations
- * - Seed test data
- * - Start backend API server
- * - Start frontend dev server
- * - Run all tests
- * - Clean up everything
- *
- * Usage: npx playwright test --config=playwright.config.full.ts
+ * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
   testDir: './tests',
 
-  /* Global setup to orchestrate entire test environment */
-  globalSetup: require.resolve('./global-setup-full'),
+  /* Global setup to seed test data */
+  globalSetup: require.resolve('./global-setup'),
 
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -33,10 +22,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    ['html'],
-    ['list'],
-  ],
+  reporter: 'html',
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -48,9 +34,6 @@ export default defineConfig({
 
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
-
-    /* Video on first retry */
-    video: 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */
@@ -81,19 +64,11 @@ export default defineConfig({
     },
   ],
 
-  /*
-   * No webServer config needed - global-setup-full.ts handles everything
-   * This includes:
-   * - PostgreSQL (Testcontainers)
-   * - Backend API (dotnet run)
-   * - Frontend (npm run dev)
-   */
-
-  /* Global timeout for each test */
-  timeout: 30000,
-
-  /* Global timeout for expect assertions */
-  expect: {
-    timeout: 10000,
+  /* Run your local dev server before starting the tests */
+  webServer: {
+    command: 'cd ../../src/UberPrints.Client && npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: true, // Set to false to auto-start servers
+    timeout: 120000,
   },
 });

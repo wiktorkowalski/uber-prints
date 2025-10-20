@@ -1,122 +1,105 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/test-fixtures';
+import { TestDataFactory, TestUrls } from '../fixtures/test-data';
 
 test.describe('New Print Request', () => {
-  test('should display new request form', async ({ page }) => {
-    await page.goto('/request/new');
-
-    // Wait for form to load
-    await page.waitForTimeout(1000);
-
-    // Check page heading
-    await expect(page.getByRole('heading', { name: /submit new request/i })).toBeVisible();
-
-    // Check form fields exist
-    await expect(page.getByPlaceholder(/john doe/i)).toBeVisible();
-    await expect(page.getByPlaceholder(/thingiverse/i)).toBeVisible();
+  test('should display new request form', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
+    await newRequestPage.waitForFormReady();
+    await newRequestPage.verifyFormInteractive();
   });
 
-  test('should validate required fields', async ({ page }) => {
-    await page.goto('/request/new');
+  test('should validate required fields', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
 
     // Try to submit empty form
-    const submitButton = page.getByRole('button', { name: /submit/i });
-    await submitButton.click();
+    await newRequestPage.submit();
 
-    // Wait for validation errors
-    await page.waitForTimeout(500);
-
-    // Check for validation messages (form should not submit)
-    await expect(page).toHaveURL(/.*\/request\/new/);
+    // Verify validation prevents submission
+    await newRequestPage.verifyValidationError();
   });
 
-  test('should create guest session before allowing request', async ({ page }) => {
-    await page.goto('/request/new');
-    await page.waitForTimeout(1000);
+  test('should allow filling form fields', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
 
-    // Fill out the form
-    await page.getByPlaceholder(/john doe/i).fill('Test User');
-    await page.getByPlaceholder(/thingiverse/i).fill('https://example.com/model.stl');
+    const testData = TestDataFactory.createPrintRequest();
 
-    // Select a filament (if available)
-    const filamentSelect = page.getByRole('combobox').first();
-    await filamentSelect.click();
+    // Fill fields
+    await newRequestPage.fillRequesterName(testData.requesterName);
+    await newRequestPage.fillModelUrl(testData.modelUrl);
 
-    // Wait for options to load
-    await page.waitForTimeout(500);
+    // Verify filaments are available
+    const filamentCount = await newRequestPage.getFilamentCount();
+    expect(filamentCount, 'Should have filaments available').toBeGreaterThan(0);
 
-    // Try to select the first option if available
-    const firstOption = page.getByRole('option').first();
-    if (await firstOption.isVisible()) {
-      await firstOption.click();
+    // Select a filament
+    await newRequestPage.selectFilament(0);
+  });
+
+  test('should allow optional notes field', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
+
+    const notes = 'This is a test print request with special instructions';
+    await newRequestPage.fillNotes(notes);
+
+    // Verify notes were filled
+    await expect(newRequestPage.notesInput).toHaveValue(notes);
+  });
+
+  test('should have delivery option checkbox', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
+
+    // Test checking delivery
+    await newRequestPage.setDelivery(true);
+    await expect(newRequestPage.deliveryCheckbox).toBeChecked();
+
+    // Test unchecking delivery
+    await newRequestPage.setDelivery(false);
+    await expect(newRequestPage.deliveryCheckbox).not.toBeChecked();
+  });
+
+  test('should submit request successfully with valid data', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
+
+    const testData = TestDataFactory.createPrintRequest({
+      requesterName: 'E2E Test User',
+      modelUrl: TestUrls.validThingiverseUrl,
+      notes: 'Test request created by Playwright',
+    });
+
+    await newRequestPage.submitRequest(testData);
+
+    // Should redirect away from form
+    expect(newRequestPage.urlContains('/request/new')).toBeFalsy();
+  });
+
+  test('should validate invalid URL format', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
+
+    const invalidData = TestDataFactory.createInvalidPrintRequest('url');
+
+    await newRequestPage.fillRequesterName(invalidData.requesterName!);
+    await newRequestPage.fillModelUrl(invalidData.modelUrl!);
+
+    // Try to submit with invalid URL
+    const filamentCount = await newRequestPage.getFilamentCount();
+    if (filamentCount > 0) {
+      await newRequestPage.selectFilament(0);
+      await newRequestPage.submit();
+
+      // Should show error or stay on page
+      const onFormPage = newRequestPage.urlContains('/request/new');
+      expect(onFormPage, 'Should stay on form page with invalid URL').toBeTruthy();
     }
   });
 
-  test('should allow optional notes field', async ({ page }) => {
-    await page.goto('/request/new');
-    await page.waitForTimeout(1000);
+  test('should handle delivery requests', async ({ newRequestPage }) => {
+    await newRequestPage.goto();
 
-    const notesField = page.getByPlaceholder(/additional details/i);
+    const deliveryData = TestDataFactory.createDeliveryRequest();
 
-    if (await notesField.isVisible()) {
-      await notesField.fill('This is a test print request with special instructions');
-      await expect(notesField).toHaveValue(/test print request/i);
-    }
-  });
+    await newRequestPage.submitRequest(deliveryData);
 
-  test('should have delivery option checkbox', async ({ page }) => {
-    await page.goto('/request/new');
-    await page.waitForTimeout(1000);
-
-    const deliveryCheckbox = page.getByRole('checkbox', { name: /delivery/i });
-
-    if (await deliveryCheckbox.isVisible()) {
-      // Check the checkbox
-      await deliveryCheckbox.check();
-      await expect(deliveryCheckbox).toBeChecked();
-
-      // Uncheck it
-      await deliveryCheckbox.uncheck();
-      await expect(deliveryCheckbox).not.toBeChecked();
-    }
-  });
-
-  test('should submit request successfully with valid data', async ({ page }) => {
-    await page.goto('/request/new');
-    await page.waitForTimeout(1000);
-
-    // Fill required fields
-    await page.getByPlaceholder(/john doe/i).fill('E2E Test User');
-    await page.getByPlaceholder(/thingiverse/i).fill('https://www.thingiverse.com/thing:12345');
-
-    // Select filament
-    const filamentSelect = page.getByRole('combobox').first();
-    await filamentSelect.click();
-    await page.waitForTimeout(500);
-
-    // Select first available filament
-    const options = page.getByRole('option');
-    const count = await options.count();
-
-    if (count > 0) {
-      await options.first().click();
-
-      // Add optional notes
-      const notesField = page.getByPlaceholder(/additional details/i);
-      if (await notesField.isVisible()) {
-        await notesField.fill('Test request created by Playwright');
-      }
-
-      // Submit the form
-      await page.getByRole('button', { name: /submit/i }).click();
-
-      // Wait for redirect or success message
-      await page.waitForTimeout(2000);
-
-      // Should redirect away from new-request or show success
-      const currentUrl = page.url();
-      const hasSuccessMessage = await page.getByText(/success|created|submitted/i).isVisible().catch(() => false);
-
-      expect(currentUrl !== '/request/new' || hasSuccessMessage).toBeTruthy();
-    }
+    // Should redirect after submission
+    expect(newRequestPage.urlContains('/request/new')).toBeFalsy();
   });
 });
