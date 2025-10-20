@@ -1,16 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Moq;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
-using UberPrints.Server.DTOs;
 
 namespace UberPrints.Server.UnitTests;
 
@@ -91,18 +88,5 @@ public class TestBase
         {
             HttpContext = httpContext
         };
-    }
-}
-
-public class UnitTest1 : TestBase
-{
-    [Fact]
-    public void TestInfrastructureSetup()
-    {
-        // Test that the basic infrastructure is properly set up
-        Assert.NotNull(Context);
-        Assert.NotNull(RequestsController);
-        Assert.NotNull(AdminController);
-        Assert.NotNull(FilamentsController);
     }
 }

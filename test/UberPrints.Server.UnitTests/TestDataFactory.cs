@@ -41,6 +41,7 @@ public static class TestDataFactory
       string modelUrl = "https://example.com/model.stl",
       string? notes = null,
       bool requestDelivery = true,
+      bool isPublic = true,
       Guid? filamentId = null,
       RequestStatusEnum status = RequestStatusEnum.Pending,
       Filament? filament = null)
@@ -54,6 +55,7 @@ public static class TestDataFactory
       ModelUrl = modelUrl,
       Notes = notes,
       RequestDelivery = requestDelivery,
+      IsPublic = isPublic,
       FilamentId = filamentId ?? Guid.NewGuid(),
       CurrentStatus = status,
       CreatedAt = DateTime.UtcNow,
@@ -136,11 +138,12 @@ public static class TestDataFactory
   }
 
   public static CreatePrintRequestDto CreatePrintRequestDto(
-      Guid filamentId,
+      Guid? filamentId = null,
       string requesterName = "Test User",
       string? modelUrl = null,
       string? notes = null,
-      bool requestDelivery = true)
+      bool requestDelivery = true,
+      bool isPublic = true)
   {
     return new CreatePrintRequestDto
     {
@@ -148,6 +151,7 @@ public static class TestDataFactory
       ModelUrl = modelUrl ?? "https://example.com/model.stl",
       Notes = notes ?? "Test request",
       RequestDelivery = requestDelivery,
+      IsPublic = isPublic,
       FilamentId = filamentId
     };
   }

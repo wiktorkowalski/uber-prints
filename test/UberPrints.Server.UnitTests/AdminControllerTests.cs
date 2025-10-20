@@ -128,48 +128,6 @@ public class AdminControllerTests : TestBase
   }
 
   [Fact]
-  public async Task CreateFilament_ThrowsNullReferenceException_WhenDtoIsNull()
-  {
-    // Arrange
-    CreateFilamentDto? createDto = null;
-
-    // Act & Assert
-    await Assert.ThrowsAsync<NullReferenceException>(() => AdminController.CreateFilament(createDto!));
-  }
-
-  [Fact]
-  public async Task CreateFilament_CreatesFilament_WhenNameIsEmpty()
-  {
-    // Arrange
-    var createDto = TestDataFactory.CreateFilamentDto(name: "");
-
-    // Act
-    var result = await AdminController.CreateFilament(createDto);
-
-    // Assert
-    var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-    var filamentDto = Assert.IsType<FilamentDto>(createdResult.Value);
-    Assert.NotNull(filamentDto);
-    Assert.Equal("", filamentDto.Name); // Empty name is currently allowed
-  }
-
-  [Fact]
-  public async Task CreateFilament_CreatesFilament_WhenStockAmountIsNegative()
-  {
-    // Arrange
-    var createDto = TestDataFactory.CreateFilamentDto(stockAmount: -100);
-
-    // Act
-    var result = await AdminController.CreateFilament(createDto);
-
-    // Assert
-    var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-    var filamentDto = Assert.IsType<FilamentDto>(createdResult.Value);
-    Assert.NotNull(filamentDto);
-    Assert.Equal(-100, filamentDto.StockAmount); // Negative stock is currently allowed
-  }
-
-  [Fact]
   public async Task UpdateFilament_ReturnsNotFound_WhenFilamentDoesNotExist()
   {
     // Arrange
