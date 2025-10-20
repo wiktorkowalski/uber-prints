@@ -380,4 +380,543 @@ public class AdminControllerTests : IntegrationTestBase
 
   #endregion
 
+  #region Admin Update Print Request Tests
+
+  [Fact]
+  public async Task AdminUpdateRequest_UpdatesAllFields_WhenValidDataProvided()
+  {
+    // Arrange - Create initial request
+    var filament1Dto = TestDataFactory.CreateFilamentDto(name: "Filament 1");
+    var filament1Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament1Dto);
+    var filament1 = await filament1Response.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament1);
+
+    var filament2Dto = TestDataFactory.CreateFilamentDto(name: "Filament 2");
+    var filament2Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament2Dto);
+    var filament2 = await filament2Response.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament2);
+
+    var requestDto = TestDataFactory.CreatePrintRequestDto(filament1.Id, "Original Name");
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    // Admin updates the request
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = "Admin Updated Name",
+      ModelUrl = "https://example.com/admin-updated-model.stl",
+      Notes = "Admin updated notes",
+      RequestDelivery = false,
+      IsPublic = false,
+      FilamentId = filament2.Id
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(createdRequest.Id, updatedRequest.Id);
+    Assert.Equal("Admin Updated Name", updatedRequest.RequesterName);
+    Assert.Equal("https://example.com/admin-updated-model.stl", updatedRequest.ModelUrl);
+    Assert.Equal("Admin updated notes", updatedRequest.Notes);
+    Assert.False(updatedRequest.RequestDelivery);
+    Assert.False(updatedRequest.IsPublic);
+    Assert.Equal(filament2.Id, updatedRequest.FilamentId);
+  }
+
+  [Fact]
+  public async Task AdminUpdateRequest_CanSetFilamentIdToNull()
+  {
+    // Arrange - Create request with filament
+    var filamentDto = TestDataFactory.CreateFilamentDto();
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament);
+
+    var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(createdRequest);
+    Assert.NotNull(createdRequest.FilamentId);
+
+    // Admin removes filament
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = createdRequest.RequesterName,
+      ModelUrl = createdRequest.ModelUrl,
+      Notes = createdRequest.Notes,
+      RequestDelivery = createdRequest.RequestDelivery,
+      IsPublic = createdRequest.IsPublic,
+      FilamentId = null // Remove filament
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Null(updatedRequest.FilamentId);
+    Assert.Null(updatedRequest.FilamentName);
+  }
+
+  [Fact]
+  public async Task AdminUpdateRequest_UpdatesIsPublicFlag()
+  {
+    // Arrange - Create public request
+    var filamentDto = TestDataFactory.CreateFilamentDto();
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament);
+
+    var requestDto = new CreatePrintRequestDto
+    {
+      RequesterName = "Test User",
+      ModelUrl = "https://example.com/model.stl",
+      Notes = "Test request",
+      RequestDelivery = true,
+      IsPublic = true,
+      FilamentId = filament.Id
+    };
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(createdRequest);
+    Assert.True(createdRequest.IsPublic);
+
+    // Admin makes it private
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = createdRequest.RequesterName,
+      ModelUrl = createdRequest.ModelUrl,
+      Notes = createdRequest.Notes,
+      RequestDelivery = createdRequest.RequestDelivery,
+      IsPublic = false, // Change to private
+      FilamentId = createdRequest.FilamentId
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.False(updatedRequest.IsPublic);
+  }
+
+  [Fact]
+  public async Task AdminUpdateRequest_UpdatesRequestDeliveryFlag()
+  {
+    // Arrange
+    var filamentDto = TestDataFactory.CreateFilamentDto();
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament);
+
+    var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    var originalDeliveryValue = createdRequest.RequestDelivery;
+
+    // Admin toggles delivery flag
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = createdRequest.RequesterName,
+      ModelUrl = createdRequest.ModelUrl,
+      Notes = createdRequest.Notes,
+      RequestDelivery = !originalDeliveryValue, // Toggle
+      IsPublic = createdRequest.IsPublic,
+      FilamentId = createdRequest.FilamentId
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(!originalDeliveryValue, updatedRequest.RequestDelivery);
+  }
+
+  [Fact]
+  public async Task AdminUpdateRequest_ReturnsNotFound_WhenRequestDoesNotExist()
+  {
+    // Arrange
+    var nonExistentId = Guid.NewGuid();
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = "Name",
+      ModelUrl = "https://example.com/model.stl",
+      Notes = "Notes",
+      RequestDelivery = true,
+      IsPublic = true,
+      FilamentId = null
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{nonExistentId}", updateDto);
+
+    // Assert
+    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task AdminUpdateRequest_ReturnsBadRequest_WhenFilamentIdIsInvalid()
+  {
+    // Arrange - Create request
+    var filamentDto = TestDataFactory.CreateFilamentDto();
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament);
+
+    var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    // Admin tries to set invalid filament
+    var nonExistentFilamentId = Guid.NewGuid();
+    var updateDto = new UpdatePrintRequestAdminDto
+    {
+      RequesterName = createdRequest.RequesterName,
+      ModelUrl = createdRequest.ModelUrl,
+      Notes = createdRequest.Notes,
+      RequestDelivery = createdRequest.RequestDelivery,
+      IsPublic = createdRequest.IsPublic,
+      FilamentId = nonExistentFilamentId // Invalid filament ID
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+
+    // Assert
+    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    var errorMessage = await response.Content.ReadAsStringAsync();
+    Assert.Contains("Invalid filament selected", errorMessage);
+  }
+
+  #endregion
+
+  #region Admin Filament Requests Tests
+
+  [Fact]
+  public async Task GetAllFilamentRequests_ReturnsEmptyList_WhenNoRequestsExist()
+  {
+    // Act
+    var response = await Client.GetAsync("/api/admin/filament-requests");
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    Assert.NotNull(requests);
+    Assert.Empty(requests);
+  }
+
+  [Fact]
+  public async Task GetAllFilamentRequests_ReturnsAllRequests_WhenRequestsExist()
+  {
+    // Arrange - Create filament requests
+    await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "User A",
+      Material = "PLA",
+      Brand = "Brand A",
+      Colour = "Red"
+    });
+
+    await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "User B",
+      Material = "PETG",
+      Brand = "Brand B",
+      Colour = "Blue"
+    });
+
+    await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "User C",
+      Material = "ABS",
+      Brand = "Brand C",
+      Colour = "Green"
+    });
+
+    // Act
+    var response = await Client.GetAsync("/api/admin/filament-requests");
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    Assert.NotNull(requests);
+    Assert.Equal(3, requests.Count);
+    Assert.Contains(requests, r => r.RequesterName == "User A");
+    Assert.Contains(requests, r => r.RequesterName == "User B");
+    Assert.Contains(requests, r => r.RequesterName == "User C");
+  }
+
+  [Fact]
+  public async Task GetAllFilamentRequests_ReturnsRequestsOrderedByCreatedAtDescending()
+  {
+    // Arrange - Create requests with slight delays
+    var request1Response = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "First",
+      Material = "PLA",
+      Brand = "Brand",
+      Colour = "Red"
+    });
+    var request1 = await request1Response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+
+    await Task.Delay(10); // Small delay to ensure different timestamps
+
+    var request2Response = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Second",
+      Material = "PETG",
+      Brand = "Brand",
+      Colour = "Blue"
+    });
+    var request2 = await request2Response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+
+    await Task.Delay(10);
+
+    var request3Response = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Third",
+      Material = "ABS",
+      Brand = "Brand",
+      Colour = "Green"
+    });
+    var request3 = await request3Response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+
+    // Act
+    var response = await Client.GetAsync("/api/admin/filament-requests");
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    Assert.NotNull(requests);
+    Assert.Equal(3, requests.Count);
+    // Should be ordered newest first
+    Assert.Equal("Third", requests[0].RequesterName);
+    Assert.Equal("Second", requests[1].RequesterName);
+    Assert.Equal("First", requests[2].RequesterName);
+  }
+
+  [Fact]
+  public async Task GetAllFilamentRequests_IncludesStatusHistory()
+  {
+    // Arrange - Create and update a filament request
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Test User",
+      Material = "PLA",
+      Brand = "Test Brand",
+      Colour = "White"
+    });
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    // Change status
+    await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Approved,
+      Reason = "Approved for purchase"
+    });
+
+    // Act
+    var response = await Client.GetAsync("/api/admin/filament-requests");
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    Assert.NotNull(requests);
+    var request = Assert.Single(requests);
+    Assert.NotNull(request.StatusHistory);
+    Assert.Equal(2, request.StatusHistory.Count); // Initial Pending + Approved
+  }
+
+  [Fact]
+  public async Task ChangeFilamentRequestStatus_UpdatesStatusToApproved()
+  {
+    // Arrange
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Test User",
+      Material = "PLA",
+      Brand = "Prusament",
+      Colour = "Galaxy Black"
+    });
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(createdRequest);
+    Assert.Equal(FilamentRequestStatusEnum.Pending, createdRequest.CurrentStatus);
+
+    var statusDto = new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Approved,
+      Reason = "Great choice, we'll order this"
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(FilamentRequestStatusEnum.Approved, updatedRequest.CurrentStatus);
+    Assert.Equal(2, updatedRequest.StatusHistory.Count);
+
+    var latestHistory = updatedRequest.StatusHistory.OrderByDescending(h => h.CreatedAt).First();
+    Assert.Equal(FilamentRequestStatusEnum.Approved, latestHistory.Status);
+    Assert.Equal("Great choice, we'll order this", latestHistory.Reason);
+  }
+
+  [Fact]
+  public async Task ChangeFilamentRequestStatus_UpdatesStatusToRejected()
+  {
+    // Arrange
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Test User",
+      Material = "Expensive Material",
+      Brand = "Premium Brand",
+      Colour = "Gold"
+    });
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    var statusDto = new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Rejected,
+      Reason = "Too expensive for our budget"
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(FilamentRequestStatusEnum.Rejected, updatedRequest.CurrentStatus);
+
+    var latestHistory = updatedRequest.StatusHistory.OrderByDescending(h => h.CreatedAt).First();
+    Assert.Equal("Too expensive for our budget", latestHistory.Reason);
+  }
+
+  [Fact]
+  public async Task ChangeFilamentRequestStatus_LinksFilamentWhenApproved()
+  {
+    // Arrange - Create a filament
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000));
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    Assert.NotNull(filament);
+
+    // Create filament request
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Test User",
+      Material = "PLA",
+      Brand = "Test Brand",
+      Colour = "Blue"
+    });
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(createdRequest);
+    Assert.Null(createdRequest.FilamentId);
+
+    // Approve and link filament
+    var statusDto = new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Approved,
+      FilamentId = filament.Id,
+      Reason = "Linked to existing filament"
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(FilamentRequestStatusEnum.Approved, updatedRequest.CurrentStatus);
+    Assert.Equal(filament.Id, updatedRequest.FilamentId);
+    Assert.Equal(filament.Name, updatedRequest.FilamentName);
+  }
+
+  [Fact]
+  public async Task ChangeFilamentRequestStatus_TracksMultipleStatusChanges()
+  {
+    // Arrange
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
+    {
+      RequesterName = "Test User",
+      Material = "PLA",
+      Brand = "Brand",
+      Colour = "Red"
+    });
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(createdRequest);
+
+    // Act - Multiple status changes
+    await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Pending,
+      Reason = "Needs more info"
+    });
+
+    await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Approved,
+      Reason = "Info received, approved"
+    });
+
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Received,
+      Reason = "Filament purchased and added to inventory"
+    });
+
+    // Assert
+    response.EnsureSuccessStatusCode();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    Assert.NotNull(updatedRequest);
+    Assert.Equal(FilamentRequestStatusEnum.Received, updatedRequest.CurrentStatus);
+    Assert.Equal(4, updatedRequest.StatusHistory.Count); // Initial + 3 changes
+
+    var statuses = updatedRequest.StatusHistory.OrderBy(h => h.CreatedAt).Select(h => h.Status).ToList();
+    Assert.Equal(FilamentRequestStatusEnum.Pending, statuses[0]);
+    Assert.Equal(FilamentRequestStatusEnum.Pending, statuses[1]);
+    Assert.Equal(FilamentRequestStatusEnum.Approved, statuses[2]);
+    Assert.Equal(FilamentRequestStatusEnum.Received, statuses[3]);
+  }
+
+  [Fact]
+  public async Task ChangeFilamentRequestStatus_ReturnsNotFound_WhenRequestDoesNotExist()
+  {
+    // Arrange
+    var nonExistentId = Guid.NewGuid();
+    var statusDto = new ChangeFilamentRequestStatusDto
+    {
+      Status = FilamentRequestStatusEnum.Approved,
+      Reason = "Test"
+    };
+
+    // Act
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{nonExistentId}/status", statusDto);
+
+    // Assert
+    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+  }
+
+  #endregion
+
 }

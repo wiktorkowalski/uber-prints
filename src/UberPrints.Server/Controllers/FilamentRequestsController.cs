@@ -180,9 +180,13 @@ public class FilamentRequestsController : ControllerBase
         if (!string.IsNullOrEmpty(guestToken))
         {
           var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
-          if (user == null || request.UserId != user.Id)
+          if (user == null)
           {
-            return Forbid(); // Guest session exists but doesn't own this request
+            return Unauthorized(); // Invalid guest token
+          }
+          if (request.UserId != user.Id)
+          {
+            return Forbid(); // Valid guest token but doesn't own this request
           }
           // Guest owns the request, continue
         }
