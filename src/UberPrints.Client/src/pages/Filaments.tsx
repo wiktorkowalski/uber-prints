@@ -4,7 +4,8 @@ import { FilamentDto } from '../types/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Skeleton } from '../components/ui/skeleton';
+import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Package, ExternalLink, AlertCircle } from 'lucide-react';
 
@@ -54,16 +55,23 @@ export const Filaments = () => {
                   <span className="px-2 py-1 bg-muted rounded">{filament.colour}</span>
                 </div>
               </div>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 min-w-[120px]">
                 {filament.stockAmount <= 0 ? (
                   <Badge variant="destructive" className="flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Out of Stock
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="whitespace-nowrap">
-                    {filament.stockAmount} {filament.stockUnit} available
-                  </Badge>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Stock</span>
+                      <span className="font-medium">{filament.stockAmount} {filament.stockUnit}</span>
+                    </div>
+                    <Progress
+                      value={Math.min((filament.stockAmount / 1000) * 100, 100)}
+                      className="h-2"
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -86,7 +94,39 @@ export const Filaments = () => {
   );
 
   if (loading) {
-    return <LoadingSpinner message="Loading filaments..." />;
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <Skeleton className="h-10 w-64 mx-auto" />
+          <Skeleton className="h-4 w-96 mx-auto" />
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="w-24 h-24 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-6 w-48" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-6 w-16" />
+                          <Skeleton className="h-6 w-16" />
+                          <Skeleton className="h-6 w-16" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-6 w-24" />
+                    </div>
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {

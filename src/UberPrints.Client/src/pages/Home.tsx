@@ -3,6 +3,7 @@ import { Button } from '../components/ui/button';
 import { Package, Search, User, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { getDisplayName } from '../lib/utils';
+import { Separator } from '../components/ui/separator';
 
 export const Home = () => {
   const { isAuthenticated, user } = useAuth();
@@ -32,6 +33,8 @@ export const Home = () => {
           </Link>
         </div>
       </section>
+
+      <Separator />
 
       {/* Features Section */}
       <section className="grid md:grid-cols-3 gap-8 py-8">
@@ -65,6 +68,8 @@ export const Home = () => {
           </p>
         </div>
       </section>
+
+      <Separator />
 
       {/* User-specific Section */}
       {isAuthenticated && user ? (

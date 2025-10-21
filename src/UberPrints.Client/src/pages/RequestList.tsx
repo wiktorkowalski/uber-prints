@@ -5,7 +5,8 @@ import { PrintRequestDto, RequestStatusEnum } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Skeleton } from '../components/ui/skeleton';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../components/ui/hover-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ExternalLink, Package, User } from 'lucide-react';
@@ -47,7 +48,31 @@ export const RequestList = () => {
   const myRequestsCount = user ? getRequestsByStatus('mine').length : 0;
 
   if (loading) {
-    return <LoadingSpinner message="Loading requests..." />;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border rounded-lg p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -79,33 +104,55 @@ export const RequestList = () => {
             key={request.id}
             className="border rounded-lg p-6 hover:border-primary transition-colors"
           >
-            <Link to={`/request/${request.id}`} className="block">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-xl font-semibold">
-                      {request.requesterName}
-                    </h3>
-                    {user && request.userId === user.id && (
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        Your request
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatRelativeTime(request.createdAt)}
-                  </p>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Link to={`/request/${request.id}`}>
+                        <h3 className="text-xl font-semibold hover:text-primary transition-colors">
+                          {request.requesterName}
+                        </h3>
+                      </Link>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-semibold">Request Details</h4>
+                        <div className="text-sm space-y-1">
+                          <p><span className="text-muted-foreground">ID:</span> {request.id.slice(0, 8)}...</p>
+                          <p><span className="text-muted-foreground">Requester:</span> {request.requesterName}</p>
+                          {request.filamentName && (
+                            <p><span className="text-muted-foreground">Filament:</span> {request.filamentName}</p>
+                          )}
+                          <p><span className="text-muted-foreground">Delivery:</span> {request.requestDelivery ? 'Yes' : 'No'}</p>
+                          {request.notes && (
+                            <p className="pt-1"><span className="text-muted-foreground">Notes:</span><br/>{request.notes.slice(0, 100)}{request.notes.length > 100 ? '...' : ''}</p>
+                          )}
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                  {user && request.userId === user.id && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      Your request
+                    </Badge>
+                  )}
                 </div>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    request.currentStatus
-                  )}`}
-                >
-                  {getStatusLabel(request.currentStatus)}
-                </span>
+                <p className="text-sm text-muted-foreground">
+                  {formatRelativeTime(request.createdAt)}
+                </p>
               </div>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                  request.currentStatus
+                )}`}
+              >
+                {getStatusLabel(request.currentStatus)}
+              </span>
+            </div>
 
+            <Link to={`/request/${request.id}`} className="block">
               <div className="space-y-2 text-sm">
                 {request.filamentName && (
                   <div className="text-muted-foreground">
@@ -123,19 +170,20 @@ export const RequestList = () => {
                   </p>
                 )}
               </div>
-            </Link>
 
-            <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              <a
-                href={sanitizeUrl(request.modelUrl)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-primary truncate"
-              >
-                {request.modelUrl}
-              </a>
-            </div>
+              <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                <a
+                  href={sanitizeUrl(request.modelUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary truncate"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {request.modelUrl}
+                </a>
+              </div>
+            </Link>
           </div>
         ))}
       </div>

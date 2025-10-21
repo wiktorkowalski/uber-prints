@@ -12,7 +12,9 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Skeleton } from '../components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Package, Clock, CheckCircle2 } from 'lucide-react';
@@ -103,7 +105,39 @@ export const NewRequest = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading form..." />;
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <Skeleton className="h-10 w-64 mx-auto" />
+          <Skeleton className="h-4 w-96 mx-auto" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-72" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+            <Skeleton className="h-16 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (filaments.length === 0) {
@@ -199,7 +233,19 @@ export const NewRequest = () => {
                 name="filamentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Filament (Optional)</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Filament (Optional)</FormLabel>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Select a filament material and color. If you're not sure, leave it blank and an admin will choose the best option for your print.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Select
                       onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
                       defaultValue={field.value || 'none'}
@@ -313,10 +359,22 @@ export const NewRequest = () => {
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Make request public
-                      </FormLabel>
+                    <div className="space-y-1 leading-none flex-1">
+                      <div className="flex items-center gap-2">
+                        <FormLabel>
+                          Make request public
+                        </FormLabel>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">Public requests appear in the public request list. Private requests are only visible to you and administrators.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                       <FormDescription>
                         Public requests are visible to everyone. Uncheck to make this request private (only you and admins can view it)
                       </FormDescription>

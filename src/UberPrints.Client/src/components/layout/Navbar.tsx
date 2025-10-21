@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useState } from 'react';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -9,12 +10,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard, PackagePlus } from 'lucide-react';
+import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard, PackagePlus, Menu } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getDisplayName } from '../../lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
 
 export const Navbar = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogin = () => {
     window.location.href = api.getDiscordLoginUrl();
@@ -25,6 +29,23 @@ export const Navbar = () => {
     window.location.href = '/';
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
+
+  const getAvatarUrl = (userData: { discordId?: string; avatarHash?: string } | null) => {
+    if (!userData) return undefined;
+    if (userData.discordId && userData.avatarHash) {
+      return `https://cdn.discordapp.com/avatars/${userData.discordId}/${userData.avatarHash}.png`;
+    }
+    return undefined;
+  };
+
   return (
     <nav className="border-b bg-background">
       <div className="container mx-auto px-4 py-3">
@@ -33,6 +54,72 @@ export const Navbar = () => {
             <Link to="/" className="flex items-center space-x-2">
               <span className="text-2xl font-bold text-primary">UberPrints</span>
             </Link>
+
+            {/* Mobile Menu Button */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="md:hidden">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px]">
+                <SheetHeader>
+                  <SheetTitle className="text-primary">UberPrints</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-4 mt-6">
+                  <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Home className="w-4 h-4 mr-2" />
+                      Home
+                    </Button>
+                  </Link>
+                  <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/filaments" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Palette className="w-4 h-4 mr-2" />
+                      Filaments
+                    </Button>
+                  </Link>
+                  <Link to="/filament-requests" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <PackagePlus className="w-4 h-4 mr-2" />
+                      Request Filament
+                    </Button>
+                  </Link>
+                  <Link to="/requests" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <List className="w-4 h-4 mr-2" />
+                      All Requests
+                    </Button>
+                  </Link>
+                  <Link to="/request/new" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Request
+                    </Button>
+                  </Link>
+                  <Link to="/track" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Search className="w-4 h-4 mr-2" />
+                      Track
+                    </Button>
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
 
             <div className="hidden md:flex items-center space-x-4">
               <Link to="/">
@@ -94,8 +181,13 @@ export const Navbar = () => {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <User className="w-4 h-4 mr-2" />
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={getAvatarUrl(user)} alt={getDisplayName(user)} />
+                        <AvatarFallback className="text-xs">
+                          {getInitials(getDisplayName(user))}
+                        </AvatarFallback>
+                      </Avatar>
                       {getDisplayName(user)}
                     </Button>
                   </DropdownMenuTrigger>

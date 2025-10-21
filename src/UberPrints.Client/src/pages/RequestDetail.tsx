@@ -7,7 +7,26 @@ import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Skeleton } from '../components/ui/skeleton';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../components/ui/breadcrumb';
+import { ScrollArea } from '../components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2 } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
@@ -22,6 +41,7 @@ export const RequestDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [statusDialogRequest, setStatusDialogRequest] = useState<PrintRequestDto | null>(null);
   const [editDialogRequest, setEditDialogRequest] = useState<PrintRequestDto | null>(null);
 
@@ -47,9 +67,7 @@ export const RequestDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (!request || !window.confirm('Are you sure you want to delete this request?')) {
-      return;
-    }
+    if (!request) return;
 
     try {
       setDeleting(true);
@@ -69,6 +87,7 @@ export const RequestDetail = () => {
       });
     } finally {
       setDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -79,7 +98,64 @@ export const RequestDetail = () => {
   const canDelete = isAuthenticated && user && request?.userId === user.id;
 
   if (loading) {
-    return <LoadingSpinner message="Loading request..." />;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-24" />
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-32" />
+            <Skeleton className="h-9 w-32" />
+          </div>
+        </div>
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-7 w-24" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-48" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-6 w-full" />
+            </div>
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-4 pb-4 border-b">
+                  <Skeleton className="w-2 h-2 rounded-full mt-2" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (error || !request) {
@@ -102,12 +178,25 @@ export const RequestDetail = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/requests">Requests</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Request #{request.id.slice(0, 8)}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate(-1)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
 
         <div className="flex gap-2">
           {user?.isAdmin && (
@@ -143,14 +232,10 @@ export const RequestDetail = () => {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleDelete}
+                onClick={() => setDeleteDialogOpen(true)}
                 disabled={deleting}
               >
-                {deleting ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4 mr-2" />
-                )}
+                <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>
             </>
@@ -280,10 +365,11 @@ export const RequestDetail = () => {
               No status changes yet
             </p>
           ) : (
-            <div className="space-y-4">
-              {request.statusHistory
-                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                .map((history) => (
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {request.statusHistory
+                  .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                  .map((history) => (
                   <div
                     key={history.id}
                     className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"
@@ -316,7 +402,8 @@ export const RequestDetail = () => {
                     </div>
                   </div>
                 ))}
-            </div>
+              </div>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
@@ -335,6 +422,35 @@ export const RequestDetail = () => {
         onOpenChange={(open) => !open && setStatusDialogRequest(null)}
         onSuccess={handleDialogSuccess}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this print request? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

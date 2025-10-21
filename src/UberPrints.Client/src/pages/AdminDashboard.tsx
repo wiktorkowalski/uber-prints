@@ -12,7 +12,20 @@ import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
+import { Skeleton } from '../components/ui/skeleton';
+import { Progress } from '../components/ui/progress';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
@@ -84,6 +97,9 @@ export const AdminDashboard = () => {
   const [filamentRequestReason, setFilamentRequestReason] = useState('');
   const [selectedFilamentForRequest, setSelectedFilamentForRequest] = useState<string>('');
   const [updatingFilamentRequest, setUpdatingFilamentRequest] = useState(false);
+  const [deleteFilamentDialogOpen, setDeleteFilamentDialogOpen] = useState(false);
+  const [filamentToDelete, setFilamentToDelete] = useState<FilamentDto | null>(null);
+  const [deletingFilament, setDeletingFilament] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -286,13 +302,12 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteFilament = async (filament: FilamentDto) => {
-    if (!window.confirm(`Are you sure you want to delete ${filament.name}?`)) {
-      return;
-    }
+  const handleDeleteFilament = async () => {
+    if (!filamentToDelete) return;
 
     try {
-      await api.deleteFilament(filament.id);
+      setDeletingFilament(true);
+      await api.deleteFilament(filamentToDelete.id);
       toast({
         title: "Filament deleted",
         description: "Filament has been removed from inventory",
@@ -306,6 +321,10 @@ export const AdminDashboard = () => {
         description: err.response?.data?.message || 'Could not delete filament',
         variant: "destructive",
       });
+    } finally {
+      setDeletingFilament(false);
+      setDeleteFilamentDialogOpen(false);
+      setFilamentToDelete(null);
     }
   };
 
@@ -318,7 +337,46 @@ export const AdminDashboard = () => {
   const completedCount = getRequestsByStatus(RequestStatusEnum.Completed).length;
 
   if (loading) {
-    return <LoadingSpinner message="Loading admin panel..." />;
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-4 w-96 mt-1" />
+        </div>
+        <div className="grid md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-8 w-16" />
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Skeleton className="h-9 w-24" />
+                      <Skeleton className="h-9 w-32" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -440,7 +498,21 @@ export const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               {filamentsLoading ? (
-                <LoadingSpinner message="Loading filaments..." />
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="border rounded-lg p-4 flex items-start gap-4">
+                      <Skeleton className="w-20 h-20 rounded" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-6 w-48" />
+                        <Skeleton className="h-4 w-64" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-9 w-20" />
+                        <Skeleton className="h-9 w-9" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : filaments.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -475,16 +547,23 @@ export const AdminDashboard = () => {
                               {filament.brand} • {filament.material} • {filament.colour}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="min-w-[140px]">
                             {filament.stockAmount <= 0 ? (
                               <Badge variant="destructive" className="flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
                                 Out of Stock
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">
-                                {filament.stockAmount} {filament.stockUnit}
-                              </Badge>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs">
+                                  <span className="text-muted-foreground">Stock</span>
+                                  <span className="font-medium">{filament.stockAmount} {filament.stockUnit}</span>
+                                </div>
+                                <Progress
+                                  value={Math.min((filament.stockAmount / 1000) * 100, 100)}
+                                  className="h-2"
+                                />
+                              </div>
                             )}
                           </div>
                         </div>
@@ -512,7 +591,10 @@ export const AdminDashboard = () => {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteFilament(filament)}
+                          onClick={() => {
+                            setFilamentToDelete(filament);
+                            setDeleteFilamentDialogOpen(true);
+                          }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -538,8 +620,19 @@ export const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               {filamentRequestsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <LoadingSpinner className="w-6 h-6" />
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-6 w-64" />
+                          <Skeleton className="h-4 w-48" />
+                        </div>
+                        <Skeleton className="h-6 w-20" />
+                      </div>
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
                 </div>
               ) : filamentRequests.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
@@ -586,34 +679,37 @@ export const AdminDashboard = () => {
                           </p>
                         )}
                         {request.statusHistory.length > 1 && (
-                          <details className="mt-2">
-                            <summary className="text-sm cursor-pointer text-muted-foreground hover:text-foreground">
+                          <Collapsible className="mt-2">
+                            <CollapsibleTrigger className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground hover:text-foreground">
+                              <ChevronDown className="w-4 h-4 transition-transform ui-state-open:rotate-180" />
                               Status History ({request.statusHistory.length})
-                            </summary>
-                            <div className="mt-2 space-y-1 pl-4 border-l-2">
-                              {request.statusHistory.map((history) => (
-                                <div key={history.id} className="text-sm">
-                                  <Badge variant="outline" className="mr-2">
-                                    {getFilamentRequestStatusLabel(history.status)}
-                                  </Badge>
-                                  {history.changedByUsername && (
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <div className="mt-2 space-y-1 pl-4 border-l-2">
+                                {request.statusHistory.map((history) => (
+                                  <div key={history.id} className="text-sm">
+                                    <Badge variant="outline" className="mr-2">
+                                      {getFilamentRequestStatusLabel(history.status)}
+                                    </Badge>
+                                    {history.changedByUsername && (
+                                      <span className="text-muted-foreground">
+                                        by {history.changedByUsername}
+                                      </span>
+                                    )}
+                                    {' • '}
                                     <span className="text-muted-foreground">
-                                      by {history.changedByUsername}
+                                      {formatRelativeTime(history.createdAt)}
                                     </span>
-                                  )}
-                                  {' • '}
-                                  <span className="text-muted-foreground">
-                                    {formatRelativeTime(history.createdAt)}
-                                  </span>
-                                  {history.reason && (
-                                    <p className="text-muted-foreground italic mt-1">
-                                      {history.reason}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </details>
+                                    {history.reason && (
+                                      <p className="text-muted-foreground italic mt-1">
+                                        {history.reason}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </CollapsibleContent>
+                          </Collapsible>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -789,6 +885,35 @@ export const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Filament Confirmation Dialog */}
+      <AlertDialog open={deleteFilamentDialogOpen} onOpenChange={setDeleteFilamentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Filament</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {filamentToDelete?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingFilament}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteFilament}
+              disabled={deletingFilament}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingFilament ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Filament Request Status Change Dialog */}
       <Dialog open={selectedFilamentRequest !== null} onOpenChange={(open) => !open && setSelectedFilamentRequest(null)}>

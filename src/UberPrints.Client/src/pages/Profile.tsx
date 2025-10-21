@@ -5,8 +5,10 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { User, Edit2, Save, X } from 'lucide-react';
+import { Skeleton } from '../components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Separator } from '../components/ui/separator';
+import { User, Edit2, Save, X, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -74,7 +76,49 @@ export const Profile = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading profile..." />;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-4 w-96 mt-2" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center gap-4">
+              <Skeleton className="w-24 h-24 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!profile) {
@@ -86,7 +130,14 @@ export const Profile = () => {
   }
 
   const displayName = profile.globalName || profile.username;
-  const defaultAvatar = `https://cdn.discordapp.com/embed/avatars/0.png`;
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -118,11 +169,12 @@ export const Profile = () => {
         <CardContent className="space-y-6">
           {/* Avatar */}
           <div className="flex items-center gap-4">
-            <img
-              src={profile.avatarUrl || defaultAvatar}
-              alt={displayName}
-              className="w-24 h-24 rounded-full"
-            />
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={profile.avatarUrl || undefined} alt={displayName} />
+              <AvatarFallback className="text-2xl">
+                {getInitials(displayName)}
+              </AvatarFallback>
+            </Avatar>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Avatar</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -130,6 +182,8 @@ export const Profile = () => {
               </p>
             </div>
           </div>
+
+          <Separator />
 
           {/* Discord Username */}
           <div>
@@ -206,7 +260,7 @@ export const Profile = () => {
                 <Button type="submit" disabled={saveLoading}>
                   {saveLoading ? (
                     <>
-                      <LoadingSpinner className="mr-2" size="sm" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Saving...
                     </>
                   ) : (
