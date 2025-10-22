@@ -45,6 +45,9 @@ builder.Services.AddOptions<FrontendOptions>()
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // Trust all proxies (Cloudflare Tunnel)
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // Add services to the container.

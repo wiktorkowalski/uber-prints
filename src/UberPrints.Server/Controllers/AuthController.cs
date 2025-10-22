@@ -206,8 +206,9 @@ public class AuthController : ControllerBase
         authProperties);
 
     // Redirect to frontend auth callback with token
-    var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
-    var redirectUrl = $"{frontendUrl}/auth/callback?token={token}";
+    // Use the request's origin (scheme + host) to support both local dev and production
+    var origin = $"{Request.Scheme}://{Request.Host}";
+    var redirectUrl = $"{origin}/auth/callback?token={token}";
 
     // Append returnUrl if provided
     if (!string.IsNullOrEmpty(returnUrl))

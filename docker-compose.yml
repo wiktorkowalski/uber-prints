@@ -32,17 +32,17 @@ services:
       ConnectionStrings__DefaultConnection: "Host=database;Database=uberprints;Username=postgres;Password=${POSTGRES_PASSWORD:-your-strong-password-here}"
 
       # JWT Configuration
-      Jwt__SecretKey: ${JWT_SECRET_KEY:-your-secret-key-minimum-32-characters-long-change-this}
+      Jwt__SecretKey: ${Jwt__SecretKey:-your-secret-key-minimum-32-characters-long-change-this}
       Jwt__Issuer: "UberPrints"
       Jwt__Audience: "UberPrints"
       Jwt__ExpiryHours: "1"
 
       # Discord OAuth
-      Discord__ClientId: ${DISCORD_CLIENT_ID}
-      Discord__ClientSecret: ${DISCORD_CLIENT_SECRET}
+      Discord__ClientId: ${Discord__ClientId}
+      Discord__ClientSecret: ${Discord__ClientSecret}
 
       # Frontend URL (only needed for CORS in development)
-      Frontend__Url: ${FRONTEND_URL:-http://localhost:8080}
+      Frontend__Url: ${Frontend__Url:-http://localhost:8080}
 
       # ASP.NET Core
       ASPNETCORE_URLS: "http://+:8080"
