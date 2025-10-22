@@ -125,6 +125,7 @@ public class AdminController : ControllerBase
       StockUnit = dto.StockUnit,
       Link = dto.Link,
       PhotoUrl = dto.PhotoUrl,
+      IsAvailable = dto.IsAvailable,
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow
     };
@@ -171,6 +172,7 @@ public class AdminController : ControllerBase
     filament.StockUnit = dto.StockUnit;
     filament.Link = dto.Link;
     filament.PhotoUrl = dto.PhotoUrl;
+    filament.IsAvailable = dto.IsAvailable;
     filament.UpdatedAt = DateTime.UtcNow;
 
     await _context.SaveChangesAsync();

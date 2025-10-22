@@ -33,4 +33,6 @@ public class UpdateFilamentDto
   [Url]
   [MaxLength(500)]
   public string? PhotoUrl { get; set; }
+
+  public bool IsAvailable { get; set; }
 }

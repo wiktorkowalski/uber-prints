@@ -128,6 +128,7 @@ export interface CreateFilamentDto {
   stockUnit: string;
   link?: string;
   photoUrl?: string;
+  isAvailable?: boolean;
 }
 
 export interface UpdateFilamentDto {
@@ -139,6 +140,7 @@ export interface UpdateFilamentDto {
   stockUnit: string;
   link?: string;
   photoUrl?: string;
+  isAvailable: boolean;
 }
 
 export interface UpdateStockDto {

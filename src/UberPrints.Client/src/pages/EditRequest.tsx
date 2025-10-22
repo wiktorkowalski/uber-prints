@@ -20,7 +20,7 @@ import { ArrowLeft, Loader2, Edit2 } from 'lucide-react';
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   modelUrl: z.string().url('Must be a valid URL').max(500, 'URL must be less than 500 characters'),
-  notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional().or(z.literal('')),
+  notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
   requestDelivery: z.boolean(),
   isPublic: z.boolean(),
   filamentId: z.string().min(1, 'Please select a filament'),

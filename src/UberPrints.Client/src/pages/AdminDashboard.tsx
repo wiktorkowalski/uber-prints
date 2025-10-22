@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
@@ -85,6 +85,7 @@ export const AdminDashboard = () => {
     stockUnit: 'g',
     link: '',
     photoUrl: '',
+    isAvailable: true,
   });
   const [filamentSubmitting, setFilamentSubmitting] = useState(false);
 
@@ -100,6 +101,7 @@ export const AdminDashboard = () => {
   const [deleteFilamentDialogOpen, setDeleteFilamentDialogOpen] = useState(false);
   const [filamentToDelete, setFilamentToDelete] = useState<FilamentDto | null>(null);
   const [deletingFilament, setDeletingFilament] = useState(false);
+  const [creatingFilamentForRequest, setCreatingFilamentForRequest] = useState<FilamentRequestDto | null>(null);
 
   useEffect(() => {
     loadRequests();
@@ -148,6 +150,7 @@ export const AdminDashboard = () => {
 
   const openCreateFilamentDialog = () => {
     setEditingFilament(null);
+    setCreatingFilamentForRequest(null); // Clear any request tracking
     setFilamentFormData({
       name: '',
       material: '',
@@ -157,12 +160,14 @@ export const AdminDashboard = () => {
       stockUnit: 'g',
       link: '',
       photoUrl: '',
+      isAvailable: true,
     });
     setFilamentDialogOpen(true);
   };
 
   const openEditFilamentDialog = (filament: FilamentDto) => {
     setEditingFilament(filament);
+    setCreatingFilamentForRequest(null); // Clear any request tracking
     setFilamentFormData({
       name: filament.name,
       material: filament.material,
@@ -172,6 +177,7 @@ export const AdminDashboard = () => {
       stockUnit: filament.stockUnit,
       link: filament.link || '',
       photoUrl: filament.photoUrl || '',
+      isAvailable: filament.isAvailable,
     });
     setFilamentDialogOpen(true);
   };
@@ -187,12 +193,44 @@ export const AdminDashboard = () => {
           variant: "success",
         });
       } else {
-        await api.createFilament(filamentFormData);
+        const newFilament = await api.createFilament(filamentFormData);
         toast({
           title: "Filament created",
           description: "New filament has been added to inventory",
           variant: "success",
         });
+
+        // If this filament was created from a filament request, automatically link and approve it
+        if (creatingFilamentForRequest) {
+          try {
+            const statusData: ChangeFilamentRequestStatusDto = {
+              status: FilamentRequestStatusEnum.Approved,
+              filamentId: newFilament.id,
+              reason: 'Filament added to inventory',
+            };
+            await api.changeFilamentRequestStatus(creatingFilamentForRequest.id, statusData);
+
+            toast({
+              title: "Filament request approved",
+              description: "The filament request has been linked to the new filament and approved.",
+              variant: "success",
+            });
+
+            // Reload filament requests
+            setFilamentRequestsLoaded(false);
+            await loadFilamentRequests();
+
+            // Clear the tracking state
+            setCreatingFilamentForRequest(null);
+          } catch (err: any) {
+            console.error('Error auto-approving filament request:', err);
+            toast({
+              title: "Filament created but not linked",
+              description: "The filament was created but could not be automatically linked to the request.",
+              variant: "destructive",
+            });
+          }
+        }
       }
       setFilamentDialogOpen(false);
       await loadFilaments();
@@ -251,8 +289,10 @@ export const AdminDashboard = () => {
       stockUnit: 'g',
       link: request.link || '',
       photoUrl: '',
+      isAvailable: true,
     });
     setEditingFilament(null);
+    setCreatingFilamentForRequest(request); // Track that we're creating from a request
     setFilamentDialogOpen(true);
     // Close the status dialog
     setSelectedFilamentRequest(null);
@@ -541,8 +581,15 @@ export const AdminDashboard = () => {
                       )}
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold">{filament.name}</h3>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold">{filament.name}</h3>
+                              {!filament.isAvailable && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Hidden
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {filament.brand} • {filament.material} • {filament.colour}
                             </p>
@@ -673,10 +720,13 @@ export const AdminDashboard = () => {
                         {request.notes && (
                           <p className="text-sm text-muted-foreground mb-2">{request.notes}</p>
                         )}
-                        {request.filamentName && (
-                          <p className="text-sm text-green-600">
-                            Linked to filament: {request.filamentName}
-                          </p>
+                        {request.filamentId && request.filamentName && (
+                          <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                              In Stock: {request.filamentName}
+                            </p>
+                          </div>
                         )}
                         {request.statusHistory.length > 1 && (
                           <Collapsible className="mt-2">
@@ -712,15 +762,30 @@ export const AdminDashboard = () => {
                           </Collapsible>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        {!request.filamentId && (
+                      <div className="flex flex-col gap-2">
+                        {request.currentStatus === FilamentRequestStatusEnum.Pending && !request.filamentId && (
                           <Button
-                            variant="secondary"
-                            size="sm"
                             onClick={() => createFilamentFromRequest(request)}
+                            className="w-full"
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Create Filament
+                            Add to Stock
+                          </Button>
+                        )}
+                        {request.filamentId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const filament = filaments.find(f => f.id === request.filamentId);
+                              if (filament) {
+                                openEditFilamentDialog(filament);
+                              }
+                            }}
+                            disabled={!filaments.find(f => f.id === request.filamentId)}
+                          >
+                            <Package className="w-4 h-4 mr-2" />
+                            View in Stock
                           </Button>
                         )}
                         <Button
@@ -729,7 +794,7 @@ export const AdminDashboard = () => {
                           onClick={() => openFilamentRequestStatusDialog(request)}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          Update Status
+                          Change Status
                         </Button>
                       </div>
                     </div>
@@ -860,6 +925,22 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
+          <div className="flex items-center space-x-2 pt-2">
+            <input
+              type="checkbox"
+              id="isAvailable"
+              checked={filamentFormData.isAvailable ?? true}
+              onChange={(e) => setFilamentFormData({ ...filamentFormData, isAvailable: e.target.checked })}
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <Label htmlFor="isAvailable" className="text-sm font-medium cursor-pointer">
+              Available for selection in print requests
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            When enabled, users can select this filament when creating print requests. Disable to hide from selection (e.g., for discontinued or special-use filaments).
+          </p>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -946,37 +1027,42 @@ export const AdminDashboard = () => {
             </div>
 
             {newFilamentRequestStatus === FilamentRequestStatusEnum.Approved && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Link to Filament (Optional)</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => selectedFilamentRequest && createFilamentFromRequest(selectedFilamentRequest)}
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Link to Existing Filament (Optional)</Label>
+                  <Select
+                    value={selectedFilamentForRequest}
+                    onValueChange={setSelectedFilamentForRequest}
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create New
-                  </Button>
-                </div>
-                <Select
-                  value={selectedFilamentForRequest}
-                  onValueChange={setSelectedFilamentForRequest}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select filament or leave empty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">None - Create manually later</SelectItem>
-                    {filaments.map((filament) => (
-                      <SelectItem key={filament.id} value={filament.id}>
-                        {filament.name} ({filament.brand})
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select existing filament or add new to stock" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None - Add new to stock</SelectItem>
+                      {filaments.map((filament) => (
+                        <SelectItem key={filament.id} value={filament.id}>
+                          {filament.name} ({filament.brand})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-px bg-border flex-1" />
+                  <span className="text-xs text-muted-foreground">OR</span>
+                  <div className="h-px bg-border flex-1" />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => selectedFilamentRequest && createFilamentFromRequest(selectedFilamentRequest)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New to Stock
+                </Button>
                 <p className="text-xs text-muted-foreground">
-                  Link this request to an existing filament, or click "Create New" to add it to inventory now.
+                  Link to an existing filament or add a new one to your inventory.
                 </p>
               </div>
             )}

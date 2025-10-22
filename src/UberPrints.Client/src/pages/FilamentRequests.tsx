@@ -21,8 +21,11 @@ const formSchema = z.object({
   material: z.string().min(1, 'Material is required').max(50, 'Material must be less than 50 characters'),
   brand: z.string().min(1, 'Brand is required').max(100, 'Brand must be less than 100 characters'),
   colour: z.string().min(1, 'Colour is required').max(50, 'Colour must be less than 50 characters'),
-  link: z.string().url('Must be a valid URL').max(500, 'URL must be less than 500 characters').optional().or(z.literal('')),
-  notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional().or(z.literal('')),
+  link: z.union([
+    z.string().url('Must be a valid URL').max(500, 'URL must be less than 500 characters'),
+    z.literal('')
+  ]).optional(),
+  notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
