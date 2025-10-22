@@ -1,0 +1,82 @@
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:18-alpine
+    container_name: uberprints-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: uberprints
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-strong-password-here}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - uberprints-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ASP.NET Core Server (API + Frontend) - Using GitHub Container Registry Image
+  server:
+    # Replace 'yourusername' with your GitHub username or organization
+    image: ghcr.io/yourusername/uber-prints:latest
+    container_name: uberprints-server
+    restart: unless-stopped
+    environment:
+      # Database connection
+      ConnectionStrings__DefaultConnection: "Host=database;Database=uberprints;Username=postgres;Password=${POSTGRES_PASSWORD:-your-strong-password-here}"
+
+      # JWT Configuration
+      Jwt__SecretKey: ${Jwt__SecretKey:-your-secret-key-minimum-32-characters-long-change-this}
+      Jwt__Issuer: "UberPrints"
+      Jwt__Audience: "UberPrints"
+      Jwt__ExpiryHours: "1"
+
+      # Discord OAuth
+      Discord__ClientId: ${Discord__ClientId}
+      Discord__ClientSecret: ${Discord__ClientSecret}
+
+      # Frontend URL (only needed for CORS in development)
+      Frontend__Url: ${Frontend__Url:-http://localhost:8080}
+
+      # ASP.NET Core
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Production"
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - uberprints-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/filaments"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: uberprints-tunnel
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - server
+    networks:
+      - uberprints-network
+
+networks:
+  uberprints-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
