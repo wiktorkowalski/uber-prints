@@ -44,10 +44,12 @@
 
 ### Key Architectural Patterns
 - **RESTful API**: Clean separation between frontend and backend
-- **Repository Pattern**: Data access abstraction
-- **Service Layer**: Business logic encapsulation
-- **Dependency Injection**: Loose coupling and testability
-- **JWT Stateless Authentication**: Scalable authentication
+- **Controller-based Architecture**: Controllers handle HTTP requests directly with EF Core
+- **Service Layer**: Business logic for complex operations (e.g., `IChangeTrackingService`)
+- **Dependency Injection**: ASP.NET Core built-in DI container
+- **Dual Authentication**: JWT tokens for API + Cookies for session persistence
+- **Options Pattern**: Strongly-typed configuration with validation
+- **Include Pattern**: EF Core eager loading to avoid N+1 queries
 
 ## Database Schema
 
@@ -57,10 +59,12 @@
 ```csharp
 public class User
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? DiscordId { get; set; }
+    public string? GuestSessionToken { get; set; }
     public string Username { get; set; } = string.Empty;
-    public string? Email { get; set; }
+    public string? GlobalName { get; set; }
+    public string? AvatarHash { get; set; }
     public bool IsAdmin { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<PrintRequest> PrintRequests { get; set; } = new();
@@ -71,35 +75,39 @@ public class User
 ```csharp
 public class PrintRequest
 {
-    public int Id { get; set; }
-    public int? UserId { get; set; }
+    public Guid Id { get; set; }
+    public Guid? UserId { get; set; }
     public string? GuestTrackingToken { get; set; }
     public string RequesterName { get; set; } = string.Empty;
     public string ModelUrl { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public bool RequestDelivery { get; set; }
-    public int FilamentId { get; set; }
-    public int CurrentStatusId { get; set; }
+    public bool IsPublic { get; set; } = true;
+    public Guid? FilamentId { get; set; }
+    public RequestStatusEnum CurrentStatus { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     public User? User { get; set; }
-    public Filament Filament { get; set; } = null!;
-    public RequestStatus CurrentStatus { get; set; } = null!;
+    public Filament? Filament { get; set; }
     public List<StatusHistory> StatusHistory { get; set; } = new();
+    public List<PrintRequestChange> Changes { get; set; } = new();
 }
 ```
 
-#### RequestStatus
+#### RequestStatusEnum
 ```csharp
-public class RequestStatus
+public enum RequestStatusEnum
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-
-    public List<PrintRequest> PrintRequests { get; set; } = new();
-    public List<StatusHistory> StatusHistories { get; set; } = new();
+    Pending,
+    Accepted,
+    Rejected,
+    OnHold,
+    Paused,
+    WaitingForMaterials,
+    Delivering,
+    WaitingForPickup,
+    Completed
 }
 ```
 
@@ -107,15 +115,14 @@ public class RequestStatus
 ```csharp
 public class StatusHistory
 {
-    public int Id { get; set; }
-    public int RequestId { get; set; }
-    public int StatusId { get; set; }
-    public int? ChangedByUserId { get; set; }
+    public Guid Id { get; set; }
+    public Guid RequestId { get; set; }
+    public RequestStatusEnum Status { get; set; }
+    public Guid? ChangedByUserId { get; set; }
     public string? AdminNotes { get; set; }
     public DateTime Timestamp { get; set; }
 
     public PrintRequest Request { get; set; } = null!;
-    public RequestStatus Status { get; set; } = null!;
     public User? ChangedByUser { get; set; }
 }
 ```
@@ -124,7 +131,7 @@ public class StatusHistory
 ```csharp
 public class Filament
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Material { get; set; } = string.Empty;
     public string Brand { get; set; } = string.Empty;
@@ -133,16 +140,72 @@ public class Filament
     public string StockUnit { get; set; } = "grams";
     public string? Link { get; set; }
     public string? PhotoUrl { get; set; }
+    public bool IsAvailable { get; set; } = true;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     public List<PrintRequest> PrintRequests { get; set; } = new();
+    public List<FilamentRequest> FilamentRequests { get; set; } = new();
 }
 ```
 
-### Initial Data Seeding
+#### PrintRequestChange
+```csharp
+public class PrintRequestChange
+{
+    public Guid Id { get; set; }
+    public Guid PrintRequestId { get; set; }
+    public string FieldName { get; set; } = string.Empty;
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
+    public Guid? ChangedByUserId { get; set; }
+    public DateTime ChangedAt { get; set; }
 
-Initial data is seeded via EF Core migrations using the `OnModelCreating` method in `ApplicationDbContext`. This includes predefined request statuses and example filament data.
+    public PrintRequest PrintRequest { get; set; } = null!;
+    public User? ChangedByUser { get; set; }
+}
+```
+
+#### FilamentRequest
+```csharp
+public class FilamentRequest
+{
+    public Guid Id { get; set; }
+    public Guid? UserId { get; set; }
+    public string RequesterName { get; set; } = string.Empty;
+    public string Material { get; set; } = string.Empty;
+    public string Brand { get; set; } = string.Empty;
+    public string Colour { get; set; } = string.Empty;
+    public string? Link { get; set; }
+    public string? Notes { get; set; }
+    public FilamentRequestStatusEnum CurrentStatus { get; set; }
+    public Guid? FilamentId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    public User? User { get; set; }
+    public Filament? Filament { get; set; }
+    public List<FilamentRequestStatusHistory> StatusHistory { get; set; } = new();
+}
+```
+
+#### FilamentRequestStatusEnum
+```csharp
+public enum FilamentRequestStatusEnum
+{
+    Pending,
+    Approved,
+    Rejected
+}
+```
+
+### Key Database Features
+
+- **UUID v7 for Primary Keys**: All IDs use PostgreSQL's `uuidv7()` function for better database performance with time-ordered UUIDs
+- **Enum Storage**: Status enums (`RequestStatusEnum`, `FilamentRequestStatusEnum`) are stored as strings in the database for readability
+- **Unique Constraints**: Unique indexes on `User.DiscordId` and `User.GuestSessionToken`
+- **Change Tracking**: Field-level change history via `PrintRequestChange` entity
+- **Status History**: Complete audit trail of status changes via `StatusHistory` entity
 
 ## OpenAPI Specification
 
@@ -157,97 +220,168 @@ Initial data is seeded via EF Core migrations using the `OnModelCreating` method
 ### API Endpoints
 
 #### Authentication Endpoints
-- `POST /api/auth/discord` - Discord OAuth callback
-- `POST /api/auth/refresh` - Refresh JWT token
+- `GET /api/auth/login` - Initiate Discord OAuth login
+- `GET /api/auth/discord/callback` - Discord OAuth callback handler
+- `GET /api/auth/me` - Get current authenticated user (requires auth)
+- `POST /api/auth/refresh` - Refresh JWT token (requires auth)
 - `POST /api/auth/logout` - Logout user
+- `POST /api/auth/guest` - Create guest session
 
-#### Request Endpoints
-- `GET /api/requests` - Get all requests with pagination and filtering
-- `POST /api/requests` - Create new request (guest or authenticated)
+#### Request Endpoints (Public)
+- `GET /api/requests` - Get all public requests (or user's own private requests)
+- `POST /api/requests` - Create new request (requires guest or authenticated session)
 - `GET /api/requests/{id}` - Get specific request
-- `GET /api/requests/track/{token}` - Track guest request by token
-- `PUT /api/requests/{id}` - Update own request (authenticated users)
-- `DELETE /api/requests/{id}` - Delete own request (authenticated users)
+- `GET /api/requests/track/{token}` - Track request by guest tracking token
+- `PUT /api/requests/{id}` - Update own request (requires ownership)
+- `DELETE /api/requests/{id}` - Delete own request (requires ownership)
 
-#### Filament Endpoints
-- `GET /api/filaments` - Get all filaments with optional stock filtering
+#### Filament Endpoints (Public)
+- `GET /api/filaments` - Get all filaments
 - `GET /api/filaments/{id}` - Get filament by ID
 
-#### Admin Endpoints
-- `GET /api/admin/requests` - Get all requests (admin view)
+#### Filament Request Endpoints (Public)
+- `GET /api/filamentrequests` - Get all filament requests
+- `POST /api/filamentrequests` - Create new filament request
+- `GET /api/filamentrequests/{id}` - Get filament request by ID
+- `PUT /api/filamentrequests/{id}` - Update own filament request
+- `DELETE /api/filamentrequests/{id}` - Delete own filament request
+
+#### Admin Endpoints (Require Admin Role)
+- `GET /api/admin/requests` - Get all requests (including private)
+- `PUT /api/admin/requests/{id}` - Update any request
 - `PUT /api/admin/requests/{id}/status` - Change request status
 - `POST /api/admin/filaments` - Create new filament
 - `PUT /api/admin/filaments/{id}` - Update filament
 - `PATCH /api/admin/filaments/{id}/stock` - Update filament stock
 - `DELETE /api/admin/filaments/{id}` - Delete filament
+- `GET /api/admin/filamentrequests` - Get all filament requests
+- `PUT /api/admin/filamentrequests/{id}/status` - Change filament request status
+- `POST /api/admin/filamentrequests/{id}/approve` - Approve and create filament
 
 ## Configuration
 
 
 ### Environment Variables
 
+The application uses **DotNetEnv** to load configuration from a `.env` file for local development. Configuration is validated on startup using ASP.NET Core's Options pattern with data annotations.
+
 #### Backend (.env)
 ```env
 # Database
-DATABASE_CONNECTION_STRING=Host=localhost;Database=uberprints;Username=postgres;Password=password
+ConnectionStrings__DefaultConnection=Host=localhost;Database=uberprints;Username=postgres;Password=password
 
-# Discord OAuth
-DISCORD_CLIENT_ID=your_discord_client_id
-DISCORD_CLIENT_SECRET=your_discord_client_secret
-DISCORD_REDIRECT_URI=https://localhost:7001/api/auth/discord/callback
+# Discord OAuth (loaded into Discord section)
+Discord__ClientId=your_discord_client_id
+Discord__ClientSecret=your_discord_client_secret
 
-# JWT Configuration
-JWT_SECRET_KEY=your_jwt_secret_key_here
-JWT_ISSUER=UberPrints
-JWT_AUDIENCE=UberPrints
-JWT_EXPIRY_MINUTES=60
+# JWT Configuration (loaded into Jwt section, minimum 32 characters for SecretKey)
+Jwt__SecretKey=your_jwt_secret_key_minimum_32_characters
+Jwt__Issuer=UberPrints
+Jwt__Audience=UberPrints
+Jwt__ExpiryHours=168
 
-# Admin Configuration
-ADMIN_DISCORD_ID=your_discord_user_id
+# Frontend Configuration (for CORS)
+Frontend__Url=http://localhost:5173
 
-# CORS
-FRONTEND_URL=http://localhost:5173
+# Database Password (alternative to connection string)
+POSTGRES_PASSWORD=password
 ```
+
+#### Configuration Classes
+- `DiscordOptions` - Discord OAuth settings (validated on startup)
+- `JwtOptions` - JWT token settings with minimum 32-character secret requirement
+- `FrontendOptions` - Frontend URL for CORS configuration
 
 #### Frontend (.env)
 ```env
 VITE_API_BASE_URL=https://localhost:7001
-VITE_DISCORD_CLIENT_ID=your_discord_client_id
-VITE_DISCORD_REDIRECT_URI=http://localhost:5173/auth/callback
 ```
+
+Note: Frontend uses Vite proxy in development to forward `/api` requests to the backend. In production, the backend serves the built frontend from `wwwroot`.
 
 ## Security Implementation
 
 ### Authentication Flow
+
+#### Discord OAuth Flow
 1. User clicks "Login with Discord"
-2. Redirect to Discord OAuth with proper scopes
-3. Discord redirects to backend callback endpoint
-4. Backend exchanges code for access token
-5. Backend retrieves user information from Discord
-6. Backend creates/updates user record
-7. Backend generates JWT token
-8. JWT token returned to frontend
-9. Frontend stores token in localStorage
-10. Frontend includes token in API requests
+2. Frontend redirects to `/api/auth/login` (optionally passing guest session token)
+3. Backend initiates Discord OAuth challenge
+4. Discord redirects to `/api/auth/discord/callback`
+5. Backend exchanges code for access token
+6. Backend retrieves user information from Discord (ID, username, global name, avatar)
+7. Backend creates/updates user record in database
+8. If guest session token provided, guest requests are linked to authenticated user
+9. Backend generates JWT token with user claims (ID, username, IsAdmin, Role)
+10. Backend creates authentication cookie (30-day expiration)
+11. Backend redirects to frontend `/auth/callback?token={jwt}`
+12. Frontend stores JWT token in localStorage
+13. Frontend includes JWT in Authorization header and guest session token in `X-Guest-Session-Token` header
+
+#### Guest Session Flow
+1. User visits site without authentication
+2. Frontend calls `/api/auth/guest` to create guest session
+3. Backend creates guest user with `GuestSessionToken` and auto-generated username
+4. Frontend stores guest session token
+5. Frontend includes guest session token in `X-Guest-Session-Token` header for all requests
+6. Guest can create, edit, and delete their own requests
+7. When guest logs in via Discord, their requests are linked to their authenticated account
 
 ### Authorization
-- JWT tokens contain user ID and admin status
-- API endpoints validate JWT signature and expiration
-- Role-based authorization for admin endpoints
-- Ownership validation for user request modifications
+- **Dual Authentication**: Both JWT Bearer tokens and Cookie authentication supported
+- JWT tokens contain user ID, username, IsAdmin flag, and optional Admin role
+- Admin endpoints protected with `[Authorize(Roles = "Admin")]` attribute
+- Ownership validation for user request modifications (checks user ID or guest session token)
+- Private request visibility enforced at query level
+- Guest session tokens validated via `X-Guest-Session-Token` header
 
-### Security Headers
-```csharp
-// Security headers configuration
-services.AddHsts(options =>
-{
-    options.Preload = true;
-    options.IncludeSubDomains = true;
-    options.MaxAge = TimeSpan.FromDays(365);
-});
+### Security Features
+- **HTTPS Only**: Cookie secure policy enforced in production
+- **Forwarded Headers**: Support for reverse proxy (Cloudflare Tunnel)
+- **CORS**: Configured for frontend URL from configuration
+- **Session Management**: Distributed memory cache for session state
+- **Input Validation**: Data annotations on models and DTOs
+- **Configuration Validation**: Startup validation ensures all required config is present and valid
 
-services.AddAntiforgery();
-```
+## Frontend Architecture
+
+### Technology Stack
+- **Framework**: React 18 with TypeScript 5.6
+- **Build Tool**: Vite 5.4
+- **Routing**: React Router v6
+- **UI Components**: shadcn/ui (built on Radix UI primitives)
+- **Styling**: Tailwind CSS 3.4
+- **Form Handling**: React Hook Form 7.65 with Zod 4.1 validation
+- **HTTP Client**: Axios 1.7
+- **Icons**: Lucide React
+
+### Key Frontend Features
+- **Authentication Context**: Global auth state management (`AuthContext.tsx`)
+- **Protected Routes**: Role-based route protection (`ProtectedRoute.tsx`)
+- **Guest Session Management**: Automatic guest session creation and token storage
+- **API Client**: Centralized API configuration with interceptors (`lib/api.ts`)
+- **Type Safety**: Full TypeScript coverage with strict mode
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Component Library**: Reusable shadcn/ui components in `components/ui/`
+
+### Frontend Pages
+- `Home.tsx` - Landing page
+- `NewRequest.tsx` - Create print request form
+- `EditRequest.tsx` - Edit existing request
+- `RequestList.tsx` - View all public requests
+- `RequestDetail.tsx` - View single request with history
+- `TrackRequest.tsx` - Track request by token
+- `Dashboard.tsx` - User dashboard with their requests
+- `Profile.tsx` - User profile page
+- `AdminDashboard.tsx` - Admin panel for managing requests
+- `Filaments.tsx` - Filament catalog
+- `FilamentRequests.tsx` - Filament request management
+- `AuthCallback.tsx` - Discord OAuth callback handler
+
+### Development vs Production
+- **Development**: Vite dev server at `http://localhost:5173` with proxy to backend API
+- **Production**: Static files built to `src/UberPrints.Server/wwwroot/` and served by ASP.NET Core
+- Frontend build integrated into backend deployment
 
 ## Development Setup
 
@@ -263,28 +397,37 @@ services.AddAntiforgery();
 docker run --name uberprints-db -e POSTGRES_PASSWORD=password -e POSTGRES_DB=uberprints -p 5432:5432 -d postgres:18
 
 # Backend setup
-cd backend
+cd src/UberPrints.Server
 dotnet restore
 dotnet ef database update
 dotnet run
+# API available at https://localhost:7001
+# Scalar API docs at https://localhost:7001/scalar
 
 # Frontend setup (new terminal)
-cd frontend
+cd src/UberPrints.Client
 npm install
 npm run dev
+# Frontend available at http://localhost:5173
+# Uses Vite proxy to forward /api requests to backend
 ```
 
 ### Docker Development
 ```bash
-# Start all services
-docker-compose up -d
+# Start all services (database, server, cloudflared tunnel)
+docker compose up -d --build
+
+# Run database migrations for Docker deployment
+./scripts/migrate-database.sh docker
 
 # View logs
-docker-compose logs -f
+docker compose logs -f server
 
 # Stop services
-docker-compose down
+docker compose down
 ```
+
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for complete deployment guide with Cloudflare Tunnel setup.
 
 ## Deployment
 
