@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UberPrints.Server.Validation;
 
 namespace UberPrints.Server.Models;
 
@@ -29,11 +30,11 @@ public class Filament
   [MaxLength(20)]
   public string StockUnit { get; set; } = "grams";
 
-  [Url]
+  [OptionalUrl]
   [MaxLength(500)]
   public string? Link { get; set; }
 
-  [Url]
+  [OptionalUrl]
   [MaxLength(500)]
   public string? PhotoUrl { get; set; }
 

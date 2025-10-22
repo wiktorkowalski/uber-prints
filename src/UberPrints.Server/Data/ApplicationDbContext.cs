@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
   public DbSet<Filament> Filaments { get; set; }
   public DbSet<FilamentRequest> FilamentRequests { get; set; }
   public DbSet<FilamentRequestStatusHistory> FilamentRequestStatusHistories { get; set; }
+  public DbSet<PrintRequestChange> PrintRequestChanges { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -23,6 +24,7 @@ public class ApplicationDbContext : DbContext
     modelBuilder.Entity<Filament>().Property(f => f.Id).HasDefaultValueSql("uuidv7()");
     modelBuilder.Entity<FilamentRequest>().Property(f => f.Id).HasDefaultValueSql("uuidv7()");
     modelBuilder.Entity<FilamentRequestStatusHistory>().Property(f => f.Id).HasDefaultValueSql("uuidv7()");
+    modelBuilder.Entity<PrintRequestChange>().Property(p => p.Id).HasDefaultValueSql("uuidv7()");
 
     // Enum conversions
     modelBuilder.Entity<PrintRequest>().Property(p => p.CurrentStatus).HasConversion<string>();

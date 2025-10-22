@@ -70,6 +70,17 @@ export interface StatusHistoryDto {
   timestamp: string;
 }
 
+export interface PrintRequestChangeDto {
+  id: string;
+  printRequestId: string;
+  fieldName: string;
+  oldValue?: string;
+  newValue?: string;
+  changedByUserId?: string;
+  changedByUsername?: string;
+  changedAt: string;
+}
+
 export interface PrintRequestDto {
   id: string;
   userId?: string;
@@ -85,6 +96,7 @@ export interface PrintRequestDto {
   createdAt: string;
   updatedAt: string;
   statusHistory: StatusHistoryDto[];
+  changes: PrintRequestChangeDto[];
 }
 
 export interface CreatePrintRequestDto {

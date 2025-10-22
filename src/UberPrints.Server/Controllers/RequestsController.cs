@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
 using UberPrints.Server.DTOs;
+using UberPrints.Server.Services;
 
 namespace UberPrints.Server.Controllers;
 
@@ -11,10 +12,12 @@ namespace UberPrints.Server.Controllers;
 public class RequestsController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
+  private readonly IChangeTrackingService _changeTrackingService;
 
-  public RequestsController(ApplicationDbContext context)
+  public RequestsController(ApplicationDbContext context, IChangeTrackingService changeTrackingService)
   {
     _context = context;
+    _changeTrackingService = changeTrackingService;
   }
 
   [HttpGet]
@@ -61,6 +64,8 @@ public class RequestsController : ControllerBase
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
+        .Include(r => r.Changes)
+            .ThenInclude(c => c.ChangedByUser)
         .FirstOrDefaultAsync(r => r.Id == id);
 
     if (request == null)
@@ -110,6 +115,8 @@ public class RequestsController : ControllerBase
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
+        .Include(r => r.Changes)
+            .ThenInclude(c => c.ChangedByUser)
         .FirstOrDefaultAsync(r => r.GuestTrackingToken == token);
 
     if (request == null)
@@ -205,9 +212,11 @@ public class RequestsController : ControllerBase
 
     // Validate ownership - user must own the request to update it
     // Check for authenticated user via JWT
+    Guid? currentUserId = null;
     var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
     {
+      currentUserId = userId;
       if (request.UserId != userId)
       {
         return Forbid(); // 403 Forbidden - authenticated but not authorized
@@ -226,6 +235,7 @@ public class RequestsController : ControllerBase
           {
             return Forbid(); // Guest session exists but doesn't own this request
           }
+          currentUserId = user.Id;
           // Guest owns the request, continue
         }
         else
@@ -252,6 +262,19 @@ public class RequestsController : ControllerBase
     // Allow requests without filament - admin will assign one later
     // Also allow requests with out-of-stock or pending filaments
 
+    // Create a snapshot of the old request for change tracking
+    var oldRequest = new PrintRequest
+    {
+      Id = request.Id,
+      RequesterName = request.RequesterName,
+      ModelUrl = request.ModelUrl,
+      Notes = request.Notes,
+      RequestDelivery = request.RequestDelivery,
+      IsPublic = request.IsPublic,
+      FilamentId = request.FilamentId
+    };
+
+    // Update the request
     request.RequesterName = dto.RequesterName;
     request.ModelUrl = dto.ModelUrl;
     request.Notes = dto.Notes;
@@ -259,6 +282,9 @@ public class RequestsController : ControllerBase
     request.IsPublic = dto.IsPublic;
     request.FilamentId = dto.FilamentId;
     request.UpdatedAt = DateTime.UtcNow;
+
+    // Track changes
+    await _changeTrackingService.TrackChangesAsync(oldRequest, request, currentUserId);
 
     await _context.SaveChangesAsync();
 
@@ -343,7 +369,18 @@ public class RequestsController : ControllerBase
         ChangedByUsername = sh.ChangedByUser?.Username,
         AdminNotes = sh.AdminNotes,
         Timestamp = sh.Timestamp
-      }).ToList()
+      }).ToList(),
+      Changes = request.Changes.Select(c => new PrintRequestChangeDto
+      {
+        Id = c.Id,
+        PrintRequestId = c.PrintRequestId,
+        FieldName = c.FieldName,
+        OldValue = c.OldValue,
+        NewValue = c.NewValue,
+        ChangedByUserId = c.ChangedByUserId,
+        ChangedByUsername = c.ChangedByUser?.Username,
+        ChangedAt = c.ChangedAt
+      }).OrderByDescending(c => c.ChangedAt).ToList()
     };
   }
 

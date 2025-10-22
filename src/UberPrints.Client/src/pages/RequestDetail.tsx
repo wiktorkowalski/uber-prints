@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
 import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2, History } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
@@ -430,6 +430,65 @@ export const RequestDetail = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Change History Card */}
+      {request.changes && request.changes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              Change History
+            </CardTitle>
+            <CardDescription>
+              Track all modifications made to this request
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="space-y-4">
+                {request.changes.map((change) => (
+                  <div
+                    key={change.id}
+                    className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-orange-500" />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          {change.fieldName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(change.changedAt)}
+                        </span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-start gap-2">
+                          <span className="text-muted-foreground min-w-[60px]">From:</span>
+                          <span className="text-red-600 dark:text-red-400 line-through">
+                            {change.oldValue || '(empty)'}
+                          </span>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-muted-foreground min-w-[60px]">To:</span>
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            {change.newValue || '(empty)'}
+                          </span>
+                        </div>
+                      </div>
+                      {change.changedByUsername && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-2">
+                          <User className="w-3 h-3" />
+                          Changed by {change.changedByUsername}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Admin Dialogs */}
       <EditRequestDialog

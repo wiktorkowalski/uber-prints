@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
+using UberPrints.Server.Services;
 
 namespace UberPrints.Server.Controllers;
 
@@ -13,10 +14,12 @@ namespace UberPrints.Server.Controllers;
 public class AdminController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
+  private readonly IChangeTrackingService _changeTrackingService;
 
-  public AdminController(ApplicationDbContext context)
+  public AdminController(ApplicationDbContext context, IChangeTrackingService changeTrackingService)
   {
     _context = context;
+    _changeTrackingService = changeTrackingService;
   }
 
   [HttpGet("requests")]
@@ -27,6 +30,8 @@ public class AdminController : ControllerBase
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
+        .Include(r => r.Changes)
+            .ThenInclude(c => c.ChangedByUser)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
 
@@ -94,6 +99,26 @@ public class AdminController : ControllerBase
       }
     }
 
+    // Get current admin user ID for change tracking
+    Guid? adminUserId = null;
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+    {
+      adminUserId = userId;
+    }
+
+    // Create a snapshot of the old request for change tracking
+    var oldRequest = new PrintRequest
+    {
+      Id = request.Id,
+      RequesterName = request.RequesterName,
+      ModelUrl = request.ModelUrl,
+      Notes = request.Notes,
+      RequestDelivery = request.RequestDelivery,
+      IsPublic = request.IsPublic,
+      FilamentId = request.FilamentId
+    };
+
     // Update request fields
     request.RequesterName = dto.RequesterName;
     request.ModelUrl = dto.ModelUrl;
@@ -102,6 +127,9 @@ public class AdminController : ControllerBase
     request.IsPublic = dto.IsPublic;
     request.FilamentId = dto.FilamentId;
     request.UpdatedAt = DateTime.UtcNow;
+
+    // Track changes
+    await _changeTrackingService.TrackChangesAsync(oldRequest, request, adminUserId);
 
     await _context.SaveChangesAsync();
 
@@ -383,7 +411,18 @@ public class AdminController : ControllerBase
         ChangedByUsername = sh.ChangedByUser?.Username,
         AdminNotes = sh.AdminNotes,
         Timestamp = sh.Timestamp
-      }).ToList()
+      }).ToList(),
+      Changes = request.Changes.Select(c => new PrintRequestChangeDto
+      {
+        Id = c.Id,
+        PrintRequestId = c.PrintRequestId,
+        FieldName = c.FieldName,
+        OldValue = c.OldValue,
+        NewValue = c.NewValue,
+        ChangedByUserId = c.ChangedByUserId,
+        ChangedByUsername = c.ChangedByUser?.Username,
+        ChangedAt = c.ChangedAt
+      }).OrderByDescending(c => c.ChangedAt).ToList()
     };
   }
 

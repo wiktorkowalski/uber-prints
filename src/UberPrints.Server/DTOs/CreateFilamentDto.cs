@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using UberPrints.Server.Validation;
 
 namespace UberPrints.Server.DTOs;
 
@@ -26,11 +27,11 @@ public class CreateFilamentDto
   [MaxLength(20)]
   public string StockUnit { get; set; } = "grams";
 
-  [Url]
+  [OptionalUrl]
   [MaxLength(500)]
   public string? Link { get; set; }
 
-  [Url]
+  [OptionalUrl]
   [MaxLength(500)]
   public string? PhotoUrl { get; set; }
 

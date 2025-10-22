@@ -42,4 +42,6 @@ public class PrintRequest
   public Filament? Filament { get; set; }
 
   public List<StatusHistory> StatusHistory { get; set; } = new();
+
+  public List<PrintRequestChange> Changes { get; set; } = new();
 }

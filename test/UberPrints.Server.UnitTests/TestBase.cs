@@ -8,12 +8,14 @@ using Microsoft.Extensions.Configuration;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
+using UberPrints.Server.Services;
 
 namespace UberPrints.Server.UnitTests;
 
 public class TestBase
 {
     protected readonly ApplicationDbContext Context;
+    protected readonly IChangeTrackingService ChangeTrackingService;
     protected readonly RequestsController RequestsController;
     protected readonly AdminController AdminController;
     protected readonly FilamentsController FilamentsController;
@@ -58,9 +60,12 @@ public class TestBase
         Context.Users.Add(TestAuthenticatedUser);
         Context.SaveChanges();
 
+        // Create change tracking service
+        ChangeTrackingService = new ChangeTrackingService(Context);
+
         // Create controllers with the real context
-        RequestsController = new RequestsController(Context);
-        AdminController = new AdminController(Context);
+        RequestsController = new RequestsController(Context, ChangeTrackingService);
+        AdminController = new AdminController(Context, ChangeTrackingService);
         FilamentsController = new FilamentsController(Context);
         AuthController = new AuthController(Context, Configuration);
 

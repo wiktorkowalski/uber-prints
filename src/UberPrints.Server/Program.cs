@@ -8,6 +8,7 @@ using Scalar.AspNetCore;
 using System.Text;
 using UberPrints.Server.Configuration;
 using UberPrints.Server.Data;
+using UberPrints.Server.Services;
 
 // Load environment variables from .env file (for local development)
 // Looks for .env in the project root (2 levels up from bin/Debug/net10.0)
@@ -54,6 +55,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add application services
+builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
 
 // Add session support for guest token tracking
 builder.Services.AddDistributedMemoryCache();
