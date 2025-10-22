@@ -334,14 +334,37 @@ export const RequestDetail = () => {
             </div>
           </div>
 
-          {request.guestTrackingToken && !isAuthenticated && (
+          {request.guestTrackingToken && (
             <div className="bg-muted p-4 rounded-lg">
-              <h3 className="text-sm font-medium mb-2">Tracking Token</h3>
-              <code className="text-sm bg-background px-2 py-1 rounded">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium">Tracking Token</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(request.guestTrackingToken!);
+                    toast({
+                      title: "Copied!",
+                      description: "Tracking token copied to clipboard",
+                      variant: "success",
+                    });
+                  }}
+                  className="h-7"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </Button>
+              </div>
+              <code className="text-sm bg-background px-2 py-1 rounded block">
                 {request.guestTrackingToken}
               </code>
               <p className="text-xs text-muted-foreground mt-2">
-                Save this token to track your request later
+                {isAuthenticated
+                  ? "Share this token with others to let them track this request without logging in"
+                  : "Save this token to track your request later without logging in"
+                }
               </p>
             </div>
           )}

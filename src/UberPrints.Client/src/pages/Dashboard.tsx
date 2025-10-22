@@ -227,6 +227,14 @@ export const Dashboard = () => {
                         {request.notes}
                       </p>
                     )}
+                    {request.guestTrackingToken && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 pt-2 border-t">
+                        <span>Track:</span>
+                        <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
+                          {request.guestTrackingToken}
+                        </code>
+                      </div>
+                    )}
                   </div>
                 </Link>
               ))}
