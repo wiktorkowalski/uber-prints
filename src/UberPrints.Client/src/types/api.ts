@@ -30,6 +30,20 @@ export interface UserDto {
   createdAt: string;
 }
 
+export interface AdminUserDto {
+  id: string;
+  discordId?: string;
+  guestSessionToken?: string;
+  username: string;
+  globalName?: string;
+  avatarHash?: string;
+  isAdmin: boolean;
+  createdAt: string;
+  printRequestCount: number;
+  filamentRequestCount: number;
+  isGuest: boolean;
+}
+
 export interface ProfileDto {
   id: string;
   discordId?: string;

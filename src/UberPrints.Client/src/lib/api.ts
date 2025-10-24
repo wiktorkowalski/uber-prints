@@ -6,6 +6,7 @@ import {
   UpdatePrintRequestAdminDto,
   FilamentDto,
   UserDto,
+  AdminUserDto,
   ProfileDto,
   UpdateDisplayNameDto,
   ChangeStatusDto,
@@ -256,6 +257,12 @@ class ApiClient {
 
   async changeFilamentRequestStatus(id: string, data: ChangeFilamentRequestStatusDto): Promise<FilamentRequestDto> {
     const response = await this.client.put<FilamentRequestDto>(`/api/admin/filament-requests/${id}/status`, data);
+    return response.data;
+  }
+
+  // Admin Users endpoints
+  async getAdminUsers(): Promise<AdminUserDto[]> {
+    const response = await this.client.get<AdminUserDto[]>('/api/admin/users');
     return response.data;
   }
 

@@ -15,6 +15,10 @@ import { FilamentRequests } from './pages/FilamentRequests';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminRequests } from './pages/AdminRequests';
+import { AdminFilaments } from './pages/AdminFilaments';
+import { AdminFilamentRequests } from './pages/AdminFilamentRequests';
+import { AdminUsers } from './pages/AdminUsers';
 import { LiveView } from './pages/LiveView';
 
 function App() {
@@ -52,6 +56,38 @@ function App() {
             element={
               <ProtectedRoute requireAdmin>
                 <Layout><AdminDashboard /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/requests"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout><AdminRequests /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/filaments"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout><AdminFilaments /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/filament-requests"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout><AdminFilamentRequests /></Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Layout><AdminUsers /></Layout>
               </ProtectedRoute>
             }
           />

@@ -331,6 +331,31 @@ public class AdminController : ControllerBase
     return Ok(dtos);
   }
 
+  [HttpGet("users")]
+  public async Task<IActionResult> GetAllUsers()
+  {
+    var users = await _context.Users
+        .Include(u => u.PrintRequests)
+        .ToListAsync();
+
+    var dtos = users.Select(u => new AdminUserDto
+    {
+      Id = u.Id,
+      DiscordId = u.DiscordId,
+      GuestSessionToken = u.GuestSessionToken,
+      Username = u.Username,
+      GlobalName = u.GlobalName,
+      AvatarHash = u.AvatarHash,
+      IsAdmin = u.IsAdmin,
+      CreatedAt = u.CreatedAt,
+      PrintRequestCount = u.PrintRequests.Count,
+      FilamentRequestCount = _context.FilamentRequests.Count(fr => fr.UserId == u.Id),
+      IsGuest = !string.IsNullOrEmpty(u.GuestSessionToken) && string.IsNullOrEmpty(u.DiscordId)
+    }).OrderByDescending(u => u.CreatedAt).ToList();
+
+    return Ok(dtos);
+  }
+
   [HttpPut("filament-requests/{id}/status")]
   public async Task<IActionResult> ChangeFilamentRequestStatus(Guid id, ChangeFilamentRequestStatusDto dto)
   {
