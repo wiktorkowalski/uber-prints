@@ -15,6 +15,7 @@ import { FilamentRequests } from './pages/FilamentRequests';
 import { Dashboard } from './pages/Dashboard';
 import { Profile } from './pages/Profile';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { LiveView } from './pages/LiveView';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
           <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
           <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/live-view" element={<Layout><LiveView /></Layout>} />
 
           {/* Protected routes - require authentication */}
           <Route

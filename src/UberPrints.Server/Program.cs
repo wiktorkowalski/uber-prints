@@ -42,6 +42,11 @@ builder.Services.AddOptions<FrontendOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<CameraOptions>()
+    .Bind(builder.Configuration.GetSection(CameraOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 // Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -58,6 +63,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add application services
 builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
+
+// Add camera streaming services
+builder.Services.AddSingleton<StreamStateService>();
+builder.Services.AddSingleton<CameraStreamingService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<CameraStreamingService>());
 
 // Add session support for guest token tracking
 builder.Services.AddDistributedMemoryCache();
@@ -198,8 +208,36 @@ app.UseForwardedHeaders();
 app.UseCors();
 app.UseSession();
 
-// Serve static files from wwwroot
-app.UseStaticFiles();
+// Configure content type provider for HLS files
+var contentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".m3u8"] = "application/vnd.apple.mpegurl";
+contentTypeProvider.Mappings[".ts"] = "video/mp2t";
+
+// Serve static files from wwwroot with custom headers for HLS files
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        // Set appropriate cache headers for HLS files
+        if (ctx.File.PhysicalPath?.Contains("/stream/") == true)
+        {
+            if (ctx.File.Name.EndsWith(".m3u8"))
+            {
+                // Playlist should not be cached
+                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+            }
+            else if (ctx.File.Name.EndsWith(".ts"))
+            {
+                // Segments can be cached briefly
+                ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=1");
+            }
+
+            // Add CORS headers for stream files
+            ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+        }
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

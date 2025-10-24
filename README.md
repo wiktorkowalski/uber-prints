@@ -12,6 +12,7 @@ A 3D print request management system where users can submit print requests with 
 - **Guest Sessions**: Submit requests without registration, with optional account linking via Discord OAuth
 - **Admin Dashboard**: Manage requests, update statuses, and maintain filament inventory
 - **Status History**: Complete audit trail of request status changes
+- **Live Camera Streaming**: Watch the 3D printer in action via live RTSP → HLS streaming with on-demand video delivery
 
 ## Tech Stack
 
@@ -21,6 +22,7 @@ A 3D print request management system where users can submit print requests with 
 - Entity Framework Core
 - Discord OAuth authentication
 - JWT + Cookie authentication
+- FFmpeg for RTSP → HLS video streaming
 
 **Frontend**
 - React + TypeScript
@@ -28,6 +30,7 @@ A 3D print request management system where users can submit print requests with 
 - Tailwind CSS + shadcn/ui components
 - React Router
 - Axios for API communication
+- Video.js for HLS video playback
 
 **Testing**
 - xUnit for unit and integration tests
@@ -92,6 +95,57 @@ docker compose up -d --build
 ```
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide with Cloudflare Tunnel setup.
+
+## Camera Streaming Configuration
+
+The application includes live camera streaming functionality for watching the 3D printer in action.
+
+### How It Works
+- **RTSP to HLS Conversion**: FFmpeg converts the RTSP camera stream to HLS format for browser compatibility
+- **On-Demand Streaming**: Stream automatically starts when someone views the page and stops when no one is watching
+- **Admin Controls**: Admins can temporarily enable/disable streaming (setting stored in memory, defaults to enabled)
+- **Expected Latency**: 5-15 seconds (HLS protocol)
+
+### Setup
+
+1. **Configure Camera RTSP URL** in `appsettings.json`:
+```json
+{
+  "Camera": {
+    "RtspUrl": "rtsp://192.168.1.35/live",
+    "HlsSegmentDuration": 2,
+    "MaxSegments": 3,
+    "OutputDirectory": "stream",
+    "ConnectionTimeoutSeconds": 10
+  }
+}
+```
+
+2. **FFmpeg Installation**:
+   - FFmpeg binaries are automatically downloaded on first run by the Xabe.FFmpeg library
+   - Or install manually: `brew install ffmpeg` (macOS) or `apt install ffmpeg` (Linux)
+
+3. **Access Live View**:
+   - Navigate to `/live-view` on the website
+   - Stream status and viewer count visible to all users
+   - Admin controls available in the admin dashboard
+
+### Configuration Options
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `RtspUrl` | RTSP URL of your camera | Required |
+| `HlsSegmentDuration` | Duration of each HLS segment in seconds (lower = less latency) | 2 |
+| `MaxSegments` | Number of HLS segments to keep (older segments auto-deleted) | 3 |
+| `OutputDirectory` | Directory for HLS files (relative to wwwroot) | "stream" |
+| `ConnectionTimeoutSeconds` | FFmpeg connection timeout | 10 |
+
+### Troubleshooting
+
+- **Stream won't start**: Check RTSP URL is accessible from the server
+- **High latency**: Decrease `HlsSegmentDuration` (minimum 1 second)
+- **Buffering issues**: Increase `MaxSegments` to keep more video buffered
+- **FFmpeg errors**: Check logs in the application output for detailed error messages
 
 ## Documentation
 

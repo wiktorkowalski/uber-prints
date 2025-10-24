@@ -44,6 +44,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 WORKDIR /app
 
+# Install FFmpeg for camera streaming
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
+
+# Verify FFmpeg installation
+RUN ffmpeg -version
+
 # Copy published output
 COPY --from=backend-build /app/publish .
 

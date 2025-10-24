@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard, PackagePlus, Menu } from 'lucide-react';
+import { User, LogOut, Settings, Home, List, Plus, Search, Palette, LayoutDashboard, PackagePlus, Menu, Camera } from 'lucide-react';
 import { api } from '../../lib/api';
 import { getDisplayName } from '../../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -91,6 +91,12 @@ export const Navbar = () => {
                       Request Filament
                     </Button>
                   </Link>
+                  <Link to="/live-view" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                      <Camera className="w-4 h-4 mr-2" />
+                      Live View
+                    </Button>
+                  </Link>
                   <Link to="/requests" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-start">
                       <List className="w-4 h-4 mr-2" />
@@ -144,6 +150,12 @@ export const Navbar = () => {
                 <Button variant="ghost" size="sm">
                   <PackagePlus className="w-4 h-4 mr-2" />
                   Request Filament
+                </Button>
+              </Link>
+              <Link to="/live-view">
+                <Button variant="ghost" size="sm">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Live View
                 </Button>
               </Link>
               <Link to="/requests">

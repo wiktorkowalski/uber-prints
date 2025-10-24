@@ -291,6 +291,69 @@ class ApiClient {
     const response = await this.client.put<ProfileDto>('/api/profile/display-name', data);
     return response.data;
   }
+
+  // Stream endpoints
+  async getStreamStatus(): Promise<{
+    isEnabled: boolean;
+    isActive: boolean;
+    viewerCount: number;
+    uptime: string | null;
+    lastError: string | null;
+  }> {
+    const response = await this.client.get('/api/stream/status');
+    return response.data;
+  }
+
+  async joinStream(): Promise<{
+    success: boolean;
+    viewerId?: string;
+    isEnabled: boolean;
+    isActive: boolean;
+    viewerCount?: number;
+    message?: string;
+  }> {
+    const response = await this.client.post('/api/stream/viewer/join');
+    return response.data;
+  }
+
+  async sendHeartbeat(viewerId: string): Promise<{
+    success: boolean;
+    viewerCount: number;
+    isActive: boolean;
+  }> {
+    const response = await this.client.post('/api/stream/viewer/heartbeat', { viewerId });
+    return response.data;
+  }
+
+  async leaveStream(viewerId: string): Promise<{
+    success: boolean;
+    viewerCount: number;
+    isActive: boolean;
+  }> {
+    const response = await this.client.post('/api/stream/viewer/leave', { viewerId });
+    return response.data;
+  }
+
+  async toggleStreaming(): Promise<{
+    success: boolean;
+    isEnabled: boolean;
+    message: string;
+  }> {
+    const response = await this.client.post('/api/stream/toggle');
+    return response.data;
+  }
+
+  async getStreamStats(): Promise<{
+    isEnabled: boolean;
+    isActive: boolean;
+    activeViewers: number;
+    uptime: string | null;
+    streamStartTime: string | null;
+    lastError: string | null;
+  }> {
+    const response = await this.client.get('/api/stream/stats');
+    return response.data;
+  }
 }
 
 export const api = new ApiClient();

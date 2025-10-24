@@ -44,6 +44,13 @@ services:
       # Frontend URL (only needed for CORS in development)
       Frontend__Url: ${Frontend__Url:-http://localhost:8080}
 
+      # Camera Configuration
+      Camera__RtspUrl: ${Camera__RtspUrl:-rtsp://192.168.1.35/live}
+      Camera__HlsSegmentDuration: ${Camera__HlsSegmentDuration:-2}
+      Camera__MaxSegments: ${Camera__MaxSegments:-6}
+      Camera__OutputDirectory: ${Camera__OutputDirectory:-stream}
+      Camera__ConnectionTimeoutSeconds: ${Camera__ConnectionTimeoutSeconds:-10}
+
       # ASP.NET Core
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Production"

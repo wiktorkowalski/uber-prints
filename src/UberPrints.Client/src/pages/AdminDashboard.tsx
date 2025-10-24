@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle, CheckCircle2, Camera, Users } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
@@ -98,6 +98,13 @@ export const AdminDashboard = () => {
   const [filamentRequestReason, setFilamentRequestReason] = useState('');
   const [selectedFilamentForRequest, setSelectedFilamentForRequest] = useState<string>('');
   const [updatingFilamentRequest, setUpdatingFilamentRequest] = useState(false);
+
+  // Stream stats
+  const [streamStats, setStreamStats] = useState<{
+    isEnabled: boolean;
+    isActive: boolean;
+    activeViewers: number;
+  } | null>(null);
   const [deleteFilamentDialogOpen, setDeleteFilamentDialogOpen] = useState(false);
   const [filamentToDelete, setFilamentToDelete] = useState<FilamentDto | null>(null);
   const [deletingFilament, setDeletingFilament] = useState(false);
@@ -105,6 +112,7 @@ export const AdminDashboard = () => {
 
   useEffect(() => {
     loadRequests();
+    loadStreamStats();
   }, []);
 
   const loadRequests = async () => {
@@ -117,6 +125,16 @@ export const AdminDashboard = () => {
       setError('Failed to load requests');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadStreamStats = async () => {
+    try {
+      const data = await api.getStreamStats();
+      setStreamStats(data);
+    } catch (err) {
+      console.error('Error loading stream stats:', err);
+      // Don't show error toast for stream stats, it's not critical
     }
   };
 
@@ -459,6 +477,47 @@ export const AdminDashboard = () => {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Live Stream Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-5 h-5" />
+                Live Camera Stream
+              </CardTitle>
+              <CardDescription className="mt-1">
+                {streamStats ? (
+                  streamStats.isEnabled ? (
+                    streamStats.isActive ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+                        Live
+                      </span>
+                    ) : (
+                      'Offline'
+                    )
+                  ) : (
+                    'Disabled'
+                  )
+                ) : (
+                  'Loading...'
+                )}
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/live-view'}>
+              View Stream
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="w-4 h-4" />
+            <span>{streamStats?.activeViewers || 0} active viewers</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs defaultValue="all" className="space-y-4" onValueChange={(value) => {
