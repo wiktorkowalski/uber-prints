@@ -7,8 +7,10 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
-import { AlertCircle, Users, Clock, Power, Camera } from 'lucide-react';
+import { AlertCircle, Users, Clock, Power, Camera, Database, Trash2, Scissors, Settings, RotateCw } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 interface StreamStatus {
   isEnabled: boolean;
@@ -16,6 +18,18 @@ interface StreamStatus {
   viewerCount: number;
   uptime: string | null;
   lastError: string | null;
+}
+
+interface BufferDiagnostics {
+  bufferSizeBytes: number;
+  bufferSizeMB: number;
+  tsFileCount: number;
+  m3u8FileCount: number;
+  totalFileCount: number;
+  isStreamActive: boolean;
+  outputPath: string;
+  bufferDurationMinutes: number;
+  error?: string;
 }
 
 export const LiveView = () => {
@@ -28,6 +42,13 @@ export const LiveView = () => {
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [isTogglingStream, setIsTogglingStream] = useState(false);
   const [isStreamReady, setIsStreamReady] = useState(false);
+  const [bufferDiagnostics, setBufferDiagnostics] = useState<BufferDiagnostics | null>(null);
+  const [isLoadingBuffer, setIsLoadingBuffer] = useState(false);
+  const [isResettingBuffer, setIsResettingBuffer] = useState(false);
+  const [isTrimmingBuffer, setIsTrimmingBuffer] = useState(false);
+  const [bufferDurationInput, setBufferDurationInput] = useState<string>('30');
+  const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const isAdmin = user?.isAdmin ?? false;
   const streamUrl = '/stream/playlist.m3u8';
@@ -81,6 +102,28 @@ export const LiveView = () => {
     }
   }, [hasJoined, viewerId]);
 
+  // Fetch buffer diagnostics (admin only)
+  const fetchBufferDiagnostics = useCallback(async () => {
+    if (!isAdmin) return;
+
+    setIsLoadingBuffer(true);
+    try {
+      const data = await api.getBufferDiagnostics();
+      setBufferDiagnostics(data);
+      // Update input field with current config
+      setBufferDurationInput(data.bufferDurationMinutes.toString());
+    } catch (err) {
+      console.error('Failed to fetch buffer diagnostics:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to load buffer diagnostics',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingBuffer(false);
+    }
+  }, [isAdmin, toast]);
+
   // Toggle streaming (admin only)
   const handleToggleStreaming = async () => {
     setIsTogglingStream(true);
@@ -99,6 +142,107 @@ export const LiveView = () => {
       });
     } finally {
       setIsTogglingStream(false);
+    }
+  };
+
+  // Reset buffer (admin only)
+  const handleResetBuffer = async () => {
+    setIsResettingBuffer(true);
+    try {
+      const response = await api.resetBuffer();
+      toast({
+        title: 'Buffer Reset',
+        description: response.message,
+      });
+      await fetchBufferDiagnostics();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to reset buffer',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResettingBuffer(false);
+    }
+  };
+
+  // Trim buffer (admin only)
+  const handleTrimBuffer = async () => {
+    setIsTrimmingBuffer(true);
+    try {
+      const durationMinutes = bufferDiagnostics?.bufferDurationMinutes || 30;
+      const response = await api.trimBuffer(durationMinutes);
+      toast({
+        title: 'Buffer Trimmed',
+        description: `Deleted ${response.deletedCount} files (${(response.deletedSize / (1024 * 1024)).toFixed(2)} MB)`,
+      });
+      await fetchBufferDiagnostics();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to trim buffer',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTrimmingBuffer(false);
+    }
+  };
+
+  // Update buffer configuration (admin only)
+  const handleUpdateBufferConfig = async () => {
+    const durationMinutes = parseInt(bufferDurationInput);
+
+    if (isNaN(durationMinutes) || durationMinutes < 5 || durationMinutes > 240) {
+      toast({
+        title: 'Invalid Duration',
+        description: 'Buffer duration must be between 5 and 240 minutes',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUpdatingConfig(true);
+    try {
+      const response = await api.updateBufferConfig(durationMinutes);
+      toast({
+        title: 'Configuration Updated',
+        description: response.message,
+        variant: response.requiresRestart ? 'default' : 'default',
+      });
+      await fetchBufferDiagnostics();
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update buffer configuration',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingConfig(false);
+    }
+  };
+
+  // Restart stream (admin only)
+  const handleRestartStream = async () => {
+    setIsRestarting(true);
+    try {
+      const response = await api.restartStreaming();
+      toast({
+        title: response.success ? 'Stream Restarted' : 'Restart Failed',
+        description: response.message,
+        variant: response.success ? 'default' : 'destructive',
+      });
+      await fetchStatus();
+      if (isAdmin) {
+        await fetchBufferDiagnostics();
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to restart stream',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRestarting(false);
     }
   };
 
@@ -164,13 +308,24 @@ export const LiveView = () => {
         await api.sendHeartbeat(viewerId);
         // Also update status
         await fetchStatus();
+        // Update buffer diagnostics for admin
+        if (isAdmin) {
+          await fetchBufferDiagnostics();
+        }
       } catch (err) {
         console.error('Failed to send heartbeat:', err);
       }
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [hasJoined, viewerId, fetchStatus]);
+  }, [hasJoined, viewerId, fetchStatus, isAdmin, fetchBufferDiagnostics]);
+
+  // Initial buffer diagnostics fetch for admin
+  useEffect(() => {
+    if (isAdmin && hasJoined) {
+      fetchBufferDiagnostics();
+    }
+  }, [isAdmin, hasJoined, fetchBufferDiagnostics]);
 
   const formatUptime = (uptime: string | null) => {
     if (!uptime) return 'N/A';
@@ -222,14 +377,25 @@ export const LiveView = () => {
         </div>
 
         {isAdmin && (
-          <Button
-            onClick={handleToggleStreaming}
-            disabled={isTogglingStream}
-            variant={status?.isEnabled ? 'outline' : 'default'}
-          >
-            <Power className="w-4 h-4 mr-2" />
-            {status?.isEnabled ? 'Disable Stream' : 'Enable Stream'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleRestartStream}
+              disabled={isRestarting || !status?.isEnabled || isTogglingStream}
+              variant="outline"
+              title="Restart the stream (applies new buffer configuration)"
+            >
+              <RotateCw className={`w-4 h-4 mr-2 ${isRestarting ? 'animate-spin' : ''}`} />
+              {isRestarting ? 'Restarting...' : 'Restart'}
+            </Button>
+            <Button
+              onClick={handleToggleStreaming}
+              disabled={isTogglingStream || isRestarting}
+              variant={status?.isEnabled ? 'outline' : 'default'}
+            >
+              <Power className="w-4 h-4 mr-2" />
+              {status?.isEnabled ? 'Disable Stream' : 'Enable Stream'}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -328,6 +494,157 @@ export const LiveView = () => {
             <p className="text-sm text-muted-foreground mt-4">
               The video may take a few seconds to load. If you experience issues, try refreshing the page.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Admin Debug Section */}
+      {isAdmin && (
+        <Card className="border-amber-500/50 bg-amber-50/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Database className="w-5 h-5" />
+              Buffer Diagnostics (Admin Only)
+            </CardTitle>
+            <CardDescription>
+              Monitor and manage the streaming buffer
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoadingBuffer && !bufferDiagnostics ? (
+              <p className="text-sm text-muted-foreground">Loading diagnostics...</p>
+            ) : bufferDiagnostics?.error ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{bufferDiagnostics.error}</AlertDescription>
+              </Alert>
+            ) : bufferDiagnostics ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Buffer Size</p>
+                    <p className="text-2xl font-bold">
+                      {bufferDiagnostics.bufferSizeMB.toFixed(2)} MB
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {bufferDiagnostics.bufferSizeBytes.toLocaleString()} bytes
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Video Segments</p>
+                    <p className="text-2xl font-bold">{bufferDiagnostics.tsFileCount}</p>
+                    <p className="text-xs text-muted-foreground">.ts files</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Playlists</p>
+                    <p className="text-2xl font-bold">{bufferDiagnostics.m3u8FileCount}</p>
+                    <p className="text-xs text-muted-foreground">.m3u8 files</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Total Files</p>
+                    <p className="text-2xl font-bold">{bufferDiagnostics.totalFileCount}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {bufferDiagnostics.isStreamActive ? 'Stream active' : 'Stream inactive'}
+                    </p>
+                  </div>
+                </div>
+
+                {bufferDiagnostics.bufferSizeMB > 1000 && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Warning: Buffer size exceeds 1 GB. Consider trimming or resetting the buffer.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Separator />
+
+                {/* Buffer Duration Configuration */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-muted-foreground" />
+                    <h4 className="text-sm font-semibold">Buffer Duration Configuration</h4>
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 max-w-xs space-y-2">
+                      <Label htmlFor="buffer-duration" className="text-sm">
+                        Buffer Duration (minutes)
+                      </Label>
+                      <Input
+                        id="buffer-duration"
+                        type="number"
+                        min="5"
+                        max="240"
+                        value={bufferDurationInput}
+                        onChange={(e) => setBufferDurationInput(e.target.value)}
+                        placeholder="30"
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Range: 5-240 minutes. Current: {bufferDiagnostics.bufferDurationMinutes} min
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleUpdateBufferConfig}
+                      disabled={isUpdatingConfig || bufferDurationInput === bufferDiagnostics.bufferDurationMinutes.toString()}
+                      size="sm"
+                    >
+                      {isUpdatingConfig ? 'Updating...' : 'Update Config'}
+                    </Button>
+                  </div>
+                  {bufferDiagnostics.isStreamActive && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Stream is currently active. Changes will take effect after restarting the stream.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Buffer Management Actions */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">Buffer Management</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={handleTrimBuffer}
+                      disabled={isTrimmingBuffer || isResettingBuffer}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Scissors className="w-4 h-4 mr-2" />
+                      {isTrimmingBuffer ? 'Trimming...' : `Trim to ${bufferDiagnostics.bufferDurationMinutes} Min`}
+                    </Button>
+                    <Button
+                      onClick={handleResetBuffer}
+                      disabled={isTrimmingBuffer || isResettingBuffer}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      {isResettingBuffer ? 'Resetting...' : 'Reset Buffer'}
+                    </Button>
+                    <Button
+                      onClick={fetchBufferDiagnostics}
+                      disabled={isLoadingBuffer}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      {isLoadingBuffer ? 'Refreshing...' : 'Refresh'}
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <p>Output path: {bufferDiagnostics.outputPath}</p>
+                    <p className="mt-1">
+                      <strong>Trim:</strong> Removes segments older than configured duration. <strong>Reset:</strong> Removes all segments.
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : null}
           </CardContent>
         </Card>
       )}

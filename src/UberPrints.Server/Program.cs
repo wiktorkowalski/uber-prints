@@ -104,7 +104,7 @@ builder.Services.AddAuthentication(options =>
         ? CookieSecurePolicy.None
         : CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
 
     // Return 401 instead of redirecting for API requests
     options.Events.OnRedirectToLogin = context =>

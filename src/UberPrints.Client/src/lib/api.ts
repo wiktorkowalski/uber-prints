@@ -350,6 +350,14 @@ class ApiClient {
     return response.data;
   }
 
+  async restartStreaming(): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await this.client.post('/api/stream/restart');
+    return response.data;
+  }
+
   async getStreamStats(): Promise<{
     isEnabled: boolean;
     isActive: boolean;
@@ -359,6 +367,61 @@ class ApiClient {
     lastError: string | null;
   }> {
     const response = await this.client.get('/api/stream/stats');
+    return response.data;
+  }
+
+  async getBufferDiagnostics(): Promise<{
+    bufferSizeBytes: number;
+    bufferSizeMB: number;
+    tsFileCount: number;
+    m3u8FileCount: number;
+    totalFileCount: number;
+    isStreamActive: boolean;
+    outputPath: string;
+    bufferDurationMinutes: number;
+    error?: string;
+  }> {
+    const response = await this.client.get('/api/stream/buffer/diagnostics');
+    return response.data;
+  }
+
+  async resetBuffer(): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    const response = await this.client.post('/api/stream/buffer/reset');
+    return response.data;
+  }
+
+  async trimBuffer(durationMinutes?: number): Promise<{
+    success: boolean;
+    message: string;
+    deletedCount: number;
+    deletedSize: number;
+    remainingCount: number;
+    remainingSize: number;
+  }> {
+    const response = await this.client.post('/api/stream/buffer/trim',
+      durationMinutes ? { durationMinutes } : undefined
+    );
+    return response.data;
+  }
+
+  async getBufferConfig(): Promise<{
+    durationMinutes: number;
+  }> {
+    const response = await this.client.get('/api/stream/buffer/config');
+    return response.data;
+  }
+
+  async updateBufferConfig(durationMinutes: number): Promise<{
+    success: boolean;
+    oldDurationMinutes: number;
+    newDurationMinutes: number;
+    requiresRestart: boolean;
+    message: string;
+  }> {
+    const response = await this.client.put('/api/stream/buffer/config', { durationMinutes });
     return response.data;
   }
 }

@@ -197,7 +197,7 @@ public class AuthController : ControllerBase
     var authProperties = new AuthenticationProperties
     {
       IsPersistent = true,
-      ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+      ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
     };
 
     await HttpContext.SignInAsync(
@@ -324,7 +324,7 @@ public class AuthController : ControllerBase
         issuer: _configuration["Jwt:Issuer"] ?? "UberPrints",
         audience: _configuration["Jwt:Audience"] ?? "UberPrints",
         claims: claims,
-        expires: DateTime.UtcNow.AddHours(double.Parse(_configuration["Jwt:ExpiryHours"] ?? "1")),
+        expires: DateTime.UtcNow.AddHours(double.Parse(_configuration["Jwt:ExpiryHours"] ?? "168")), // Default 7 days
         signingCredentials: credentials
     );
 

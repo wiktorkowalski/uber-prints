@@ -63,69 +63,7 @@ public class CameraStreamingService : BackgroundService
         await _streamLock.WaitAsync();
         try
         {
-            // Check if already streaming
-            if (_ffmpegTask != null && !_ffmpegTask.IsCompleted)
-            {
-                _logger.LogInformation("Stream already active");
-                return true;
-            }
-
-            _logger.LogInformation("Starting camera stream from {RtspUrl}", _cameraOptions.RtspUrl);
-
-            // Log current directory state before starting
-            var currentSize = GetDirectorySize(_outputPath);
-            var currentFiles = GetFileCountsByType(_outputPath);
-            _logger.LogInformation(
-                "Stream directory state before start - Size: {SizeMB:F2} MB, Files: {TsCount} .ts, {M3u8Count} .m3u8",
-                currentSize / (1024.0 * 1024.0),
-                currentFiles.TsCount,
-                currentFiles.M3u8Count
-            );
-
-            // Create new cancellation token for this stream session
-            _processCts = new CancellationTokenSource();
-
-            try
-            {
-                // Start FFmpeg conversion in background
-                _ffmpegTask = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await RunFFmpegStreamingAsync(_processCts.Token);
-                        _logger.LogInformation("FFmpeg process completed normally");
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        _logger.LogInformation("FFmpeg process cancelled");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "FFmpeg process error");
-                        _streamState.RecordError($"FFmpeg error: {ex.Message}");
-                    }
-                }, _processCts.Token);
-
-                // Give FFmpeg a moment to start and create initial segments
-                await Task.Delay(2000);
-
-                // Start monitoring task
-                _monitoringTask = Task.Run(async () =>
-                {
-                    await MonitorDirectorySizeAsync(_processCts.Token);
-                }, _processCts.Token);
-
-                _streamState.MarkStreamStarted();
-                _logger.LogInformation("Camera stream started successfully");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to start stream");
-                _streamState.RecordError($"Start failed: {ex.Message}");
-                await CleanupAsync();
-                return false;
-            }
+            return await StartStreamingInternalAsync();
         }
         finally
         {
@@ -142,8 +80,11 @@ public class CameraStreamingService : BackgroundService
 
         var segmentPattern = Path.Combine(_outputPath, "segment_%03d.ts");
 
-        // DVR functionality: Keep 30 minutes of segments (30 min * 60 sec / 2 sec per segment = 900 segments)
-        const int dvrSegmentCount = 900;
+        // DVR functionality: Calculate segment count based on configured buffer duration
+        // segments = (buffer_minutes * 60 seconds) / segment_duration_seconds
+        var dvrSegmentCount = (_cameraOptions.DvrBufferMinutes * 60) / _cameraOptions.HlsSegmentDuration;
+        _logger.LogInformation("DVR buffer configured for {Minutes} minutes ({SegmentCount} segments)",
+            _cameraOptions.DvrBufferMinutes, dvrSegmentCount);
 
         await FFMpegArguments
             .FromUrlInput(new Uri(_cameraOptions.RtspUrl), options => options
@@ -154,9 +95,8 @@ public class CameraStreamingService : BackgroundService
                 .WithAudioCodec("aac")  // Transcode audio to AAC
                 .ForceFormat("hls")
                 .WithCustomArgument($"-hls_time {_cameraOptions.HlsSegmentDuration}")
-                .WithCustomArgument($"-hls_list_size {dvrSegmentCount}") // Keep 5 minutes of segments
-                .WithCustomArgument("-hls_playlist_type event") // Keep all segments for DVR
-                .WithCustomArgument("-hls_flags append_list+omit_endlist") // Append segments, don't delete
+                .WithCustomArgument($"-hls_list_size {dvrSegmentCount}") // Keep configured minutes of segments in playlist
+                .WithCustomArgument("-hls_flags delete_segments") // Automatically delete old segments beyond hls_list_size
                 .WithCustomArgument($"-hls_segment_filename \"{segmentPattern}\"")
                 .WithCustomArgument("-start_number 0"))
             .CancellableThrough(cancellationToken)
@@ -178,6 +118,101 @@ public class CameraStreamingService : BackgroundService
         finally
         {
             _streamLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Restart the stream (stop and start)
+    /// </summary>
+    public async Task<bool> RestartStreamingAsync()
+    {
+        await _streamLock.WaitAsync();
+        try
+        {
+            _logger.LogInformation("Restarting camera stream");
+
+            // Stop the stream if it's running
+            await StopStreamingInternalAsync();
+
+            // Wait a moment for cleanup to complete
+            await Task.Delay(1000);
+
+            // Start the stream again
+            return await StartStreamingInternalAsync();
+        }
+        finally
+        {
+            _streamLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Internal start streaming without lock (assumes caller has acquired lock)
+    /// </summary>
+    private async Task<bool> StartStreamingInternalAsync()
+    {
+        // Check if already streaming
+        if (_ffmpegTask != null && !_ffmpegTask.IsCompleted)
+        {
+            _logger.LogInformation("Stream already active");
+            return true;
+        }
+
+        _logger.LogInformation("Starting camera stream from {RtspUrl}", _cameraOptions.RtspUrl);
+
+        // Log current directory state before starting
+        var currentSize = GetDirectorySize(_outputPath);
+        var currentFiles = GetFileCountsByType(_outputPath);
+        _logger.LogInformation(
+            "Stream directory state before start - Size: {SizeMB:F2} MB, Files: {TsCount} .ts, {M3u8Count} .m3u8",
+            currentSize / (1024.0 * 1024.0),
+            currentFiles.TsCount,
+            currentFiles.M3u8Count
+        );
+
+        // Create new cancellation token for this stream session
+        _processCts = new CancellationTokenSource();
+
+        try
+        {
+            // Start FFmpeg conversion in background
+            _ffmpegTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await RunFFmpegStreamingAsync(_processCts.Token);
+                    _logger.LogInformation("FFmpeg process completed normally");
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogInformation("FFmpeg process cancelled");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "FFmpeg process error");
+                    _streamState.RecordError($"FFmpeg error: {ex.Message}");
+                }
+            }, _processCts.Token);
+
+            // Give FFmpeg a moment to start and create initial segments
+            await Task.Delay(2000);
+
+            // Start monitoring task
+            _monitoringTask = Task.Run(async () =>
+            {
+                await MonitorDirectorySizeAsync(_processCts.Token);
+            }, _processCts.Token);
+
+            _streamState.MarkStreamStarted();
+            _logger.LogInformation("Camera stream started successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to start stream");
+            _streamState.RecordError($"Start failed: {ex.Message}");
+            await CleanupAsync();
+            return false;
         }
     }
 
@@ -404,6 +439,223 @@ public class CameraStreamingService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// Get buffer diagnostics for admin debugging
+    /// </summary>
+    public object GetBufferDiagnostics()
+    {
+        try
+        {
+            if (!Directory.Exists(_outputPath))
+            {
+                return new
+                {
+                    BufferSizeBytes = 0,
+                    BufferSizeMB = 0.0,
+                    TsFileCount = 0,
+                    M3u8FileCount = 0,
+                    TotalFileCount = 0,
+                    IsStreamActive = _ffmpegTask != null && !_ffmpegTask.IsCompleted,
+                    OutputPath = _outputPath,
+                    BufferDurationMinutes = _cameraOptions.DvrBufferMinutes,
+                    Error = "Output directory does not exist"
+                };
+            }
+
+            var size = GetDirectorySize(_outputPath);
+            var fileCounts = GetFileCountsByType(_outputPath);
+
+            return new
+            {
+                BufferSizeBytes = size,
+                BufferSizeMB = Math.Round(size / (1024.0 * 1024.0), 2),
+                TsFileCount = fileCounts.TsCount,
+                M3u8FileCount = fileCounts.M3u8Count,
+                TotalFileCount = fileCounts.TsCount + fileCounts.M3u8Count,
+                IsStreamActive = _ffmpegTask != null && !_ffmpegTask.IsCompleted,
+                OutputPath = _outputPath,
+                BufferDurationMinutes = _cameraOptions.DvrBufferMinutes
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting buffer diagnostics");
+            return new
+            {
+                Error = $"Failed to get diagnostics: {ex.Message}"
+            };
+        }
+    }
+
+    /// <summary>
+    /// Get current buffer configuration
+    /// </summary>
+    public BufferConfigDto GetBufferConfig()
+    {
+        return new BufferConfigDto(_cameraOptions.DvrBufferMinutes);
+    }
+
+    /// <summary>
+    /// Update buffer configuration (requires stream restart to take effect)
+    /// </summary>
+    public async Task<UpdateBufferConfigResult> UpdateBufferConfigAsync(int newDurationMinutes)
+    {
+        if (newDurationMinutes < 5 || newDurationMinutes > 240)
+        {
+            throw new ArgumentException("Buffer duration must be between 5 and 240 minutes");
+        }
+
+        var wasActive = _ffmpegTask != null && !_ffmpegTask.IsCompleted;
+        var oldDuration = _cameraOptions.DvrBufferMinutes;
+
+        _logger.LogInformation(
+            "Updating DVR buffer duration from {OldMinutes} to {NewMinutes} minutes",
+            oldDuration,
+            newDurationMinutes
+        );
+
+        // Update the configuration
+        _cameraOptions.DvrBufferMinutes = newDurationMinutes;
+
+        return new UpdateBufferConfigResult(
+            Success: true,
+            OldDurationMinutes: oldDuration,
+            NewDurationMinutes: newDurationMinutes,
+            RequiresRestart: wasActive,
+            Message: wasActive
+                ? "Configuration updated. Restart the stream for changes to take effect."
+                : "Configuration updated successfully."
+        );
+    }
+
+    /// <summary>
+    /// Reset buffer by deleting all segments
+    /// </summary>
+    public async Task ResetBufferAsync()
+    {
+        await _streamLock.WaitAsync();
+        try
+        {
+            _logger.LogInformation("Resetting stream buffer (admin request)");
+
+            if (!Directory.Exists(_outputPath))
+            {
+                _logger.LogWarning("Output directory does not exist, nothing to reset");
+                return;
+            }
+
+            var sizeBeforeReset = GetDirectorySize(_outputPath);
+            var fileCountsBefore = GetFileCountsByType(_outputPath);
+
+            // Delete all .ts and .m3u8 files
+            await Task.Run(() =>
+            {
+                foreach (var file in Directory.GetFiles(_outputPath, "*.ts"))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete segment file during reset: {File}", file);
+                    }
+                }
+
+                foreach (var file in Directory.GetFiles(_outputPath, "*.m3u8"))
+                {
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to delete playlist file during reset: {File}", file);
+                    }
+                }
+            });
+
+            var sizeAfterReset = GetDirectorySize(_outputPath);
+            _logger.LogInformation(
+                "Buffer reset complete - Deleted {TsCount} .ts files and {M3u8Count} .m3u8 files, freed {SizeMB:F2} MB",
+                fileCountsBefore.TsCount,
+                fileCountsBefore.M3u8Count,
+                (sizeBeforeReset - sizeAfterReset) / (1024.0 * 1024.0)
+            );
+        }
+        finally
+        {
+            _streamLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Trim buffer to keep only last N minutes of segments
+    /// </summary>
+    public async Task<TrimBufferResult> TrimBufferAsync(TimeSpan keepDuration)
+    {
+        await _streamLock.WaitAsync();
+        try
+        {
+            _logger.LogInformation("Trimming buffer to last {Minutes} minutes (admin request)", keepDuration.TotalMinutes);
+
+            if (!Directory.Exists(_outputPath))
+            {
+                _logger.LogWarning("Output directory does not exist, nothing to trim");
+                return new TrimBufferResult(0, 0, 0, 0);
+            }
+
+            var cutoffTime = DateTime.UtcNow - keepDuration;
+            var deletedCount = 0;
+            var deletedSize = 0L;
+
+            await Task.Run(() =>
+            {
+                // Get all .ts files sorted by last write time
+                var tsFiles = Directory.GetFiles(_outputPath, "*.ts")
+                    .Select(f => new FileInfo(f))
+                    .OrderBy(f => f.LastWriteTimeUtc)
+                    .ToList();
+
+                foreach (var file in tsFiles)
+                {
+                    // Delete files older than cutoff time
+                    if (file.LastWriteTimeUtc < cutoffTime)
+                    {
+                        try
+                        {
+                            var fileSize = file.Length;
+                            file.Delete();
+                            deletedCount++;
+                            deletedSize += fileSize;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete segment file during trim: {File}", file.FullName);
+                        }
+                    }
+                }
+            });
+
+            var remainingSize = GetDirectorySize(_outputPath);
+            var remainingCounts = GetFileCountsByType(_outputPath);
+
+            _logger.LogInformation(
+                "Buffer trim complete - Deleted {Count} files ({SizeMB:F2} MB), {RemainingCount} files remaining ({RemainingSizeMB:F2} MB)",
+                deletedCount,
+                deletedSize / (1024.0 * 1024.0),
+                remainingCounts.TsCount,
+                remainingSize / (1024.0 * 1024.0)
+            );
+
+            return new TrimBufferResult(deletedCount, deletedSize, remainingCounts.TsCount, remainingSize);
+        }
+        finally
+        {
+            _streamLock.Release();
+        }
+    }
+
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("CameraStreamingService stopping");
@@ -411,3 +663,7 @@ public class CameraStreamingService : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 }
+
+public record TrimBufferResult(int DeletedCount, long DeletedSize, int RemainingCount, long RemainingSize);
+public record BufferConfigDto(int DurationMinutes);
+public record UpdateBufferConfigResult(bool Success, int OldDurationMinutes, int NewDurationMinutes, bool RequiresRestart, string Message);

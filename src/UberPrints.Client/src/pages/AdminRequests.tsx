@@ -2,19 +2,17 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto, RequestStatusEnum } from '../types/api';
-import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { Package, Loader2, ExternalLink, Edit2, Shield } from 'lucide-react';
+import { Package, ExternalLink, Edit2, Shield } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 
 export const AdminRequests = () => {
-  const { toast } = useToast();
   const [requests, setRequests] = useState<PrintRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

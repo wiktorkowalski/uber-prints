@@ -198,6 +198,36 @@ public class StreamController : ControllerBase
     }
 
     /// <summary>
+    /// Restart the stream (stop and start) (admin only)
+    /// </summary>
+    [HttpPost("restart")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RestartStreaming()
+    {
+        try
+        {
+            if (!_streamState.State.IsStreamingEnabled)
+            {
+                return BadRequest(new { Success = false, Message = "Streaming is disabled. Enable it first before restarting." });
+            }
+
+            _logger.LogInformation("Restarting stream (admin request)");
+            var success = await _streamingService.RestartStreamingAsync();
+
+            return Ok(new
+            {
+                Success = success,
+                Message = success ? "Stream restarted successfully" : "Failed to restart stream"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error restarting stream");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
     /// Get detailed streaming statistics (admin only)
     /// </summary>
     [HttpGet("stats")]
@@ -215,7 +245,119 @@ public class StreamController : ControllerBase
             return StatusCode(500, new { Message = "Internal server error" });
         }
     }
+
+    /// <summary>
+    /// Get buffer diagnostics (admin only)
+    /// </summary>
+    [HttpGet("buffer/diagnostics")]
+    [Authorize(Roles = "Admin")]
+    public IActionResult GetBufferDiagnostics()
+    {
+        try
+        {
+            var diagnostics = _streamingService.GetBufferDiagnostics();
+            return Ok(diagnostics);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting buffer diagnostics");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Reset stream buffer (admin only) - deletes all segments
+    /// </summary>
+    [HttpPost("buffer/reset")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ResetBuffer()
+    {
+        try
+        {
+            await _streamingService.ResetBufferAsync();
+            return Ok(new { Success = true, Message = "Buffer reset successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting buffer");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Trim buffer to specified duration (admin only)
+    /// </summary>
+    [HttpPost("buffer/trim")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> TrimBuffer([FromBody] TrimBufferRequest? request = null)
+    {
+        try
+        {
+            // Default to configured buffer duration if not specified
+            var durationMinutes = request?.DurationMinutes ?? 30;
+            var result = await _streamingService.TrimBufferAsync(TimeSpan.FromMinutes(durationMinutes));
+            return Ok(new
+            {
+                Success = true,
+                Message = "Buffer trimmed successfully",
+                DeletedCount = result.DeletedCount,
+                DeletedSize = result.DeletedSize,
+                RemainingCount = result.RemainingCount,
+                RemainingSize = result.RemainingSize
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error trimming buffer");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Get buffer configuration (admin only)
+    /// </summary>
+    [HttpGet("buffer/config")]
+    [Authorize(Roles = "Admin")]
+    public IActionResult GetBufferConfig()
+    {
+        try
+        {
+            var config = _streamingService.GetBufferConfig();
+            return Ok(config);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting buffer config");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
+
+    /// <summary>
+    /// Update buffer configuration (admin only)
+    /// Note: Stream must be restarted for changes to take effect
+    /// </summary>
+    [HttpPut("buffer/config")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateBufferConfig([FromBody] UpdateBufferConfigRequest request)
+    {
+        try
+        {
+            var result = await _streamingService.UpdateBufferConfigAsync(request.DurationMinutes);
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating buffer config");
+            return StatusCode(500, new { Message = "Internal server error" });
+        }
+    }
 }
 
 public record HeartbeatRequest(string ViewerId);
 public record LeaveRequest(string ViewerId);
+public record TrimBufferRequest(int DurationMinutes);
+public record UpdateBufferConfigRequest(int DurationMinutes);

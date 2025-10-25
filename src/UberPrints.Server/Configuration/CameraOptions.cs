@@ -42,4 +42,11 @@ public class CameraOptions
     /// </summary>
     [Range(5, 60, ErrorMessage = "Connection timeout must be between 5 and 60 seconds")]
     public int ConnectionTimeoutSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// DVR buffer duration in minutes (default: 30)
+    /// This determines how much video history is kept for rewinding
+    /// </summary>
+    [Range(5, 240, ErrorMessage = "DVR buffer duration must be between 5 and 240 minutes (4 hours)")]
+    public int DvrBufferMinutes { get; set; } = 30;
 }

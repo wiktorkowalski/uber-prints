@@ -12,7 +12,7 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
-import { ChevronDown, Package, Loader2, ExternalLink, Edit2, Plus, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
+import { ChevronDown, Package, Loader2, ExternalLink, Edit2, Plus, CheckCircle2, Shield } from 'lucide-react';
 import { formatRelativeTime } from '../lib/utils';
 
 const ALL_FILAMENT_REQUEST_STATUS_VALUES: FilamentRequestStatusEnum[] = [
