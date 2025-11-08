@@ -13,7 +13,6 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
 import { Skeleton } from '../components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Info, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';

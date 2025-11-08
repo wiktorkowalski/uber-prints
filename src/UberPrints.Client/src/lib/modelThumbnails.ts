@@ -37,33 +37,6 @@ export function identifyModelPlatform(modelUrl: string): ModelThumbnail {
 }
 
 /**
- * Extracts model ID from Printables URL
- * Example: https://www.printables.com/model/1098891-octopus-wine-bottle-holder -> 1098891
- */
-function extractPrintablesId(url: URL): string | null {
-  const match = url.pathname.match(/\/model\/(\d+)/);
-  return match ? match[1] : null;
-}
-
-/**
- * Extracts thing ID from Thingiverse URL
- * Example: https://www.thingiverse.com/thing:3495390 -> 3495390
- */
-function extractThingiverseId(url: URL): string | null {
-  const match = url.pathname.match(/\/thing:(\d+)/);
-  return match ? match[1] : null;
-}
-
-/**
- * Extracts model ID from MakerWorld URL
- * Example: https://makerworld.com/en/models/67544 -> 67544
- */
-function extractMakerWorldId(url: URL): string | null {
-  const match = url.pathname.match(/\/models\/(\d+)/);
-  return match ? match[1] : null;
-}
-
-/**
  * Fetches thumbnail URL via backend API to avoid CORS issues
  */
 export async function fetchModelThumbnail(modelUrl: string): Promise<string | null> {
