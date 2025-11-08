@@ -14,6 +14,8 @@ public class ApplicationDbContext : DbContext
   public DbSet<FilamentRequest> FilamentRequests { get; set; }
   public DbSet<FilamentRequestStatusHistory> FilamentRequestStatusHistories { get; set; }
   public DbSet<PrintRequestChange> PrintRequestChanges { get; set; }
+  public DbSet<Printer> Printers { get; set; }
+  public DbSet<PrinterStatusHistory> PrinterStatusHistories { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -25,12 +27,16 @@ public class ApplicationDbContext : DbContext
     modelBuilder.Entity<FilamentRequest>().Property(f => f.Id).HasDefaultValueSql("uuidv7()");
     modelBuilder.Entity<FilamentRequestStatusHistory>().Property(f => f.Id).HasDefaultValueSql("uuidv7()");
     modelBuilder.Entity<PrintRequestChange>().Property(p => p.Id).HasDefaultValueSql("uuidv7()");
+    modelBuilder.Entity<Printer>().Property(p => p.Id).HasDefaultValueSql("uuidv7()");
+    modelBuilder.Entity<PrinterStatusHistory>().Property(p => p.Id).HasDefaultValueSql("uuidv7()");
 
     // Enum conversions
     modelBuilder.Entity<PrintRequest>().Property(p => p.CurrentStatus).HasConversion<string>();
     modelBuilder.Entity<StatusHistory>().Property(s => s.Status).HasConversion<string>();
     modelBuilder.Entity<FilamentRequest>().Property(f => f.CurrentStatus).HasConversion<string>();
     modelBuilder.Entity<FilamentRequestStatusHistory>().Property(f => f.Status).HasConversion<string>();
+    modelBuilder.Entity<Printer>().Property(p => p.CurrentState).HasConversion<string>();
+    modelBuilder.Entity<PrinterStatusHistory>().Property(p => p.State).HasConversion<string>();
 
     // Indexes
     modelBuilder.Entity<User>().HasIndex(u => u.DiscordId).IsUnique();

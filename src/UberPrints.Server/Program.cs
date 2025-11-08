@@ -48,6 +48,11 @@ builder.Services.AddOptions<CameraOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<PrusaLinkOptions>()
+    .Bind(builder.Configuration.GetSection(PrusaLinkOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 // Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -72,6 +77,10 @@ builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
 builder.Services.AddSingleton<StreamStateService>();
 builder.Services.AddSingleton<CameraStreamingService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<CameraStreamingService>());
+
+// Add printer monitoring services
+builder.Services.AddHttpClient<PrusaLinkClient>();
+builder.Services.AddHostedService<PrinterMonitoringService>();
 
 // Add health checks
 builder.Services.AddHealthChecks()

@@ -30,6 +30,18 @@ public class PrintRequest
 
   public Guid? FilamentId { get; set; }
 
+  public Guid? AssignedPrinterId { get; set; }
+
+  [MaxLength(500)]
+  public string? GCodeFileUrl { get; set; }
+
+  [MaxLength(255)]
+  public string? PrintJobId { get; set; }
+
+  public DateTime? PrintStartedAt { get; set; }
+
+  public DateTime? PrintCompletedAt { get; set; }
+
   [Required]
   public RequestStatusEnum CurrentStatus { get; set; }
 
@@ -40,6 +52,8 @@ public class PrintRequest
   public User? User { get; set; }
 
   public Filament? Filament { get; set; }
+
+  public Printer? AssignedPrinter { get; set; }
 
   public List<StatusHistory> StatusHistory { get; set; } = new();
 
