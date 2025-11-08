@@ -9,6 +9,7 @@ using System.Text;
 using UberPrints.Server.Configuration;
 using UberPrints.Server.Data;
 using UberPrints.Server.Services;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 // Load environment variables from .env file (for local development)
 // Looks for .env in the project root (2 levels up from bin/Debug/net10.0)
@@ -71,6 +72,17 @@ builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
 builder.Services.AddSingleton<StreamStateService>();
 builder.Services.AddSingleton<CameraStreamingService>();
 builder.Services.AddHostedService(provider => provider.GetRequiredService<CameraStreamingService>());
+
+// Add health checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Database connection string not configured"),
+        name: "postgres",
+        tags: new[] { "database", "postgres" })
+    .AddDbContextCheck<ApplicationDbContext>(
+        name: "dbcontext",
+        tags: new[] { "database", "ef-core" });
 
 // Add session support for guest token tracking
 builder.Services.AddDistributedMemoryCache();
@@ -246,6 +258,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map health check endpoints
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = healthCheck => healthCheck.Tags.Contains("database")
+});
+app.MapHealthChecks("/health/live");
 
 // Fallback to index.html for SPA routing (must be after MapControllers)
 app.MapFallbackToFile("index.html");
