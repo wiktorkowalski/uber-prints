@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox';
 import { Skeleton } from '../components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
-import { Info } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Info, ExternalLink } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Package, Clock, CheckCircle2 } from 'lucide-react';
@@ -212,16 +213,67 @@ export const NewRequest = () => {
                 name="modelUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Model URL *</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormLabel>Model URL *</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button type="button" className="focus:outline-none">
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help hover:text-foreground transition-colors" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2">Recommended Model Sources</h4>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                <strong className="text-foreground">Printables</strong> is preferred, but you can also use:
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <a
+                                href="https://www.printables.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-primary hover:underline"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Printables.com (Preferred)
+                              </a>
+                              <a
+                                href="https://www.thingiverse.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                Thingiverse.com (Alternative)
+                              </a>
+                              <a
+                                href="https://makerworld.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                              >
+                                <ExternalLink className="w-3 h-3" />
+                                MakerWorld.com (Alternative)
+                              </a>
+                            </div>
+                            <p className="text-xs text-muted-foreground pt-2 border-t">
+                              Other model links are also accepted
+                            </p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <FormControl>
                       <Input
-                        placeholder="https://www.thingiverse.com/thing:123456"
+                        placeholder="https://www.printables.com/model/123456"
                         type="url"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Link to the 3D model you want printed (Thingiverse, Printables, etc.)
+                      Link to the 3D model (Printables preferred, Thingiverse and MakerWorld also supported)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -233,19 +285,7 @@ export const NewRequest = () => {
                 name="filamentId"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormLabel>Filament (Optional)</FormLabel>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">Select a filament material and color. If you're not sure, leave it blank and an admin will choose the best option for your print.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
+                    <FormLabel>Filament (Optional)</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
                       defaultValue={field.value || 'none'}
@@ -360,21 +400,9 @@ export const NewRequest = () => {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none flex-1">
-                      <div className="flex items-center gap-2">
-                        <FormLabel>
-                          Make request public
-                        </FormLabel>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">Public requests appear in the public request list. Private requests are only visible to you and administrators.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
+                      <FormLabel>
+                        Make request public
+                      </FormLabel>
                       <FormDescription>
                         Public requests are visible to everyone. Uncheck to make this request private (only you and admins can view it)
                       </FormDescription>

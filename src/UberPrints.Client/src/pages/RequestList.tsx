@@ -10,6 +10,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '../components/ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
 import { ExternalLink, Package, User } from 'lucide-react';
+import { ModelThumbnail } from '../components/ModelThumbnail';
 
 export const RequestList = () => {
   const { user } = useAuth();
@@ -104,86 +105,96 @@ export const RequestList = () => {
             key={request.id}
             className="border rounded-lg p-6 hover:border-primary transition-colors"
           >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <HoverCard>
-                    <HoverCardTrigger asChild>
-                      <Link to={`/request/${request.id}`}>
-                        <h3 className="text-xl font-semibold hover:text-primary transition-colors">
-                          {request.requesterName}
-                        </h3>
-                      </Link>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-semibold">Request Details</h4>
-                        <div className="text-sm space-y-1">
-                          <p><span className="text-muted-foreground">ID:</span> {request.id.slice(0, 8)}...</p>
-                          <p><span className="text-muted-foreground">Requester:</span> {request.requesterName}</p>
-                          {request.filamentName && (
-                            <p><span className="text-muted-foreground">Filament:</span> {request.filamentName}</p>
-                          )}
-                          <p><span className="text-muted-foreground">Delivery:</span> {request.requestDelivery ? 'Yes' : 'No'}</p>
-                          {request.notes && (
-                            <p className="pt-1"><span className="text-muted-foreground">Notes:</span><br/>{request.notes.slice(0, 100)}{request.notes.length > 100 ? '...' : ''}</p>
-                          )}
-                        </div>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                  {user && request.userId === user.id && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <User className="w-3 h-3" />
-                      Your request
-                    </Badge>
-                  )}
+            <div className="flex gap-6">
+              {/* Model Thumbnail */}
+              <div className="flex-shrink-0">
+                <ModelThumbnail modelUrl={request.modelUrl} size={128} />
+              </div>
+
+              {/* Request Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <HoverCard>
+                        <HoverCardTrigger asChild>
+                          <Link to={`/request/${request.id}`}>
+                            <h3 className="text-xl font-semibold hover:text-primary transition-colors">
+                              {request.requesterName}
+                            </h3>
+                          </Link>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-semibold">Request Details</h4>
+                            <div className="text-sm space-y-1">
+                              <p><span className="text-muted-foreground">ID:</span> {request.id.slice(0, 8)}...</p>
+                              <p><span className="text-muted-foreground">Requester:</span> {request.requesterName}</p>
+                              {request.filamentName && (
+                                <p><span className="text-muted-foreground">Filament:</span> {request.filamentName}</p>
+                              )}
+                              <p><span className="text-muted-foreground">Delivery:</span> {request.requestDelivery ? 'Yes' : 'No'}</p>
+                              {request.notes && (
+                                <p className="pt-1"><span className="text-muted-foreground">Notes:</span><br/>{request.notes.slice(0, 100)}{request.notes.length > 100 ? '...' : ''}</p>
+                              )}
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                      {user && request.userId === user.id && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          Your request
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {formatRelativeTime(request.createdAt)}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      request.currentStatus
+                    )}`}
+                  >
+                    {getStatusLabel(request.currentStatus)}
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {formatRelativeTime(request.createdAt)}
-                </p>
+
+                <div className="space-y-2 text-sm">
+                  <Link to={`/request/${request.id}`} className="block">
+                    {request.filamentName && (
+                      <div className="text-muted-foreground">
+                        Filament: <span className="font-medium">{request.filamentName}</span>
+                      </div>
+                    )}
+                    {request.requestDelivery && (
+                      <div className="text-muted-foreground">
+                        🚚 Delivery requested
+                      </div>
+                    )}
+                    {request.notes && (
+                      <p className="text-muted-foreground line-clamp-2 mt-2">
+                        {request.notes}
+                      </p>
+                    )}
+                  </Link>
+
+                  <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    <a
+                      href={sanitizeUrl(request.modelUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-primary truncate"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {request.modelUrl}
+                    </a>
+                  </div>
+                </div>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                  request.currentStatus
-                )}`}
-              >
-                {getStatusLabel(request.currentStatus)}
-              </span>
             </div>
-
-            <Link to={`/request/${request.id}`} className="block">
-              <div className="space-y-2 text-sm">
-                {request.filamentName && (
-                  <div className="text-muted-foreground">
-                    Filament: <span className="font-medium">{request.filamentName}</span>
-                  </div>
-                )}
-                {request.requestDelivery && (
-                  <div className="text-muted-foreground">
-                    🚚 Delivery requested
-                  </div>
-                )}
-                {request.notes && (
-                  <p className="text-muted-foreground line-clamp-2 mt-2">
-                    {request.notes}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                <a
-                  href={sanitizeUrl(request.modelUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary truncate"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {request.modelUrl}
-                </a>
-              </div>
-            </Link>
           </div>
         ))}
       </div>

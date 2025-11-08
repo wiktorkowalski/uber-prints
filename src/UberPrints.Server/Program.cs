@@ -61,6 +61,9 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add HttpClient for thumbnail fetching
+builder.Services.AddHttpClient();
+
 // Add application services
 builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
 
