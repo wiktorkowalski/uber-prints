@@ -71,7 +71,7 @@ export const EditRequest = () => {
           description: "You can only edit your own requests",
           variant: "destructive",
         });
-        navigate(`/request/${id}`);
+        navigate(`/requests/${id}`);
         return;
       }
 
@@ -120,7 +120,7 @@ export const EditRequest = () => {
         description: "Your changes have been saved.",
         variant: "success",
       });
-      navigate(`/request/${id}`);
+      navigate(`/requests/${id}`);
     } catch (error: any) {
       console.error('Error updating request:', error);
       const errorMessage = error.response?.data?.message || 'Failed to update request. Please try again.';
@@ -145,7 +145,7 @@ export const EditRequest = () => {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate(`/request/${id}`)}>
+        <Button variant="ghost" onClick={() => navigate(`/requests/${id}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Request
         </Button>
@@ -315,7 +315,7 @@ export const EditRequest = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate(`/request/${id}`)}
+                  onClick={() => navigate(`/requests/${id}`)}
                   disabled={submitting}
                 >
                   Cancel

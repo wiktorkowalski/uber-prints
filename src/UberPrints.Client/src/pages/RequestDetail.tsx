@@ -224,7 +224,7 @@ export const RequestDetail = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate(`/request/${request.id}/edit`)}
+                onClick={() => navigate(`/requests/${request.id}/edit`)}
               >
                 <Edit2 className="w-4 h-4 mr-2" />
                 Edit

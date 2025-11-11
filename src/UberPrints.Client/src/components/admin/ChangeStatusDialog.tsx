@@ -87,8 +87,8 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
           <div className="space-y-2">
             <Label>New Status</Label>
             <Select
-              value={newStatus?.toString()}
-              onValueChange={(value) => setNewStatus(parseInt(value) as RequestStatusEnum)}
+              value={newStatus || undefined}
+              onValueChange={(value) => setNewStatus(value as RequestStatusEnum)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />

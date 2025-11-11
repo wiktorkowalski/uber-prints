@@ -1,23 +1,23 @@
 // API Types based on backend DTOs
 
 export enum RequestStatusEnum {
-  Pending = 0,
-  Accepted = 1,
-  Rejected = 2,
-  OnHold = 3,
-  Paused = 4,
-  WaitingForMaterials = 5,
-  Delivering = 6,
-  WaitingForPickup = 7,
-  Completed = 8
+  Pending = "Pending",
+  Accepted = "Accepted",
+  Rejected = "Rejected",
+  OnHold = "OnHold",
+  Paused = "Paused",
+  WaitingForMaterials = "WaitingForMaterials",
+  Delivering = "Delivering",
+  WaitingForPickup = "WaitingForPickup",
+  Completed = "Completed"
 }
 
 export enum FilamentRequestStatusEnum {
-  Pending = 0,
-  Approved = 1,
-  Rejected = 2,
-  Ordered = 3,
-  Received = 4
+  Pending = "Pending",
+  Approved = "Approved",
+  Rejected = "Rejected",
+  Ordered = "Ordered",
+  Received = "Received"
 }
 
 export interface UserDto {
@@ -104,6 +104,7 @@ export interface PrintRequestDto {
   notes?: string;
   requestDelivery: boolean;
   isPublic: boolean;
+  notifyOnStatusChange: boolean;
   filamentId?: string;
   filamentName?: string;
   currentStatus: RequestStatusEnum;
@@ -119,6 +120,7 @@ export interface CreatePrintRequestDto {
   notes?: string;
   requestDelivery: boolean;
   isPublic?: boolean;
+  notifyOnStatusChange?: boolean;
   filamentId?: string;
 }
 

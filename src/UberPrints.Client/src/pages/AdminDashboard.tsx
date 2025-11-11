@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Skeleton } from '../components/ui/skeleton';
 import { Shield, Package, PrinterIcon, Users, Camera, ArrowRight } from 'lucide-react';
 import { PrinterStatusCard } from '../components/PrinterStatusCard';
-import { PrinterStatusDto } from '../types/api';
+import { PrinterStatusDto, RequestStatusEnum } from '../types/api';
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
@@ -46,7 +46,7 @@ export const AdminDashboard = () => {
       // Get users
       const users = await api.getAdminUsers();
 
-      const pendingCount = requests.filter(r => r.currentStatus === 0).length;
+      const pendingCount = requests.filter(r => r.currentStatus === RequestStatusEnum.Pending).length;
       const guestCount = users.filter(u => u.isGuest).length;
 
       setStats({

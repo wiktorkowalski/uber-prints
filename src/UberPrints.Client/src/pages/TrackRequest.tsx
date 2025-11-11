@@ -35,7 +35,7 @@ export const TrackRequest = () => {
         description: "Redirecting to your request...",
         variant: "success",
       });
-      navigate(`/request/${request.id}`);
+      navigate(`/requests/${request.id}`);
     } catch (error: any) {
       console.error('Error tracking request:', error);
       const errorMessage = error.response?.status === 404

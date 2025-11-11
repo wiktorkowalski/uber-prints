@@ -76,6 +76,8 @@ builder.Services.AddHttpClient();
 
 // Add application services
 builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
+builder.Services.AddHttpClient<DiscordService>();
+builder.Services.AddHttpClient<ThermalPrinterService>();
 
 // Add camera streaming services
 builder.Services.AddSingleton<StreamStateService>();

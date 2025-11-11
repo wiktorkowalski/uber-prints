@@ -257,7 +257,7 @@ const RequestsTable = ({ requests, onStatusChange, onEdit, error, onRetry }: Req
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <Link
-                    to={`/request/${request.id}`}
+                    to={`/requests/${request.id}`}
                     className="text-lg font-semibold hover:text-primary"
                   >
                     {request.requesterName}

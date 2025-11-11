@@ -96,7 +96,7 @@ export const Dashboard = () => {
               : 'Your print requests from this browser'}
           </p>
         </div>
-        <Link to="/request/new">
+        <Link to="/requests/new">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
             New Request
@@ -176,7 +176,7 @@ export const Dashboard = () => {
               <p className="text-muted-foreground mb-4">
                 Start by submitting your first 3D printing request!
               </p>
-              <Link to="/request/new">
+              <Link to="/requests/new">
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   Submit Request
@@ -188,7 +188,7 @@ export const Dashboard = () => {
               {requests.map((request) => (
                 <Link
                   key={request.id}
-                  to={`/request/${request.id}`}
+                  to={`/requests/${request.id}`}
                   className="block border rounded-lg p-4 hover:border-primary transition-colors"
                 >
                   <div className="flex justify-between items-start mb-3">

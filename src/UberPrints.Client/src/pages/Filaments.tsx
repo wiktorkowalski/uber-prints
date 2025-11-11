@@ -223,7 +223,7 @@ export const Filaments = () => {
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <a href="/request/new">Submit Print Request</a>
+            <a href="/requests/new">Submit Print Request</a>
           </Button>
         </CardContent>
       </Card>

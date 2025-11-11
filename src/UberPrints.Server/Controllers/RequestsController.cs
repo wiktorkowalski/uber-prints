@@ -13,11 +13,19 @@ public class RequestsController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IChangeTrackingService _changeTrackingService;
+  private readonly DiscordService _discordService;
+  private readonly ThermalPrinterService _thermalPrinterService;
 
-  public RequestsController(ApplicationDbContext context, IChangeTrackingService changeTrackingService)
+  public RequestsController(
+      ApplicationDbContext context,
+      IChangeTrackingService changeTrackingService,
+      DiscordService discordService,
+      ThermalPrinterService thermalPrinterService)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
+    _discordService = discordService;
+    _thermalPrinterService = thermalPrinterService;
   }
 
   [HttpGet]
@@ -177,6 +185,7 @@ public class RequestsController : ControllerBase
       Notes = dto.Notes,
       RequestDelivery = dto.RequestDelivery,
       IsPublic = dto.IsPublic,
+      NotifyOnStatusChange = dto.NotifyOnStatusChange,
       FilamentId = dto.FilamentId,
       UserId = user.Id,  // Associate request with user
       CurrentStatus = RequestStatusEnum.Pending,
@@ -196,6 +205,33 @@ public class RequestsController : ControllerBase
     request.StatusHistory.Add(statusHistory);
 
     await _context.SaveChangesAsync();
+
+    // Reload request with filament data for notifications and printing
+    await _context.Entry(request).Reference(r => r.Filament).LoadAsync();
+
+    // Capture data for background tasks before context disposal
+    var requestId = request.Id;
+
+    // Send notifications and print receipt (fire-and-forget to not block response)
+    _ = Task.Run(async () =>
+    {
+      // Create new scope for background work to avoid disposed context
+      using var scope = HttpContext.RequestServices.CreateScope();
+      var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+      var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
+      var scopedPrinterService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();
+
+      // Reload request with all needed data
+      var backgroundRequest = await scopedContext.PrintRequests
+          .Include(r => r.Filament)
+          .FirstOrDefaultAsync(r => r.Id == requestId);
+
+      if (backgroundRequest != null)
+      {
+        await scopedDiscordService.NotifyAdminsNewRequestAsync(backgroundRequest);
+        await scopedPrinterService.PrintNewRequestAsync(backgroundRequest);
+      }
+    });
 
     var responseDto = MapToDto(request);
     return CreatedAtAction(nameof(GetRequest), new { id = request.Id }, responseDto);
@@ -355,6 +391,7 @@ public class RequestsController : ControllerBase
       Notes = request.Notes,
       RequestDelivery = request.RequestDelivery,
       IsPublic = request.IsPublic,
+      NotifyOnStatusChange = request.NotifyOnStatusChange,
       FilamentId = request.FilamentId,
       FilamentName = request.Filament?.Name,
       CurrentStatus = request.CurrentStatus,

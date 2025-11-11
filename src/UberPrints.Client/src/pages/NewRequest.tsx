@@ -26,6 +26,7 @@ const formSchema = z.object({
   notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
   requestDelivery: z.boolean(),
   isPublic: z.boolean(),
+  notifyOnStatusChange: z.boolean(),
   filamentId: z.string().optional(),
 });
 
@@ -47,6 +48,7 @@ export const NewRequest = () => {
       notes: '',
       requestDelivery: false,
       isPublic: true,
+      notifyOnStatusChange: true,
       filamentId: '',
     },
   });
@@ -82,6 +84,7 @@ export const NewRequest = () => {
         notes: values.notes || undefined,
         requestDelivery: values.requestDelivery,
         isPublic: values.isPublic,
+        notifyOnStatusChange: values.notifyOnStatusChange,
         filamentId: values.filamentId || undefined,
       });
 
@@ -90,7 +93,7 @@ export const NewRequest = () => {
         description: "Your print request has been created.",
         variant: "success",
       });
-      navigate(`/request/${request.id}`);
+      navigate(`/requests/${request.id}`);
     } catch (error: any) {
       console.error('Error creating request:', error);
       const errorMessage = error.response?.data?.message || 'Failed to submit request. Please try again.';
@@ -405,6 +408,41 @@ export const NewRequest = () => {
                       <FormDescription>
                         Public requests are visible to everyone. Uncheck to make this request private (only you and admins can view it)
                       </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notifyOnStatusChange"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none flex-1">
+                      <FormLabel>
+                        Notify me about status changes
+                      </FormLabel>
+                      <FormDescription>
+                        Get Discord DM notifications when your request status changes
+                      </FormDescription>
+                      <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950 rounded text-xs text-blue-900 dark:text-blue-100">
+                        <strong>Note:</strong> You must{' '}
+                        <a
+                          href="https://discord.com/oauth2/authorize?client_id=1402663574962438194"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-blue-700 dark:hover:text-blue-300"
+                        >
+                          add the bot to your Discord
+                        </a>
+                        {' '}for notifications to work
+                      </div>
                     </div>
                   </FormItem>
                 )}

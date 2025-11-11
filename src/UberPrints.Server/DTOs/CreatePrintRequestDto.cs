@@ -20,5 +20,7 @@ public class CreatePrintRequestDto
 
   public bool IsPublic { get; set; } = true;
 
+  public bool NotifyOnStatusChange { get; set; } = true;
+
   public Guid? FilamentId { get; set; }
 }

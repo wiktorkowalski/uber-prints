@@ -408,8 +408,8 @@ export const AdminFilamentRequests = () => {
             <div className="space-y-2">
               <Label>New Status</Label>
               <Select
-                value={newFilamentRequestStatus?.toString()}
-                onValueChange={(value) => setNewFilamentRequestStatus(parseInt(value) as FilamentRequestStatusEnum)}
+                value={newFilamentRequestStatus || undefined}
+                onValueChange={(value) => setNewFilamentRequestStatus(value as FilamentRequestStatusEnum)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select status" />

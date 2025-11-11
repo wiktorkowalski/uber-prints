@@ -103,7 +103,7 @@ export const Navbar = () => {
                       All Requests
                     </Button>
                   </Link>
-                  <Link to="/request/new" onClick={() => setMobileMenuOpen(false)}>
+                  <Link to="/requests/new" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full justify-start">
                       <Plus className="w-4 h-4 mr-2" />
                       New Request
@@ -164,7 +164,7 @@ export const Navbar = () => {
                   All Requests
                 </Button>
               </Link>
-              <Link to="/request/new">
+              <Link to="/requests/new">
                 <Button variant="ghost" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
                   New Request

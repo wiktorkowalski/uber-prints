@@ -10,6 +10,7 @@ public class PrintRequestDto
   public string? Notes { get; set; }
   public bool RequestDelivery { get; set; }
   public bool IsPublic { get; set; }
+  public bool NotifyOnStatusChange { get; set; }
   public Guid? FilamentId { get; set; }
   public string? FilamentName { get; set; }
   public Models.RequestStatusEnum CurrentStatus { get; set; }

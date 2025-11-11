@@ -28,6 +28,8 @@ public class PrintRequest
 
   public bool IsPublic { get; set; } = true;
 
+  public bool NotifyOnStatusChange { get; set; } = true;
+
   public Guid? FilamentId { get; set; }
 
   public Guid? AssignedPrinterId { get; set; }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -21,6 +21,17 @@ import { AdminFilamentRequests } from './pages/AdminFilamentRequests';
 import { AdminUsers } from './pages/AdminUsers';
 import { LiveView } from './pages/LiveView';
 
+// Redirect components for backwards compatibility
+const RedirectToRequestDetail = () => {
+  const { id } = useParams();
+  return <Navigate to={`/requests/${id}`} replace />;
+};
+
+const RedirectToRequestEdit = () => {
+  const { id } = useParams();
+  return <Navigate to={`/requests/${id}/edit`} replace />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -31,9 +42,9 @@ function App() {
           <Route path="/" element={<Layout><Home /></Layout>} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/requests" element={<Layout><RequestList /></Layout>} />
-          <Route path="/request/:id" element={<Layout><RequestDetail /></Layout>} />
-          <Route path="/request/:id/edit" element={<Layout><EditRequest /></Layout>} />
-          <Route path="/request/new" element={<Layout><NewRequest /></Layout>} />
+          <Route path="/requests/:id" element={<Layout><RequestDetail /></Layout>} />
+          <Route path="/requests/:id/edit" element={<Layout><EditRequest /></Layout>} />
+          <Route path="/requests/new" element={<Layout><NewRequest /></Layout>} />
           <Route path="/track" element={<Layout><TrackRequest /></Layout>} />
           <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
           <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
@@ -91,6 +102,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Redirects from old routes to new routes (backwards compatibility) */}
+          <Route path="/request/new" element={<Navigate to="/requests/new" replace />} />
+          <Route path="/request/:id/edit" element={<RedirectToRequestEdit />} />
+          <Route path="/request/:id" element={<RedirectToRequestDetail />} />
 
           {/* 404 page */}
           <Route

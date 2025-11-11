@@ -118,7 +118,7 @@ export const RequestList = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <HoverCard>
                         <HoverCardTrigger asChild>
-                          <Link to={`/request/${request.id}`}>
+                          <Link to={`/requests/${request.id}`}>
                             <h3 className="text-xl font-semibold hover:text-primary transition-colors">
                               {request.requesterName}
                             </h3>
@@ -162,7 +162,7 @@ export const RequestList = () => {
                 </div>
 
                 <div className="space-y-2 text-sm">
-                  <Link to={`/request/${request.id}`} className="block">
+                  <Link to={`/requests/${request.id}`} className="block">
                     {request.filamentName && (
                       <div className="text-muted-foreground">
                         Filament: <span className="font-medium">{request.filamentName}</span>
@@ -205,7 +205,7 @@ export const RequestList = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">All Print Requests</h1>
-        <Link to="/request/new">
+        <Link to="/requests/new">
           <Button>
             <Package className="w-4 h-4 mr-2" />
             New Request
@@ -220,7 +220,7 @@ export const RequestList = () => {
           <p className="text-muted-foreground mb-4">
             Be the first to submit a 3D printing request!
           </p>
-          <Link to="/request/new">
+          <Link to="/requests/new">
             <Button>Submit Request</Button>
           </Link>
         </div>

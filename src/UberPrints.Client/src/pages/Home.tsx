@@ -19,7 +19,7 @@ export const Home = () => {
           Your friendly 3D printing service for friends. Submit requests, track progress, and get your prints delivered!
         </p>
         <div className="flex justify-center gap-4 pt-4">
-          <Link to="/request/new">
+          <Link to="/requests/new">
             <Button size="lg">
               <Package className="w-5 h-5 mr-2" />
               Submit Request

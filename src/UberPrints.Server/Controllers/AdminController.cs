@@ -15,11 +15,16 @@ public class AdminController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IChangeTrackingService _changeTrackingService;
+  private readonly DiscordService _discordService;
 
-  public AdminController(ApplicationDbContext context, IChangeTrackingService changeTrackingService)
+  public AdminController(
+      ApplicationDbContext context,
+      IChangeTrackingService changeTrackingService,
+      DiscordService discordService)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
+    _discordService = discordService;
   }
 
   [HttpGet("requests")]
@@ -54,6 +59,9 @@ public class AdminController : ControllerBase
     // For now, allow status changes without authentication check
     // TODO: Add admin authentication check
 
+    // Store old status for notification
+    var oldStatus = request.CurrentStatus;
+
     request.CurrentStatus = dto.Status;
     request.UpdatedAt = DateTime.UtcNow;
 
@@ -69,6 +77,31 @@ public class AdminController : ControllerBase
     _context.StatusHistories.Add(statusHistory);
 
     await _context.SaveChangesAsync();
+
+    // Send notification to requester if opted-in (fire-and-forget)
+    if (oldStatus != dto.Status)
+    {
+      var requestId = request.Id;
+      var newStatus = dto.Status;
+
+      _ = Task.Run(async () =>
+      {
+        // Create new scope for background work to avoid disposed context
+        using var scope = HttpContext.RequestServices.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
+
+        // Reload request with user data
+        var backgroundRequest = await scopedContext.PrintRequests
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (backgroundRequest != null)
+        {
+          await scopedDiscordService.NotifyRequesterStatusChangeAsync(backgroundRequest, oldStatus, newStatus);
+        }
+      });
+    }
 
     var responseDto = MapToDto(request);
     return Ok(responseDto);
