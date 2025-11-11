@@ -69,17 +69,17 @@ services:
       start_period: 40s
 
   # Cloudflare Tunnel
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: uberprints-tunnel
-    restart: unless-stopped
-    command: tunnel run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - server
-    networks:
-      - uberprints-network
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: uberprints-tunnel
+  #   restart: unless-stopped
+  #   command: tunnel run
+  #   environment:
+  #     TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - server
+  #   networks:
+  #     - uberprints-network
 
 networks:
   uberprints-network:
