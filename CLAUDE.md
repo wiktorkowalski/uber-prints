@@ -4,9 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-UberPrints is a 3D print request management system where users can request 3D prints with optional delivery. The system consists of:
-- **Backend**: ASP.NET Core 10.0 Web API with PostgreSQL database and Discord OAuth authentication
+UberPrints is a 3D print request management system where users can request 3D prints with optional delivery, featuring live printer monitoring and camera streaming. The system consists of:
+- **Backend**: ASP.NET Core 10.0 Web API with PostgreSQL database, Discord OAuth authentication, and Prusa Link integration
 - **Frontend**: React + Vite + TypeScript SPA with Tailwind CSS and shadcn/ui components
+- **Printer Integration**: Real-time monitoring via Prusa Link API with background polling service
+- **Camera Streaming**: RTSP-to-HLS live view with DVR buffer for rewinding
+
+### Key Technologies & Dependencies
+
+**Backend:**
+- ASP.NET Core 10.0 with minimal APIs and OpenAPI/Scalar documentation
+- Entity Framework Core 10.0 with PostgreSQL provider
+- Background services (`IHostedService`) for printer monitoring and camera streaming
+- FFmpeg for RTSP-to-HLS video conversion (external dependency)
+
+**Frontend:**
+- Vite 6.x for fast builds and HMR
+- React 19 with TypeScript
+- TanStack Router for routing
+- HLS.js for video playback
+- Axios for API communication
+- React Hook Form + Zod for form validation
+- shadcn/ui component library (Radix UI primitives + Tailwind CSS)
+
+**Infrastructure:**
+- Docker & Docker Compose for containerization
+- GitHub Actions for CI/CD
+- Cloudflare Tunnel for secure public access (optional)
+- Watchtower for automated deployments (optional)
 
 ## Build and Test Commands
 
@@ -99,6 +124,9 @@ The application follows a standard ASP.NET Core Web API architecture:
   - `FilamentsController`: Public read-only filament catalog
   - `AdminController`: Admin-only operations for managing requests and filaments
   - `AuthController`: Discord OAuth authentication, JWT token generation, and guest session management
+  - `PrintersController`: Admin endpoints for printer control (upload GCode, pause/resume/cancel, test connection, get snapshot)
+  - `PrinterStatusController`: Public endpoints for printer status and print queue monitoring
+  - `StreamController`: Camera streaming control (start/stop, viewer management, buffer diagnostics)
 
 - **Models** (`Models/`): Domain entities that map to database tables
   - Uses Entity Framework Core conventions
@@ -111,6 +139,11 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 - **Data** (`Data/`): Entity Framework Core DbContext
   - `ApplicationDbContext`: Configures all entities and relationships
+
+- **Services** (`Services/`): Background services and external integrations
+  - `PrusaLinkClient`: HTTP client for communicating with Prusa Link API
+  - `PrinterMonitoringService`: Background service that polls printer status every 5-30 seconds (adaptive polling based on printer state)
+  - `CameraStreamingService`: Background service managing FFmpeg for RTSP-to-HLS conversion with DVR buffer
 
 ### Key Architectural Patterns
 
@@ -134,14 +167,32 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 **Include Pattern**: Controllers use EF Core's `.Include()` extensively to eager-load related entities and avoid N+1 queries. Always check existing patterns when adding new queries.
 
+**Prusa Link Integration**: Real-time printer monitoring and control:
+- `PrusaLinkClient` service communicates with Prusa printers via HTTP API
+- `PrinterMonitoringService` polls printer status at adaptive intervals (5s when printing, 30s when idle)
+- Printer configuration stored in `Printers` table (IP address, API key, location)
+- Status data cached in database: temperatures, print progress, time remaining, current file
+- `PrinterStatusHistory` maintains audit trail of printer state changes
+- Admin endpoints support GCode upload, print control (pause/resume/cancel), and camera snapshots
+
+**Camera Streaming**: Live RTSP-to-HLS conversion with DVR functionality:
+- `CameraStreamingService` uses FFmpeg to convert RTSP camera feed to HLS format
+- DVR buffer (configurable 5-240 minutes, default 30) allows rewinding live stream
+- Viewer tracking system: start stream when first viewer joins, stop when last viewer leaves
+- Heartbeat mechanism keeps viewer sessions alive (10-second interval)
+- Admin controls for buffer management (trim old segments, reset buffer, configure duration)
+- HLS segments stored in `wwwroot/stream/` directory, served as static files
+
 ### Database Schema
 
 The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 
 - `User` → many `PrintRequest` (optional, for authenticated users)
-- `Filament` → many `PrintRequest` (required)
+- `Filament` → many `PrintRequest` (optional)
 - `PrintRequest` → many `StatusHistory` (audit trail)
 - `StatusHistory` → one `User` as `ChangedByUser` (optional, for admin tracking)
+- `Printer` → many `PrintRequest` (optional, for tracking which printer handled the request)
+- `Printer` → many `PrinterStatusHistory` (audit trail of printer state changes)
 
 **Important**: IDs use `uuidv7()` for better database performance with ordered UUIDs. This is configured in `ApplicationDbContext.OnModelCreating`.
 
@@ -152,6 +203,14 @@ The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 - Unique indexes on both `DiscordId` and `GuestSessionToken` fields
 
 **Status Enum**: `RequestStatusEnum` includes: Pending, Accepted, Rejected, OnHold, Paused, WaitingForMaterials, Delivering, WaitingForPickup, Completed.
+
+**Printer Model**: Stores 3D printer configuration and real-time status:
+- Configuration: Name, IP address, API key, location, active status
+- Real-time status: Current state (Unknown, Idle, Printing, Paused, Finished, Error, etc.)
+- Temperature readings: Nozzle and bed temperatures (current and target)
+- Print progress: Percentage complete, time remaining, time printing, current filename
+- Status updates cached in database and refreshed by `PrinterMonitoringService`
+- Default printer created automatically on first startup if none exists
 
 ### Testing Strategy
 
@@ -218,8 +277,16 @@ Key frontend pages:
 - `RequestList.tsx`: View all print requests
 - `RequestDetail.tsx`: View single request details
 - `Dashboard.tsx`: User dashboard
-- `AdminDashboard.tsx`: Admin panel (protected)
+- `AdminDashboard.tsx`: Admin panel with printer management (protected)
+- `PrinterStatus.tsx`: Real-time printer status and print queue monitoring (public)
+- `LiveView.tsx`: Live camera stream with DVR playback (public, with admin controls)
 - `AuthCallback.tsx`: Handles OAuth callback and JWT token storage
+
+Key frontend components:
+- `PrinterStatusCard.tsx`: Displays printer status, temperatures, and progress
+- `TemperatureDisplay.tsx`: Shows nozzle/bed temperatures with gauges
+- `PrintProgress.tsx`: Progress bar for active prints
+- `VideoPlayer.tsx`: HLS video player with retry logic and error handling
 
 When adding new features:
 1. Create API client functions in `lib/api.ts`
@@ -244,6 +311,9 @@ cp .env.example .env
 # - DISCORD_CLIENT_SECRET
 # - JWT_SECRET_KEY (minimum 32 characters)
 # - POSTGRES_PASSWORD
+# - PrusaLink__IpAddress (printer IP address)
+# - PrusaLink__ApiKey (from printer: Settings → Prusa Connect → API Key)
+# - Camera__RtspUrl (RTSP camera stream URL, e.g., rtsp://192.168.1.35/live)
 ```
 
 **appsettings.json structure** (no secrets here):
@@ -264,6 +334,22 @@ cp .env.example .env
   },
   "Frontend": {
     "Url": "http://localhost:5173"
+  },
+  "PrusaLink": {
+    "IpAddress": "",  // Loaded from PrusaLink__IpAddress env var
+    "ApiKey": "",     // Loaded from PrusaLink__ApiKey env var
+    "PollingIntervalIdle": 30,    // Poll every 30 seconds when idle
+    "PollingIntervalActive": 5,   // Poll every 5 seconds when printing
+    "RequestTimeout": 30,
+    "MaxRetryAttempts": 3
+  },
+  "Camera": {
+    "RtspUrl": "",               // Loaded from Camera__RtspUrl env var
+    "HlsSegmentDuration": 2,     // 2-second HLS segments for low latency
+    "MaxSegments": 6,            // Keep 6 segments in live buffer
+    "OutputDirectory": "stream", // Output to wwwroot/stream/
+    "ConnectionTimeoutSeconds": 10,
+    "DvrBufferMinutes": 30       // 30-minute rewind buffer
   }
 }
 ```
@@ -277,11 +363,12 @@ cp .env.example .env
 
 **Configuration Validation:**
 The application uses ASP.NET Core's Options pattern with data annotation validation:
-- Configuration classes in `Configuration/` folder (DiscordOptions, JwtOptions, FrontendOptions)
-- Validation attributes enforce required fields and constraints (e.g., JWT secret minimum 32 characters)
+- Configuration classes in `Configuration/` folder (DiscordOptions, JwtOptions, FrontendOptions, PrusaLinkOptions, CameraOptions)
+- Validation attributes enforce required fields and constraints (e.g., JWT secret minimum 32 characters, camera buffer 5-240 minutes)
 - `ValidateOnStart()` ensures invalid configuration is caught at startup, not runtime
 - Application will fail to start with clear error messages if configuration is invalid or missing
 - Example: If JWT SecretKey is less than 32 characters, you'll see: "JWT SecretKey must be at least 32 characters long"
+- PrusaLink and Camera configuration are required for printer monitoring and streaming features
 
 For local development with Docker:
 ```bash
@@ -291,6 +378,32 @@ docker run --name uberprints-db \
   -p 5432:5432 \
   -d postgres:18
 ```
+
+## Deployment Automation
+
+The project supports automated continuous deployment:
+
+**GitHub Actions CI/CD**:
+- Automatically builds Docker images on push to `master` branch
+- Pushes images to GitHub Container Registry (ghcr.io)
+- Configured in `.github/workflows/` directory
+
+**Watchtower Auto-Deployment** (optional):
+- Monitors running Docker containers for new images
+- Automatically updates and restarts containers when new builds are available
+- Polls GHCR every 5 minutes by default
+- See `WATCHTOWER.md` for detailed setup instructions
+- Deployment flow: Push to GitHub → Actions builds → Watchtower deploys (within 5 minutes)
+
+**Manual Deployment**:
+- `docker compose pull` to pull latest images
+- `docker compose up -d` to recreate containers with new images
+- `./scripts/migrate-database.sh docker` to apply pending migrations
+
+**Health Checks**:
+- Server exposes `/health/ready` endpoint for container health monitoring
+- Database has `pg_isready` health check
+- Docker Compose waits for database health before starting server
 
 ## API Documentation
 
