@@ -122,11 +122,14 @@ The application follows a standard ASP.NET Core Web API architecture:
 - **Controllers** (`Controllers/`): API endpoints grouped by resource
   - `RequestsController`: Public-facing print request management
   - `FilamentsController`: Public read-only filament catalog
+  - `FilamentRequestsController`: User-submitted requests for new filaments
   - `AdminController`: Admin-only operations for managing requests and filaments
   - `AuthController`: Discord OAuth authentication, JWT token generation, and guest session management
   - `PrintersController`: Admin endpoints for printer control (upload GCode, pause/resume/cancel, test connection, get snapshot)
   - `PrinterStatusController`: Public endpoints for printer status and print queue monitoring
   - `StreamController`: Camera streaming control (start/stop, viewer management, buffer diagnostics)
+  - `ProfileController`: User profile management (display name, Discord info)
+  - `ThumbnailController`: Fetches Open Graph thumbnails from 3D model URLs
 
 - **Models** (`Models/`): Domain entities that map to database tables
   - Uses Entity Framework Core conventions
@@ -144,6 +147,10 @@ The application follows a standard ASP.NET Core Web API architecture:
   - `PrusaLinkClient`: HTTP client for communicating with Prusa Link API
   - `PrinterMonitoringService`: Background service that polls printer status every 5-30 seconds (adaptive polling based on printer state)
   - `CameraStreamingService`: Background service managing FFmpeg for RTSP-to-HLS conversion with DVR buffer
+  - `ThermalPrinterService`: Prints receipt-style tickets for new print requests via external thermal printer API
+  - `DiscordService`: Sends Discord DM notifications for new requests and status changes
+  - `ChangeTrackingService`: Tracks and audits changes to print request fields
+  - `StreamStateService`: In-memory management of camera streaming state and viewer sessions
 
 ### Key Architectural Patterns
 
@@ -153,8 +160,8 @@ The application follows a standard ASP.NET Core Web API architecture:
 - Cookie authentication for session persistence (30-day expiration)
 - Guest sessions supported via `GuestSessionToken` on User model
 - Authentication configured in `Program.cs` with both JWT Bearer and Cookie schemes
-- **TODO**: Admin endpoints in `AdminController` still need `[Authorize(Roles = "Admin")]` attributes
-- **TODO**: Request ownership validation needed in `RequestsController.UpdateRequest` and `DeleteRequest`
+- Admin authorization enforced via `[Authorize(Roles = "Admin")]` on `AdminController` and admin endpoints
+- Request ownership validation implemented in `RequestsController.UpdateRequest` and `DeleteRequest`
 
 **Guest Session Flow**:
 - Anonymous users can create guest sessions via `/api/auth/guest` to get a `GuestSessionToken`
@@ -183,14 +190,42 @@ The application follows a standard ASP.NET Core Web API architecture:
 - Admin controls for buffer management (trim old segments, reset buffer, configure duration)
 - HLS segments stored in `wwwroot/stream/` directory, served as static files
 
+**Thermal Printer Integration**: Automatic receipt printing for new print requests:
+- `ThermalPrinterService` calls external thermal printer API at `https://printer.vicio.ovh/api/printer/custom`
+- Fire-and-forget pattern: failures don't block request creation
+- Prints receipt with request ID, requester name, filament details, QR code linking to request page
+- Triggered automatically on new print request creation
+
+**Discord Notifications**: DM notifications for admins and requesters:
+- `DiscordService` sends Discord DMs using bot token
+- Admin notifications: All admin users notified when new print request created
+- Requester notifications: Users notified on status changes (opt-in via `NotifyOnStatusChange` field, defaults to true)
+- Fire-and-forget pattern: notification failures don't block operations
+- Requires Discord bot token and users must have Discord authentication
+
+**Filament Request System**: Users can request new filaments to be added:
+- Separate workflow from print requests with own status lifecycle (Pending → Approved/Rejected/Ordered/Received)
+- Supports both authenticated and guest users
+- Users can view/delete their own requests, admins can manage all requests and change status
+- Full audit trail via `FilamentRequestStatusHistory`
+
+**Change Tracking**: Audit trail for print request modifications:
+- `ChangeTrackingService` tracks changes to key fields: RequesterName, ModelUrl, Notes, RequestDelivery, IsPublic, FilamentId
+- Stores old/new values, timestamp, and user who made change
+- Changes included in PrintRequestDto responses for full transparency
+- Used by both user and admin update endpoints
+
 ### Database Schema
 
 The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 
 - `User` → many `PrintRequest` (optional, for authenticated users)
+- `User` → many `FilamentRequest` (optional, for authenticated users)
 - `Filament` → many `PrintRequest` (optional)
 - `PrintRequest` → many `StatusHistory` (audit trail)
+- `PrintRequest` → many `PrintRequestChange` (change tracking audit trail)
 - `StatusHistory` → one `User` as `ChangedByUser` (optional, for admin tracking)
+- `FilamentRequest` → many `FilamentRequestStatusHistory` (audit trail)
 - `Printer` → many `PrintRequest` (optional, for tracking which printer handled the request)
 - `Printer` → many `PrinterStatusHistory` (audit trail of printer state changes)
 
@@ -202,7 +237,9 @@ The database uses PostgreSQL 18 with Entity Framework Core. Key relationships:
 - A guest user can be converted to authenticated when they log in via Discord
 - Unique indexes on both `DiscordId` and `GuestSessionToken` fields
 
-**Status Enum**: `RequestStatusEnum` includes: Pending, Accepted, Rejected, OnHold, Paused, WaitingForMaterials, Delivering, WaitingForPickup, Completed.
+**Status Enums**:
+- `RequestStatusEnum`: Pending, Accepted, Rejected, OnHold, Paused, WaitingForMaterials, Delivering, WaitingForPickup, Completed
+- `FilamentRequestStatusEnum`: Pending, Approved, Rejected, Ordered, Received
 
 **Printer Model**: Stores 3D printer configuration and real-time status:
 - Configuration: Name, IP address, API key, location, active status
@@ -309,6 +346,7 @@ cp .env.example .env
 # Required variables:
 # - DISCORD_CLIENT_ID
 # - DISCORD_CLIENT_SECRET
+# - DISCORD_BOT_TOKEN (for Discord DM notifications)
 # - JWT_SECRET_KEY (minimum 32 characters)
 # - POSTGRES_PASSWORD
 # - PrusaLink__IpAddress (printer IP address)
@@ -330,7 +368,8 @@ cp .env.example .env
   },
   "Discord": {
     "ClientId": "",  // Loaded from DISCORD_CLIENT_ID env var
-    "ClientSecret": ""  // Loaded from DISCORD_CLIENT_SECRET env var
+    "ClientSecret": "",  // Loaded from DISCORD_CLIENT_SECRET env var
+    "BotToken": ""  // Loaded from DISCORD_BOT_TOKEN env var (for DM notifications)
   },
   "Frontend": {
     "Url": "http://localhost:5173"
@@ -355,6 +394,11 @@ cp .env.example .env
 ```
 
 **Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7001/api/auth/discord/callback`
+
+**Required for Discord Notifications**: Discord bot must be created at https://discord.com/developers/applications with bot token and DM permissions
+
+**External Services**:
+- Thermal printer API at `https://printer.vicio.ovh/api/printer/custom` (hardcoded, automatically called on new requests)
 
 **How environment variables work:**
 - Local development: `Program.cs` uses DotNetEnv to load `.env` file automatically
