@@ -8,11 +8,16 @@ A 3D print request management system where users can submit print requests with 
 
 - **Print Requests**: Submit 3D print requests with STL file upload, quantity, color preferences, and delivery options
 - **Filament Catalog**: Browse available filament colors and materials
+- **Filament Requests**: Request new filaments to be added to inventory with admin approval workflow
 - **Request Tracking**: Track print status from submission to completion with anonymous tracking tokens
+- **Change Tracking**: Full audit trail of all modifications to print requests
 - **Guest Sessions**: Submit requests without registration, with optional account linking via Discord OAuth
 - **Admin Dashboard**: Manage requests, update statuses, and maintain filament inventory
 - **Status History**: Complete audit trail of request status changes
-- **Live Camera Streaming**: Watch the 3D printer in action via live RTSP → HLS streaming with on-demand video delivery
+- **Discord Notifications**: Automated DM notifications for admins on new requests and requesters on status changes
+- **Thermal Printer**: Automatic receipt printing for new print requests with QR codes
+- **Live Camera Streaming**: Watch the 3D printer in action via live RTSP → HLS streaming with DVR rewind buffer
+- **Printer Monitoring**: Real-time printer status, temperatures, and print progress via Prusa Link integration
 
 ## Tech Stack
 
@@ -20,17 +25,19 @@ A 3D print request management system where users can submit print requests with 
 - ASP.NET Core 10.0 Web API
 - PostgreSQL 18 database
 - Entity Framework Core
-- Discord OAuth authentication
+- Discord OAuth authentication + Discord bot for notifications
 - JWT + Cookie authentication
-- FFmpeg for RTSP → HLS video streaming
+- FFmpeg for RTSP → HLS video streaming with DVR buffer
+- Prusa Link API integration for printer monitoring
+- External thermal printer API integration
 
 **Frontend**
 - React + TypeScript
 - Vite build tool
 - Tailwind CSS + shadcn/ui components
-- React Router
+- TanStack Router for routing
 - Axios for API communication
-- Video.js for HLS video playback
+- HLS.js for video playback
 
 **Testing**
 - xUnit for unit and integration tests
@@ -44,6 +51,7 @@ A 3D print request management system where users can submit print requests with 
 - Node.js 18+
 - PostgreSQL 18 (or Docker)
 - Discord OAuth application credentials
+- Discord bot token (for notifications)
 
 ### Development Setup
 
@@ -56,7 +64,7 @@ cd uber-prints
 2. Configure environment variables
 ```bash
 cp .env.example .env
-# Edit .env with your Discord OAuth credentials and JWT secret
+# Edit .env with your Discord OAuth credentials, Discord bot token, and JWT secret
 ```
 
 3. Start PostgreSQL (Docker)
