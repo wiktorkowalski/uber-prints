@@ -6,6 +6,8 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
 import { Shield, Package, PrinterIcon, Users, Camera, ArrowRight } from 'lucide-react';
+import { PrinterStatusCard } from '../components/PrinterStatusCard';
+import { PrinterStatusDto } from '../types/api';
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
@@ -21,11 +23,17 @@ export const AdminDashboard = () => {
     isActive: boolean;
     activeViewers: number;
   } | null>(null);
+  const [printerStatus, setPrinterStatus] = useState<PrinterStatusDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
     loadStreamStats();
+    loadPrinterStatus();
+
+    // Poll printer status every 10 seconds
+    const interval = setInterval(loadPrinterStatus, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadStats = async () => {
@@ -66,6 +74,15 @@ export const AdminDashboard = () => {
       setStreamStats(data);
     } catch (err) {
       console.error('Error loading stream stats:', err);
+    }
+  };
+
+  const loadPrinterStatus = async () => {
+    try {
+      const data = await api.getPrinterStatus();
+      setPrinterStatus(data);
+    } catch (err) {
+      console.error('Error loading printer status:', err);
     }
   };
 
@@ -136,6 +153,11 @@ export const AdminDashboard = () => {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Printer Status */}
+      {printerStatus && (
+        <PrinterStatusCard status={printerStatus} />
+      )}
 
       {/* Live Stream Card */}
       <Card>

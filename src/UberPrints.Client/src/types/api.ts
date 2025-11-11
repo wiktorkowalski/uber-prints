@@ -223,3 +223,76 @@ export interface ChangeFilamentRequestStatusDto {
   reason?: string;
   filamentId?: string;
 }
+
+// Printer types
+export enum PrinterStateEnum {
+  Unknown = 'Unknown',
+  Idle = 'Idle',
+  Busy = 'Busy',
+  Printing = 'Printing',
+  Paused = 'Paused',
+  Finished = 'Finished',
+  Stopped = 'Stopped',
+  Error = 'Error',
+  Attention = 'Attention',
+  Ready = 'Ready',
+}
+
+export interface PrinterDto {
+  id: string;
+  name: string;
+  ipAddress: string;
+  isActive: boolean;
+  location?: string;
+  currentState: PrinterStateEnum;
+  lastStatusUpdate?: string;
+  nozzleTemperature?: number;
+  nozzleTargetTemperature?: number;
+  bedTemperature?: number;
+  bedTargetTemperature?: number;
+  printProgress?: number;
+  timeRemaining?: number;
+  timePrinting?: number;
+  currentFileName?: string;
+  axisX?: number;
+  axisY?: number;
+  axisZ?: number;
+  flowRate?: number;
+  speedRate?: number;
+  fanHotend?: number;
+  fanPrint?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PrinterStatusDto {
+  id: string;
+  name: string;
+  location?: string;
+  currentState: PrinterStateEnum;
+  lastStatusUpdate?: string;
+  nozzleTemperature?: number;
+  nozzleTargetTemperature?: number;
+  bedTemperature?: number;
+  bedTargetTemperature?: number;
+  printProgress?: number;
+  timeRemaining?: number;
+  timePrinting?: number;
+  currentFileName?: string;
+  axisX?: number;
+  axisY?: number;
+  axisZ?: number;
+  flowRate?: number;
+  speedRate?: number;
+  fanHotend?: number;
+  fanPrint?: number;
+  isAvailable: boolean;
+}
+
+export interface PrintQueueItem {
+  id: string;
+  requesterName: string;
+  modelUrl: string;
+  filamentName?: string;
+  acceptedAt: string;
+}

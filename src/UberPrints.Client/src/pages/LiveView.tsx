@@ -11,6 +11,8 @@ import { AlertCircle, Users, Clock, Power, Camera, Database, Trash2, Scissors, S
 import { useToast } from '../hooks/use-toast';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PrinterStatusCard } from '../components/PrinterStatusCard';
+import { PrinterStatusDto } from '../types/api';
 
 interface StreamStatus {
   isEnabled: boolean;
@@ -49,6 +51,7 @@ export const LiveView = () => {
   const [bufferDurationInput, setBufferDurationInput] = useState<string>('30');
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
+  const [printerStatus, setPrinterStatus] = useState<PrinterStatusDto | null>(null);
 
   const isAdmin = user?.isAdmin ?? false;
   const streamUrl = '/stream/playlist.m3u8';
@@ -62,6 +65,16 @@ export const LiveView = () => {
     } catch (err) {
       console.error('Failed to fetch stream status:', err);
       setError('Failed to load stream status');
+    }
+  }, []);
+
+  // Fetch printer status
+  const fetchPrinterStatus = useCallback(async () => {
+    try {
+      const data = await api.getPrinterStatus();
+      setPrinterStatus(data);
+    } catch (err) {
+      console.error('Failed to fetch printer status:', err);
     }
   }, []);
 
@@ -249,8 +262,14 @@ export const LiveView = () => {
   // Join stream on mount, leave on unmount
   useEffect(() => {
     joinStream();
+    fetchPrinterStatus();
+
+    // Poll printer status every 10 seconds
+    const printerInterval = setInterval(fetchPrinterStatus, 10000);
+
     return () => {
       leaveStream();
+      clearInterval(printerInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps array ensures this only runs once on mount/unmount
@@ -471,31 +490,38 @@ export const LiveView = () => {
 
       {/* Video Player */}
       {status?.isEnabled && status?.isActive && isStreamReady && !error && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Live Feed</CardTitle>
-            <CardDescription>
-              Real-time view from the 3D printer camera
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <VideoPlayer
-                streamUrl={streamUrl}
-                onError={(err) => {
-                  console.error('Video player error:', err);
-                  setError('Failed to load video stream. Please try refreshing the page.');
-                }}
-                onReady={() => {
-                  console.log('Video player ready');
-                }}
-              />
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              The video may take a few seconds to load. If you experience issues, try refreshing the page.
-            </p>
-          </CardContent>
-        </Card>
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Feed</CardTitle>
+              <CardDescription>
+                Real-time view from the 3D printer camera
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                <VideoPlayer
+                  streamUrl={streamUrl}
+                  onError={(err) => {
+                    console.error('Video player error:', err);
+                    setError('Failed to load video stream. Please try refreshing the page.');
+                  }}
+                  onReady={() => {
+                    console.log('Video player ready');
+                  }}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                The video may take a few seconds to load. If you experience issues, try refreshing the page.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Printer Status */}
+          {printerStatus && (
+            <PrinterStatusCard status={printerStatus} />
+          )}
+        </>
       )}
 
       {/* Admin Debug Section */}
