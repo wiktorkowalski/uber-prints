@@ -93,7 +93,14 @@ public class PrinterStatusController : ControllerBase
       PrintProgress = printer.PrintProgress,
       TimeRemaining = printer.TimeRemaining,
       TimePrinting = printer.TimePrinting,
-      CurrentFileName = printer.CurrentFileName
+      CurrentFileName = printer.CurrentFileName,
+      AxisX = printer.AxisX,
+      AxisY = printer.AxisY,
+      AxisZ = printer.AxisZ,
+      FlowRate = printer.FlowRate,
+      SpeedRate = printer.SpeedRate,
+      FanHotend = printer.FanHotend,
+      FanPrint = printer.FanPrint
     };
   }
 }

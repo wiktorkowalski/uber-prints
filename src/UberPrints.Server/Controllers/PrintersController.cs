@@ -186,6 +186,13 @@ public class PrintersController : ControllerBase
       TimeRemaining = printer.TimeRemaining,
       TimePrinting = printer.TimePrinting,
       CurrentFileName = printer.CurrentFileName,
+      AxisX = printer.AxisX,
+      AxisY = printer.AxisY,
+      AxisZ = printer.AxisZ,
+      FlowRate = printer.FlowRate,
+      SpeedRate = printer.SpeedRate,
+      FanHotend = printer.FanHotend,
+      FanPrint = printer.FanPrint,
       CreatedAt = printer.CreatedAt,
       UpdatedAt = printer.UpdatedAt
     };

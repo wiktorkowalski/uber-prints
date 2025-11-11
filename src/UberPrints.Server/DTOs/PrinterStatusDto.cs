@@ -20,5 +20,12 @@ public class PrinterStatusDto
   public int? TimeRemaining { get; set; }
   public int? TimePrinting { get; set; }
   public string? CurrentFileName { get; set; }
+  public double? AxisX { get; set; }
+  public double? AxisY { get; set; }
+  public double? AxisZ { get; set; }
+  public int? FlowRate { get; set; }
+  public int? SpeedRate { get; set; }
+  public int? FanHotend { get; set; }
+  public int? FanPrint { get; set; }
   public bool IsAvailable => CurrentState == PrinterStateEnum.Idle || CurrentState == PrinterStateEnum.Ready;
 }

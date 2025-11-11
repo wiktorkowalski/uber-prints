@@ -159,6 +159,19 @@ public class PrinterMonitoringService : BackgroundService
     printer.TimePrinting = status.Job?.TimePrinting;
     printer.CurrentFileName = status.Job?.File?.DisplayName ?? status.Job?.File?.Name;
 
+    // Update axis positions
+    printer.AxisX = status.Printer?.AxisX;
+    printer.AxisY = status.Printer?.AxisY;
+    printer.AxisZ = status.Printer?.AxisZ;
+
+    // Update flow and speed rates
+    printer.FlowRate = status.Printer?.Flow;
+    printer.SpeedRate = status.Printer?.Speed;
+
+    // Update fan speeds
+    printer.FanHotend = status.Printer?.FanHotend;
+    printer.FanPrint = status.Printer?.FanPrint;
+
     printer.LastStatusUpdate = DateTime.UtcNow;
     printer.UpdatedAt = DateTime.UtcNow;
 
