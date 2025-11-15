@@ -47,12 +47,14 @@ export const Navbar = () => {
   };
 
   return (
-    <nav className="border-b bg-background">
-      <div className="container mx-auto px-4 py-3">
+    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+      <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-primary">UberPrints</span>
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="text-2xl font-heading font-bold text-primary group-hover:text-primary/80 transition-colors">
+                UberPrints
+              </div>
             </Link>
 
             {/* Mobile Menu Button */}
@@ -127,115 +129,105 @@ export const Navbar = () => {
               </SheetContent>
             </Sheet>
 
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-1">
               <Link to="/">
-                <Button variant="ghost" size="sm">
-                  <Home className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <Home className="w-4 h-4 mr-1.5" />
                   Home
                 </Button>
               </Link>
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
-                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <LayoutDashboard className="w-4 h-4 mr-1.5" />
                   Dashboard
                 </Button>
               </Link>
               <Link to="/filaments">
-                <Button variant="ghost" size="sm">
-                  <Palette className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <Palette className="w-4 h-4 mr-1.5" />
                   Filaments
                 </Button>
               </Link>
               <Link to="/filament-requests">
-                <Button variant="ghost" size="sm">
-                  <PackagePlus className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <PackagePlus className="w-4 h-4 mr-1.5" />
                   Request Filament
                 </Button>
               </Link>
               <Link to="/live-view">
-                <Button variant="ghost" size="sm">
-                  <Camera className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <Camera className="w-4 h-4 mr-1.5" />
                   Live View
                 </Button>
               </Link>
               <Link to="/requests">
-                <Button variant="ghost" size="sm">
-                  <List className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <List className="w-4 h-4 mr-1.5" />
                   All Requests
                 </Button>
               </Link>
               <Link to="/requests/new">
-                <Button variant="ghost" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <Plus className="w-4 h-4 mr-1.5" />
                   New Request
                 </Button>
               </Link>
               <Link to="/track">
-                <Button variant="ghost" size="sm">
-                  <Search className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all hover:bg-primary/10">
+                  <Search className="w-4 h-4 mr-1.5" />
                   Track
                 </Button>
               </Link>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            {isAuthenticated && user ? (
-              <>
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4 mr-2" />
-                      Admin
-                    </Button>
-                  </Link>
-                )}
+          <div className="flex items-center gap-2">
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Avatar className="w-6 h-6">
-                        <AvatarImage src={getAvatarUrl(user)} alt={getDisplayName(user)} />
-                        <AvatarFallback className="text-xs">
-                          {getInitials(getDisplayName(user))}
-                        </AvatarFallback>
-                      </Avatar>
-                      {getDisplayName(user)}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 transition-all hover:border-primary">
+                    <Avatar className="w-6 h-6 ring-2 ring-primary/10">
+                      <AvatarImage src={getAvatarUrl(user)} alt={getDisplayName(user)} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                        {getInitials(getDisplayName(user))}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline">{getDisplayName(user)}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-heading">My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="cursor-pointer">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
                     <DropdownMenuItem asChild>
-                      <Link to="/profile" className="cursor-pointer">
-                        <User className="w-4 h-4 mr-2" />
-                        Profile
+                      <Link to="/admin" className="cursor-pointer">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Admin Panel
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/dashboard" className="cursor-pointer">
-                        <LayoutDashboard className="w-4 h-4 mr-2" />
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    {isAdmin && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/admin" className="cursor-pointer">
-                          <Settings className="w-4 h-4 mr-2" />
-                          Admin Panel
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Button onClick={handleLogin} size="sm">
+              <Button onClick={handleLogin} size="sm" className="transition-all hover:scale-105">
                 Login with Discord
               </Button>
             )}

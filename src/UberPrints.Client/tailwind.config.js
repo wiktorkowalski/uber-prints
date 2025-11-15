@@ -54,7 +54,30 @@ export default {
 					'3': 'hsl(var(--chart-3))',
 					'4': 'hsl(var(--chart-4))',
 					'5': 'hsl(var(--chart-5))'
+				},
+				status: {
+					pending: 'hsl(var(--status-pending))',
+					'pending-bg': 'hsl(var(--status-pending-bg))',
+					accepted: 'hsl(var(--status-accepted))',
+					'accepted-bg': 'hsl(var(--status-accepted-bg))',
+					rejected: 'hsl(var(--status-rejected))',
+					'rejected-bg': 'hsl(var(--status-rejected-bg))',
+					onhold: 'hsl(var(--status-onhold))',
+					'onhold-bg': 'hsl(var(--status-onhold-bg))',
+					paused: 'hsl(var(--status-paused))',
+					'paused-bg': 'hsl(var(--status-paused-bg))',
+					waiting: 'hsl(var(--status-waiting))',
+					'waiting-bg': 'hsl(var(--status-waiting-bg))',
+					delivering: 'hsl(var(--status-delivering))',
+					'delivering-bg': 'hsl(var(--status-delivering-bg))',
+					completed: 'hsl(var(--status-completed))',
+					'completed-bg': 'hsl(var(--status-completed-bg))'
 				}
+			},
+			fontFamily: {
+				sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+				heading: ['Sora', 'system-ui', 'sans-serif'],
+				mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'monospace']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -77,11 +100,43 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'snap-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'scale(0.95) translateY(8px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'scale(1) translateY(0)'
+					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
+				},
+				'slide-up': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(16px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'pulse-soft': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.7' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'snap-in': 'snap-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+				'fade-in': 'fade-in 0.4s ease-out',
+				'slide-up': 'slide-up 0.4s ease-out',
+				'pulse-soft': 'pulse-soft 2s ease-in-out infinite'
 			}
 		}
 	},

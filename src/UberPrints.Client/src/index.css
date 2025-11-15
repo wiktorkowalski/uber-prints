@@ -1,61 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* Base colors - Warm neutral with subtle grid aesthetic */
+    --background: 220 15% 98%;
+    --foreground: 220 20% 15%;
+
+    /* Cards with subtle elevation */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 220 20% 15%;
+
+    /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --popover-foreground: 220 20% 15%;
+
+    /* Primary - Deep indigo/slate (technical precision) */
+    --primary: 220 30% 25%;
+    --primary-foreground: 220 15% 98%;
+
+    /* Secondary - Subtle slate */
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 20% 15%;
+
+    /* Muted - For backgrounds and disabled states */
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Accent - Neutral dark (same as primary for consistency) */
+    --accent: 220 30% 25%;
+    --accent-foreground: 220 15% 98%;
+
+    /* Destructive */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 220 30% 25%;
+
+    /* Border radius */
     --radius: 0.5rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+
+    /* Status colors - theme-aware */
+    --status-pending: 45 90% 55%;
+    --status-pending-bg: 45 90% 95%;
+    --status-accepted: 150 65% 45%;
+    --status-accepted-bg: 150 65% 95%;
+    --status-rejected: 0 75% 55%;
+    --status-rejected-bg: 0 75% 95%;
+    --status-onhold: 220 15% 55%;
+    --status-onhold-bg: 220 15% 95%;
+    --status-paused: 280 55% 55%;
+    --status-paused-bg: 280 55% 95%;
+    --status-waiting: 200 75% 50%;
+    --status-waiting-bg: 200 75% 95%;
+    --status-delivering: 15 85% 62%;
+    --status-delivering-bg: 15 85% 95%;
+    --status-completed: 150 65% 45%;
+    --status-completed-bg: 150 65% 95%;
+
+    /* Chart colors */
+    --chart-1: 220 70% 55%;
+    --chart-2: 220 50% 45%;
+    --chart-3: 150 65% 45%;
+    --chart-4: 45 90% 55%;
+    --chart-5: 280 55% 55%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* Base colors - Deep slate with warmth */
+    --background: 220 25% 8%;
+    --foreground: 220 15% 95%;
+
+    /* Cards with elevation */
+    --card: 220 20% 12%;
+    --card-foreground: 220 15% 95%;
+
+    /* Popovers */
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 15% 95%;
+
+    /* Primary - Lighter indigo for dark mode */
+    --primary: 220 40% 75%;
+    --primary-foreground: 220 25% 8%;
+
+    /* Secondary */
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 95%;
+
+    /* Muted */
+    --muted: 220 20% 16%;
+    --muted-foreground: 220 10% 60%;
+
+    /* Accent - Neutral light (same as primary for consistency) */
+    --accent: 220 40% 75%;
+    --accent-foreground: 220 25% 8%;
+
+    /* Destructive */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders and inputs */
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 220 40% 75%;
+
+    /* Status colors - adjusted for dark mode */
+    --status-pending: 45 85% 60%;
+    --status-pending-bg: 45 50% 20%;
+    --status-accepted: 150 60% 50%;
+    --status-accepted-bg: 150 40% 20%;
+    --status-rejected: 0 70% 55%;
+    --status-rejected-bg: 0 45% 20%;
+    --status-onhold: 220 15% 65%;
+    --status-onhold-bg: 220 15% 25%;
+    --status-paused: 280 50% 60%;
+    --status-paused-bg: 280 35% 25%;
+    --status-waiting: 200 70% 55%;
+    --status-waiting-bg: 200 50% 25%;
+    --status-delivering: 15 85% 58%;
+    --status-delivering-bg: 15 60% 22%;
+    --status-completed: 150 60% 50%;
+    --status-completed-bg: 150 40% 20%;
+
+    /* Chart colors */
+    --chart-1: 220 70% 60%;
+    --chart-2: 220 50% 50%;
+    --chart-3: 150 60% 50%;
+    --chart-4: 45 85% 60%;
+    --chart-5: 280 50% 60%;
   }
 }
 
@@ -66,5 +144,153 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  h1 {
+    @apply text-3xl lg:text-4xl;
+  }
+
+  h2 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h3 {
+    @apply text-xl lg:text-2xl;
+  }
+
+  h4 {
+    @apply text-lg lg:text-xl;
+  }
+
+  /* Monospace for technical data */
+  .font-mono {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    font-feature-settings: 'zero', 'cv05';
+  }
+}
+
+@layer utilities {
+  /* Subtle grid pattern for backgrounds */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .bg-grid-pattern-fine {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.2) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.2) 1px, transparent 1px);
+    background-size: 12px 12px;
+  }
+
+  /* Smooth snap animations */
+  .animate-snap-in {
+    animation: snap-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes snap-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+
+  @keyframes slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-bounce {
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Enhanced focus rings */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    background: hsl(var(--background) / 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Status badge utilities */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-smooth;
+  }
+}
+
+@layer components {
+  /* Enhanced card with subtle border and shadow */
+  .card-enhanced {
+    @apply bg-card text-card-foreground rounded-lg border border-border/50 shadow-sm;
+  }
+
+  /* Interactive card with hover state */
+  .card-interactive {
+    @apply card-enhanced cursor-pointer transition-all duration-200;
+    @apply hover:border-border hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  /* Page header pattern */
+  .page-header {
+    @apply space-y-2 mb-8;
+  }
+
+  .page-title {
+    @apply text-3xl lg:text-4xl font-semibold tracking-tight;
+  }
+
+  .page-description {
+    @apply text-muted-foreground text-base lg:text-lg;
   }
 }

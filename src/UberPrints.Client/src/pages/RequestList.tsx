@@ -6,11 +6,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '../components/ui/hover-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { ExternalLink, Package, User } from 'lucide-react';
+import { formatRelativeTime } from '../lib/utils';
+import { ExternalLink, Package, User, Truck } from 'lucide-react';
 import { ModelThumbnail } from '../components/ModelThumbnail';
+import { StatusBadge } from '../components/StatusBadge';
+import { PageHeader } from '../components/PageHeader';
 
 export const RequestList = () => {
   const { user } = useAuth();
@@ -51,23 +52,26 @@ export const RequestList = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-        </div>
+        <Skeleton className="h-24 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
         <div className="grid gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="border rounded-lg p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-32" />
+            <div key={i} className="card-enhanced p-6 space-y-4 animate-pulse">
+              <div className="flex gap-6">
+                <Skeleton className="h-32 w-32 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-7 w-24 rounded-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
                 </div>
-                <Skeleton className="h-6 w-20" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
               </div>
             </div>
           ))}
@@ -100,102 +104,74 @@ export const RequestList = () => {
 
     return (
       <div className="grid gap-4">
-        {filteredRequests.map((request) => (
-          <div
+        {filteredRequests.map((request, index) => (
+          <Link
             key={request.id}
-            className="border rounded-lg p-6 hover:border-primary transition-colors"
+            to={`/requests/${request.id}`}
+            className="block"
           >
-            <div className="flex gap-6">
-              {/* Model Thumbnail */}
-              <div className="flex-shrink-0">
-                <ModelThumbnail modelUrl={request.modelUrl} size={128} />
-              </div>
-
-              {/* Request Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <HoverCard>
-                        <HoverCardTrigger asChild>
-                          <Link to={`/requests/${request.id}`}>
-                            <h3 className="text-xl font-semibold hover:text-primary transition-colors">
-                              {request.requesterName}
-                            </h3>
-                          </Link>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80">
-                          <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Request Details</h4>
-                            <div className="text-sm space-y-1">
-                              <p><span className="text-muted-foreground">ID:</span> {request.id.slice(0, 8)}...</p>
-                              <p><span className="text-muted-foreground">Requester:</span> {request.requesterName}</p>
-                              {request.filamentName && (
-                                <p><span className="text-muted-foreground">Filament:</span> {request.filamentName}</p>
-                              )}
-                              <p><span className="text-muted-foreground">Delivery:</span> {request.requestDelivery ? 'Yes' : 'No'}</p>
-                              {request.notes && (
-                                <p className="pt-1"><span className="text-muted-foreground">Notes:</span><br/>{request.notes.slice(0, 100)}{request.notes.length > 100 ? '...' : ''}</p>
-                              )}
-                            </div>
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
-                      {user && request.userId === user.id && (
-                        <Badge variant="secondary" className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          Your request
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {formatRelativeTime(request.createdAt)}
-                    </p>
-                  </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      request.currentStatus
-                    )}`}
-                  >
-                    {getStatusLabel(request.currentStatus)}
-                  </span>
+            <div
+              className="group card-interactive p-6 animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex gap-6">
+                {/* Model Thumbnail */}
+                <div className="flex-shrink-0 overflow-hidden rounded-lg">
+                  <ModelThumbnail modelUrl={request.modelUrl} size={144} />
                 </div>
 
-                <div className="space-y-2 text-sm">
-                  <Link to={`/requests/${request.id}`} className="block">
+                {/* Request Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <h3 className="text-xl font-heading font-semibold group-hover:text-primary transition-colors">
+                          {request.requesterName}
+                        </h3>
+                        {user && request.userId === user.id && (
+                          <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                            <User className="w-3 h-3" />
+                            Your request
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground font-mono">
+                        {formatRelativeTime(request.createdAt)}
+                      </p>
+                    </div>
+                    <StatusBadge status={request.currentStatus} />
+                  </div>
+
+                  <div className="space-y-3">
                     {request.filamentName && (
-                      <div className="text-muted-foreground">
-                        Filament: <span className="font-medium">{request.filamentName}</span>
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span className="text-muted-foreground">
+                          Filament: <span className="font-medium text-foreground">{request.filamentName}</span>
+                        </span>
                       </div>
                     )}
                     {request.requestDelivery && (
-                      <div className="text-muted-foreground">
-                        🚚 Delivery requested
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Truck className="w-4 h-4 text-primary" />
+                        <span>Delivery requested</span>
                       </div>
                     )}
                     {request.notes && (
-                      <p className="text-muted-foreground line-clamp-2 mt-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                         {request.notes}
                       </p>
                     )}
-                  </Link>
 
-                  <div className="flex items-center text-muted-foreground text-sm mt-3 pt-3 border-t">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    <a
-                      href={sanitizeUrl(request.modelUrl)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-primary truncate"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {request.modelUrl}
-                    </a>
+                    <div className="flex items-center text-muted-foreground text-xs pt-2 mt-2 border-t border-border/50">
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate font-mono">{request.modelUrl}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     );
@@ -203,45 +179,65 @@ export const RequestList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">All Print Requests</h1>
-        <Link to="/requests/new">
-          <Button>
-            <Package className="w-4 h-4 mr-2" />
-            New Request
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Print Requests"
+        description="Browse and track all 3D printing requests"
+        breadcrumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'Requests' }
+        ]}
+        actions={
+          <Link to="/requests/new">
+            <Button className="transition-all hover:scale-105 shadow-md">
+              <Package className="w-4 h-4 mr-2" />
+              New Request
+            </Button>
+          </Link>
+        }
+      />
 
       {requests.length === 0 ? (
-        <div className="text-center py-12 border rounded-lg">
-          <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No requests yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Be the first to submit a 3D printing request!
+        <div className="text-center py-16 card-enhanced">
+          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+            <Package className="w-8 h-8 text-primary" />
+          </div>
+          <h3 className="text-xl font-heading font-semibold mb-2">No requests yet</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Be the first to submit a 3D printing request and bring your ideas to life!
           </p>
           <Link to="/requests/new">
-            <Button>Submit Request</Button>
+            <Button size="lg">
+              <Package className="w-5 h-5 mr-2" />
+              Submit Your First Request
+            </Button>
           </Link>
         </div>
       ) : (
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">All ({requests.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
-            {user && <TabsTrigger value="mine">My Requests ({myRequestsCount})</TabsTrigger>}
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="all" className="gap-1.5">
+              All <span className="text-xs opacity-70">({requests.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="gap-1.5">
+              Pending <span className="text-xs opacity-70">({pendingCount})</span>
+            </TabsTrigger>
+            {user && (
+              <TabsTrigger value="mine" className="gap-1.5">
+                Mine <span className="text-xs opacity-70">({myRequestsCount})</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
-          <TabsContent value="all">
+          <TabsContent value="all" className="mt-6">
             {renderRequestsList(getRequestsByStatus('all'))}
           </TabsContent>
 
-          <TabsContent value="pending">
+          <TabsContent value="pending" className="mt-6">
             {renderRequestsList(getRequestsByStatus(RequestStatusEnum.Pending))}
           </TabsContent>
 
           {user && (
-            <TabsContent value="mine">
+            <TabsContent value="mine" className="mt-6">
               {renderRequestsList(getRequestsByStatus('mine'))}
             </TabsContent>
           )}
