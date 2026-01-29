@@ -78,3 +78,15 @@ jobs:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+
+  deploy:
+    needs: build-and-push
+    if: github.event_name != 'pull_request'
+    runs-on: [self-hosted, homelab]
+
+    steps:
+      - name: Deploy to homelab
+        run: |
+          cd /home/ubuntu/docker/uber-prints
+          docker compose pull
+          docker compose up -d
