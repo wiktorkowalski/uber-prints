@@ -28,6 +28,9 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    __COMMIT_SHA__: JSON.stringify(process.env.VITE_COMMIT_SHA || 'dev'),
+  },
   build: {
     outDir: '../UberPrints.Server/wwwroot',
     emptyOutDir: true,

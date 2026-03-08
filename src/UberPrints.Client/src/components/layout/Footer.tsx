@@ -32,6 +32,19 @@ export const Footer = () => {
 
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <span>3D Printing Request System</span>
+            <span>·</span>
+            {__COMMIT_SHA__ === 'dev' ? (
+              <span className="font-mono">dev</span>
+            ) : (
+              <a
+                href={`https://github.com/wiktorkowalski/uber-prints/commit/${__COMMIT_SHA__}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono hover:text-foreground transition-colors"
+              >
+                {__COMMIT_SHA__.substring(0, 7)}
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -16,6 +16,8 @@ COPY src/UberPrints.Client/ ./
 # Build frontend (outputs to ../UberPrints.Server/wwwroot)
 # Set NODE_ENV to production to use .env.production
 ENV NODE_ENV=production
+ARG COMMIT_SHA=dev
+ENV VITE_COMMIT_SHA=$COMMIT_SHA
 RUN npm run build
 
 # Stage 2: Build backend
