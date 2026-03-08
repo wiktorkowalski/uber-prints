@@ -10,7 +10,7 @@ public class ThermalPrinterService
   private readonly IConfiguration _configuration;
   private readonly ILogger<ThermalPrinterService> _logger;
   private readonly HttpClient _httpClient;
-  private const string PRINTER_API_URL = "https://printer.vicio.ovh/api/printer/custom";
+  private const string PRINTER_API_URL = "https://printer.vicio.ovh/api/Printer";
 
   public ThermalPrinterService(
       IConfiguration configuration,
@@ -66,7 +66,7 @@ public class ThermalPrinterService
           {
             Type = "Separator",
             SeparatorChar = "=",
-            SeparatorLength = 32,
+            SeparatorLength = 24,
             Alignment = "Center",
             Style = new[] { "DoubleHeight", "DoubleWidth" }
           },
@@ -81,7 +81,7 @@ public class ThermalPrinterService
           {
             Type = "Separator",
             SeparatorChar = "=",
-            SeparatorLength = 32,
+            SeparatorLength = 24,
             Alignment = "Center",
             Style = new[] { "DoubleHeight", "DoubleWidth" }
           },
@@ -290,6 +290,15 @@ public class ThermalPrinterService
   // DTOs for thermal printer API
   private class ThermalPrintRequest
   {
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("imageBase64")]
+    public string? ImageBase64 { get; set; }
+
     [JsonPropertyName("content")]
     public List<ThermalPrintContent> Content { get; set; } = new();
 
@@ -328,6 +337,12 @@ public class ThermalPrinterService
 
     [JsonPropertyName("separatorLength")]
     public int? SeparatorLength { get; set; }
+
+    [JsonPropertyName("imageOptions")]
+    public ImageOptions? ImageOptions { get; set; }
+
+    [JsonPropertyName("barcodeOptions")]
+    public BarcodeOptions? BarcodeOptions { get; set; }
   }
 
   private class QRCodeOptions
@@ -340,6 +355,33 @@ public class ThermalPrinterService
 
     [JsonPropertyName("correctionLevel")]
     public string? CorrectionLevel { get; set; }
+  }
+
+  private class ImageOptions
+  {
+    [JsonPropertyName("maxWidth")]
+    public int? MaxWidth { get; set; }
+
+    [JsonPropertyName("maxHeight")]
+    public int? MaxHeight { get; set; }
+
+    [JsonPropertyName("preserveAspectRatio")]
+    public bool? PreserveAspectRatio { get; set; }
+  }
+
+  private class BarcodeOptions
+  {
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
+
+    [JsonPropertyName("width")]
+    public int? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    public int? Height { get; set; }
+
+    [JsonPropertyName("hriPosition")]
+    public string? HriPosition { get; set; }
   }
 
   private class PrintOptions
