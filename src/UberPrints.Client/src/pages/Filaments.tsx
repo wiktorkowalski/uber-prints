@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { FilamentDto } from '../types/api';
 import { Button } from '../components/ui/button';
@@ -140,14 +141,16 @@ export const Filaments = () => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Package className="w-8 h-8" />
-          Available Filaments
-        </h1>
-        <p className="text-muted-foreground">
-          Browse our filament inventory and check availability
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Filaments</h1>
+          <p className="text-muted-foreground">
+            Browse our filament inventory and check availability
+          </p>
+        </div>
+        <Link to="/filament-requests">
+          <Button variant="outline">Request a filament</Button>
+        </Link>
       </div>
 
       {filaments.length === 0 ? (

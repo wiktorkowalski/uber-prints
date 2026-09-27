@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Red+Hat+Text:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,44 +7,47 @@
 @layer base {
   :root {
     /* Base colors - Warm neutral with subtle grid aesthetic */
-    --background: 220 15% 98%;
-    --foreground: 220 20% 15%;
+    --background: 213 29% 92%;
+    --foreground: 215 47% 11%;
 
     /* Cards with subtle elevation */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 215 47% 11%;
 
     /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 215 47% 11%;
 
     /* Primary - Deep indigo/slate (technical precision) */
-    --primary: 220 30% 25%;
-    --primary-foreground: 220 15% 98%;
+    --primary: 191 87% 32%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary - Subtle slate */
-    --secondary: 220 15% 94%;
-    --secondary-foreground: 220 20% 15%;
+    --secondary: 216 33% 97%;
+    --secondary-foreground: 215 47% 11%;
 
     /* Muted - For backgrounds and disabled states */
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 210 30% 95%;
+    --muted-foreground: 215 17% 41%;
 
     /* Accent - Neutral dark (same as primary for consistency) */
-    --accent: 220 30% 25%;
-    --accent-foreground: 220 15% 98%;
+    --accent: 191 50% 93%;
+    --accent-foreground: 191 87% 22%;
 
     /* Destructive */
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 220 30% 25%;
+    --border: 213 23% 84%;
+    --input: 213 20% 76%;
+    --ring: 191 87% 32%;
 
     /* Border radius */
-    --radius: 0.5rem;
+    --radius: 0.625rem;
+
+    /* Print-bed grid line */
+    --grid-line: 213 25% 87%;
 
     /* Status colors - theme-aware */
     --status-pending: 45 90% 55%;
@@ -74,41 +77,44 @@
 
   .dark {
     /* Base colors - Deep slate with warmth */
-    --background: 220 25% 8%;
-    --foreground: 220 15% 95%;
+    --background: 216 33% 8%;
+    --foreground: 213 45% 91%;
 
     /* Cards with elevation */
-    --card: 220 20% 12%;
-    --card-foreground: 220 15% 95%;
+    --card: 216 30% 12%;
+    --card-foreground: 213 45% 91%;
 
     /* Popovers */
-    --popover: 220 20% 12%;
-    --popover-foreground: 220 15% 95%;
+    --popover: 216 30% 12%;
+    --popover-foreground: 213 45% 91%;
 
     /* Primary - Lighter indigo for dark mode */
-    --primary: 220 40% 75%;
-    --primary-foreground: 220 25% 8%;
+    --primary: 188 62% 57%;
+    --primary-foreground: 216 33% 8%;
 
     /* Secondary */
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 220 15% 95%;
+    --secondary: 216 25% 16%;
+    --secondary-foreground: 213 45% 91%;
 
     /* Muted */
-    --muted: 220 20% 16%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 216 25% 15%;
+    --muted-foreground: 214 17% 59%;
 
     /* Accent - Neutral light (same as primary for consistency) */
-    --accent: 220 40% 75%;
-    --accent-foreground: 220 25% 8%;
+    --accent: 190 40% 18%;
+    --accent-foreground: 188 62% 75%;
 
     /* Destructive */
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* Borders and inputs */
-    --border: 220 20% 22%;
-    --input: 220 20% 22%;
-    --ring: 220 40% 75%;
+    --border: 215 24% 20%;
+    --input: 215 22% 26%;
+    --ring: 188 62% 57%;
+
+    /* Print-bed grid line */
+    --grid-line: 216 25% 13%;
 
     /* Status colors - adjusted for dark mode */
     --status-pending: 45 85% 60%;
@@ -144,14 +150,18 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'cv11', 'ss01';
+    font-family: 'Red Hat Text', system-ui, -apple-system, sans-serif;
+    /* Print-bed grid behind every page */
+    background-image:
+      linear-gradient(hsl(var(--grid-line)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--grid-line)) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Sora', system-ui, -apple-system, sans-serif;
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-family: 'Red Hat Display', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   h1 {
