@@ -48,7 +48,8 @@ export function StageBar({ status, className }: StageBarProps) {
       <div className="grid grid-cols-4 gap-1.5 text-xs sm:text-sm">
         {MAIN_STAGES.map((s, i) => {
           const isCurrent = i === currentIndex;
-          const showStatus = isCurrent && statusLabel !== STAGE_LABELS[s];
+          // Completed adds nothing to "Done", so skip the suffix there.
+          const showStatus = isCurrent && s !== 'done' && statusLabel !== STAGE_LABELS[s];
           return (
             <span
               key={s}
