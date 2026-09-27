@@ -93,8 +93,8 @@ public class ThermalPrinterService
 
     var printRequest = new ThermalPrintRequest
     {
-      Content = new List<ThermalPrintContent>
-      {
+      Content =
+      [
         // Header
         new ThermalPrintContent
         {
@@ -102,14 +102,14 @@ public class ThermalPrinterService
           SeparatorChar = "=",
           SeparatorLength = 24,
           Alignment = "Center",
-          Style = new[] { "DoubleHeight", "DoubleWidth" }
+          Style = ["DoubleHeight", "DoubleWidth"]
         },
         new ThermalPrintContent
         {
           Type = "Text",
           Content = "NEW PRINT REQUEST",
           Alignment = "Center",
-          Style = new[] { "Bold", "DoubleHeight", "DoubleWidth" }
+          Style = ["Bold", "DoubleHeight", "DoubleWidth"]
         },
         new ThermalPrintContent
         {
@@ -117,7 +117,7 @@ public class ThermalPrinterService
           SeparatorChar = "=",
           SeparatorLength = 24,
           Alignment = "Center",
-          Style = new[] { "DoubleHeight", "DoubleWidth" }
+          Style = ["DoubleHeight", "DoubleWidth"]
         },
         new ThermalPrintContent
         {
@@ -131,7 +131,7 @@ public class ThermalPrinterService
           Type = "Text",
           Content = $"Order #: {request.Id.ToString().Substring(0, 8)}",
           Alignment = "Left",
-          Style = new[] { "Bold" }
+          Style = ["Bold"]
         },
         new ThermalPrintContent
         {
@@ -198,7 +198,7 @@ public class ThermalPrinterService
           Type = "Text",
           Content = "Description:",
           Alignment = "Left",
-          Style = new[] { "Bold" }
+          Style = ["Bold"]
         },
         new ThermalPrintContent
         {
@@ -225,7 +225,7 @@ public class ThermalPrinterService
           Type = "Text",
           Content = "SCAN TO VIEW DETAILS",
           Alignment = "Center",
-          Style = new[] { "Bold" }
+          Style = ["Bold"]
         },
         new ThermalPrintContent
         {
@@ -266,14 +266,14 @@ public class ThermalPrinterService
           Type = "Text",
           Content = "TRACKING CODE",
           Alignment = "Center",
-          Style = new[] { "Bold" }
+          Style = ["Bold"]
         },
         new ThermalPrintContent
         {
           Type = "Text",
           Content = request.GuestTrackingToken ?? "N/A",
           Alignment = "Center",
-          Style = new[] { "Bold", "DoubleHeight", "DoubleWidth" }
+          Style = ["Bold", "DoubleHeight", "DoubleWidth"]
         },
 
         // Footer separator
@@ -291,7 +291,7 @@ public class ThermalPrinterService
           Type = "Cut",
           PartialCut = false
         }
-      },
+      ],
       Source = "UberPrints",
       Options = new PrintOptions
       {
@@ -316,7 +316,7 @@ public class ThermalPrinterService
     public string? ImageBase64 { get; set; }
 
     [JsonPropertyName("content")]
-    public List<ThermalPrintContent> Content { get; set; } = new();
+    public List<ThermalPrintContent> Content { get; set; } = [];
 
     [JsonPropertyName("source")]
     public string? Source { get; set; }
