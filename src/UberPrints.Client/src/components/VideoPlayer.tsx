@@ -92,7 +92,9 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
           // 4 = MEDIA_ERR_SRC_NOT_SUPPORTED (stream might be initializing)
           if (errorCode === 2) {
             console.warn('Network error during streaming (may be temporary):', errorMessage);
-            // Don't call onError for temporary network issues
+            // Don't call onError for temporary network issues, but drop the
+            // starting overlay so the player's own error UI and controls show.
+            setHasFrame(true);
             return;
           }
 
