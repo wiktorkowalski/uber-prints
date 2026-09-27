@@ -49,23 +49,12 @@
     /* Print-bed grid line */
     --grid-line: 213 25% 87%;
 
-    /* Status colors - theme-aware */
-    --status-pending: 45 90% 55%;
-    --status-pending-bg: 45 90% 95%;
-    --status-accepted: 150 65% 45%;
-    --status-accepted-bg: 150 65% 95%;
-    --status-rejected: 0 75% 55%;
-    --status-rejected-bg: 0 75% 95%;
-    --status-onhold: 220 15% 55%;
-    --status-onhold-bg: 220 15% 95%;
-    --status-paused: 280 55% 55%;
-    --status-paused-bg: 280 55% 95%;
-    --status-waiting: 200 75% 50%;
-    --status-waiting-bg: 200 75% 95%;
-    --status-delivering: 15 85% 62%;
-    --status-delivering-bg: 15 85% 95%;
-    --status-completed: 150 65% 45%;
-    --status-completed-bg: 150 65% 95%;
+    /* Request stage colors */
+    --stage-waiting: 36 81% 33%;
+    --stage-printing: 191 87% 32%;
+    --stage-pickup: 263 48% 48%;
+    --stage-done: 145 46% 34%;
+    --stage-rejected: 4 63% 44%;
 
     /* Chart colors */
     --chart-1: 220 70% 55%;
@@ -116,23 +105,12 @@
     /* Print-bed grid line */
     --grid-line: 216 25% 13%;
 
-    /* Status colors - adjusted for dark mode */
-    --status-pending: 45 85% 60%;
-    --status-pending-bg: 45 50% 20%;
-    --status-accepted: 150 60% 50%;
-    --status-accepted-bg: 150 40% 20%;
-    --status-rejected: 0 70% 55%;
-    --status-rejected-bg: 0 45% 20%;
-    --status-onhold: 220 15% 65%;
-    --status-onhold-bg: 220 15% 25%;
-    --status-paused: 280 50% 60%;
-    --status-paused-bg: 280 35% 25%;
-    --status-waiting: 200 70% 55%;
-    --status-waiting-bg: 200 50% 25%;
-    --status-delivering: 15 85% 58%;
-    --status-delivering-bg: 15 60% 22%;
-    --status-completed: 150 60% 50%;
-    --status-completed-bg: 150 40% 20%;
+    /* Request stage colors */
+    --stage-waiting: 38 72% 58%;
+    --stage-printing: 188 62% 57%;
+    --stage-pickup: 263 60% 72%;
+    --stage-done: 145 45% 55%;
+    --stage-rejected: 4 75% 65%;
 
     /* Chart colors */
     --chart-1: 220 70% 60%;
@@ -273,10 +251,6 @@
     -webkit-backdrop-filter: blur(12px);
   }
 
-  /* Status badge utilities */
-  .status-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-smooth;
-  }
 }
 
 @layer components {

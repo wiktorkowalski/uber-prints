@@ -55,23 +55,12 @@ export default {
 					'4': 'hsl(var(--chart-4))',
 					'5': 'hsl(var(--chart-5))'
 				},
-				status: {
-					pending: 'hsl(var(--status-pending))',
-					'pending-bg': 'hsl(var(--status-pending-bg))',
-					accepted: 'hsl(var(--status-accepted))',
-					'accepted-bg': 'hsl(var(--status-accepted-bg))',
-					rejected: 'hsl(var(--status-rejected))',
-					'rejected-bg': 'hsl(var(--status-rejected-bg))',
-					onhold: 'hsl(var(--status-onhold))',
-					'onhold-bg': 'hsl(var(--status-onhold-bg))',
-					paused: 'hsl(var(--status-paused))',
-					'paused-bg': 'hsl(var(--status-paused-bg))',
-					waiting: 'hsl(var(--status-waiting))',
-					'waiting-bg': 'hsl(var(--status-waiting-bg))',
-					delivering: 'hsl(var(--status-delivering))',
-					'delivering-bg': 'hsl(var(--status-delivering-bg))',
-					completed: 'hsl(var(--status-completed))',
-					'completed-bg': 'hsl(var(--status-completed-bg))'
+				stage: {
+					waiting: 'hsl(var(--stage-waiting))',
+					printing: 'hsl(var(--stage-printing))',
+					pickup: 'hsl(var(--stage-pickup))',
+					done: 'hsl(var(--stage-done))',
+					rejected: 'hsl(var(--stage-rejected))'
 				}
 			},
 			fontFamily: {
