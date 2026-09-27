@@ -202,7 +202,7 @@ export const RequestDetail = () => {
         <div className="space-y-6">
           {showTicket && (
             <Ticket number={`#${request.id.slice(0, 8)}`} stamp={stage}>
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Your ticket</div>
+              <div className="text-xs font-medium text-muted-foreground">Your ticket</div>
               <TicketDivider />
               <TicketRow label="Requester">{request.requesterName}</TicketRow>
               <TicketRow label="Created">{formatShortDate(request.createdAt)}</TicketRow>

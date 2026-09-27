@@ -14,7 +14,8 @@ export const TrackRequest = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [trackingToken, setTrackingToken] = useState(() => (searchParams.get('token') ?? '').trim().toUpperCase());
+  const [initialToken] = useState(() => (searchParams.get('token') ?? '').trim().toUpperCase());
+  const [trackingToken, setTrackingToken] = useState(initialToken);
   const [loading, setLoading] = useState(false);
   const autoSubmitted = useRef(false);
 
@@ -43,12 +44,12 @@ export const TrackRequest = () => {
     }
   }, [navigate, toast]);
 
-  // /track?token=XYZ looks the token up right away.
+  // /track?token=XYZ looks the token up right away, once. Typing never triggers it.
   useEffect(() => {
-    if (autoSubmitted.current || !trackingToken) return;
+    if (autoSubmitted.current || !initialToken) return;
     autoSubmitted.current = true;
-    track(trackingToken);
-  }, [trackingToken, track]);
+    track(initialToken);
+  }, [initialToken, track]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +76,7 @@ export const TrackRequest = () => {
       </div>
 
       <Ticket className="space-y-4 px-6 pt-6">
-        <div className="font-heading text-lg font-extrabold uppercase tracking-wide">Print request</div>
+        <div className="font-heading text-lg font-extrabold">Print request</div>
         <TicketDivider />
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
