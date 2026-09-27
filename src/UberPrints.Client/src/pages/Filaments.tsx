@@ -86,7 +86,7 @@ export const Filaments = () => {
                 className="text-sm text-primary hover:underline flex items-center gap-1 mt-2"
               >
                 <ExternalLink className="w-3 h-3" />
-                View Product
+                View product
               </a>
             )}
           </div>
@@ -135,7 +135,7 @@ export const Filaments = () => {
     return (
       <div className="text-center py-12">
         <p className="text-destructive mb-4">{error}</p>
-        <Button onClick={loadFilaments}>Try Again</Button>
+        <Button onClick={loadFilaments}>Try again</Button>
       </div>
     );
   }
@@ -169,7 +169,7 @@ export const Filaments = () => {
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">All ({filaments.length})</TabsTrigger>
-            <TabsTrigger value="in-stock">In Stock ({inStockFilaments.length})</TabsTrigger>
+            <TabsTrigger value="in-stock">In stock ({inStockFilaments.length})</TabsTrigger>
             <TabsTrigger value="out-of-stock">Out of Stock ({outOfStockFilaments.length})</TabsTrigger>
           </TabsList>
 
@@ -226,7 +226,7 @@ export const Filaments = () => {
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <a href="/requests/new">Submit Print Request</a>
+            <a href="/requests/new">Submit print request</a>
           </Button>
         </CardContent>
       </Card>

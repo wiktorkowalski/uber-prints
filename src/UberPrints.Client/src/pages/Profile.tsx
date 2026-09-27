@@ -157,7 +157,7 @@ export const Profile = () => {
       {/* Profile Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Discord Information</CardTitle>
+          <CardTitle>Discord information</CardTitle>
           <CardDescription>
             Information provided by Discord OAuth
           </CardDescription>
@@ -183,7 +183,7 @@ export const Profile = () => {
 
           {/* Discord Username */}
           <div>
-            <Label>Discord Username</Label>
+            <Label>Discord username</Label>
             <Input
               value={profile.username}
               disabled
@@ -211,7 +211,7 @@ export const Profile = () => {
       {/* Display Name Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Display Name</CardTitle>
+          <CardTitle>Display name</CardTitle>
           <CardDescription>
             The name that will be shown throughout the application
           </CardDescription>
@@ -220,7 +220,7 @@ export const Profile = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="displayName">Display Name</Label>
+                <Label htmlFor="displayName">Display name</Label>
                 {!isEditing && (
                   <Button
                     type="button"
@@ -284,11 +284,11 @@ export const Profile = () => {
       {/* Account Details Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Details</CardTitle>
+          <CardTitle>Account details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>Account Type</Label>
+            <Label>Account type</Label>
             <Input
               value={profile.isAdmin ? 'Administrator' : 'User'}
               disabled
@@ -297,7 +297,7 @@ export const Profile = () => {
           </div>
 
           <div>
-            <Label>Member Since</Label>
+            <Label>Member since</Label>
             <Input
               value={new Date(profile.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',

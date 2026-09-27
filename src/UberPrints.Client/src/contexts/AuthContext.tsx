@@ -53,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (error) {
         // Surface error to user - guest session is needed for creating requests
         toast({
-          title: "Connection Error",
+          title: "Connection error",
           description: "Unable to establish session. Please check your internet connection and try again.",
           variant: "destructive",
         });
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isMounted) return;
       const customEvent = event as CustomEvent;
       toast({
-        title: "Access Denied",
+        title: "Access denied",
         description: customEvent.detail?.message || "You don't have permission to perform this action.",
         variant: "destructive",
       });
@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isMounted) return;
       const customEvent = event as CustomEvent;
       toast({
-        title: "Server Error",
+        title: "Server error",
         description: customEvent.detail?.message || "Something went wrong. Please try again later.",
         variant: "destructive",
       });
@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!isMounted) return;
       const customEvent = event as CustomEvent;
       toast({
-        title: "Network Error",
+        title: "Network error",
         description: customEvent.detail?.message || "Please check your internet connection.",
         variant: "destructive",
       });

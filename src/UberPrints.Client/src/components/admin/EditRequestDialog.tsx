@@ -100,7 +100,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Print Request</DialogTitle>
+          <DialogTitle>Edit print request</DialogTitle>
           <DialogDescription>
             Update request details for {request?.requesterName}
           </DialogDescription>
@@ -108,7 +108,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Requester Name</Label>
+            <Label>Requester name</Label>
             <Input
               value={editFormData.requesterName}
               onChange={(e) => setEditFormData({ ...editFormData, requesterName: e.target.value })}
@@ -127,7 +127,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
           </div>
 
           <div className="space-y-2">
-            <Label>Filament (Optional)</Label>
+            <Label>Filament (optional)</Label>
             {filamentsLoading ? (
               <div className="text-sm text-muted-foreground">Loading filaments...</div>
             ) : (
@@ -168,7 +168,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
               onChange={(e) => setEditFormData({ ...editFormData, requestDelivery: e.target.checked })}
               className="rounded"
             />
-            <Label htmlFor="requestDelivery">Request Delivery</Label>
+            <Label htmlFor="requestDelivery">Request delivery</Label>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -193,7 +193,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || filamentsLoading}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save Changes
+            Save changes
           </Button>
         </DialogFooter>
       </DialogContent>

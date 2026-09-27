@@ -151,7 +151,7 @@ export const NewRequest = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="w-6 h-6" />
-              No Filaments Available
+              No filaments available
             </CardTitle>
             <CardDescription>
               There are currently no filaments in stock to process your request
@@ -162,7 +162,7 @@ export const NewRequest = () => {
               Please check back later when filaments are restocked, or contact the administrator.
             </p>
             <Button variant="outline" onClick={() => navigate('/requests')}>
-              View Existing Requests
+              View existing requests
             </Button>
           </CardContent>
         </Card>
@@ -180,7 +180,7 @@ export const NewRequest = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Request Details</CardTitle>
+          <CardTitle>Request details</CardTitle>
           <CardDescription>
             {isAuthenticated
               ? 'Your request will be linked to your account'
@@ -195,7 +195,7 @@ export const NewRequest = () => {
                 name="requesterName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Name *</FormLabel>
+                    <FormLabel>Your name *</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -223,7 +223,7 @@ export const NewRequest = () => {
                         <PopoverContent className="w-80">
                           <div className="space-y-3">
                             <div>
-                              <h4 className="font-semibold text-sm mb-2">Recommended Model Sources</h4>
+                              <h4 className="font-semibold text-sm mb-2">Recommended model sources</h4>
                               <p className="text-sm text-muted-foreground mb-3">
                                 <strong className="text-foreground">Printables</strong> is preferred, but you can also use:
                               </p>
@@ -284,7 +284,7 @@ export const NewRequest = () => {
                 name="filamentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Filament (Optional)</FormLabel>
+                    <FormLabel>Filament (optional)</FormLabel>
                     <Select
                       onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
                       defaultValue={field.value || 'none'}
@@ -299,7 +299,7 @@ export const NewRequest = () => {
                         {filaments.filter(f => f.isAvailable && f.stockAmount > 0).length > 0 && (
                           <>
                             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                              ✓ Available Now
+                              ✓ Available now
                             </div>
                             {filaments
                               .filter(f => f.isAvailable && f.stockAmount > 0)
@@ -347,7 +347,7 @@ export const NewRequest = () => {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
+                    <FormLabel>Additional notes</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Any special instructions or requirements..."
@@ -377,7 +377,7 @@ export const NewRequest = () => {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>
-                        Request Delivery
+                        Request delivery
                       </FormLabel>
                       <FormDescription>
                         Check this if you need the print delivered to you
@@ -448,7 +448,7 @@ export const NewRequest = () => {
               <div className="flex gap-4">
                 <Button type="submit" disabled={submitting} className="flex-1">
                   {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Submit Request
+                  Submit request
                 </Button>
                 <Button
                   type="button"

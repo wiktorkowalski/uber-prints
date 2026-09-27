@@ -77,7 +77,7 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change Request Status</DialogTitle>
+          <DialogTitle>Change request status</DialogTitle>
           <DialogDescription>
             Update the status for request by {request?.requesterName}
           </DialogDescription>
@@ -85,7 +85,7 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>New Status</Label>
+            <Label>New status</Label>
             <Select
               value={newStatus || undefined}
               onValueChange={(value) => setNewStatus(value as RequestStatusEnum)}
@@ -104,7 +104,7 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
           </div>
 
           <div className="space-y-2">
-            <Label>Admin Notes (Optional)</Label>
+            <Label>Admin notes (optional)</Label>
             <Textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
@@ -124,7 +124,7 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || newStatus === null}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Update Status
+            Update status
           </Button>
         </DialogFooter>
       </DialogContent>

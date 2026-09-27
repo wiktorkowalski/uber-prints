@@ -83,7 +83,7 @@ export const RequestList = () => {
     return (
       <div className="text-center py-12">
         <p className="text-destructive mb-4">{error}</p>
-        <Button onClick={loadRequests}>Try Again</Button>
+        <Button onClick={loadRequests}>Try again</Button>
       </div>
     );
   }

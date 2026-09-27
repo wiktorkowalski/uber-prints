@@ -277,7 +277,7 @@ export const AdminFilamentRequests = () => {
                         className="text-sm text-primary hover:underline flex items-center gap-1 mb-2"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        Product Link
+                        Product link
                       </a>
                     )}
                     {request.notes && (
@@ -287,7 +287,7 @@ export const AdminFilamentRequests = () => {
                       <div className="flex items-center gap-2 mt-2 p-2 bg-stage-done/10 border border-stage-done/30 rounded">
                         <CheckCircle2 className="w-4 h-4 text-stage-done" />
                         <p className="text-sm text-stage-done font-medium">
-                          In Stock: {request.filamentName}
+                          In stock: {request.filamentName}
                         </p>
                       </div>
                     )}
@@ -295,7 +295,7 @@ export const AdminFilamentRequests = () => {
                       <Collapsible className="mt-2">
                         <CollapsibleTrigger className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground hover:text-foreground">
                           <ChevronDown className="w-4 h-4 transition-transform ui-state-open:rotate-180" />
-                          Status History ({request.statusHistory.length})
+                          Status history ({request.statusHistory.length})
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <div className="mt-2 space-y-1 pl-4 border-l-2">
@@ -353,7 +353,7 @@ export const AdminFilamentRequests = () => {
                       className="w-full"
                     >
                       <Edit2 className="w-4 h-4 mr-2" />
-                      Change Status
+                      Change status
                     </Button>
                   </div>
                 </div>
@@ -367,7 +367,7 @@ export const AdminFilamentRequests = () => {
       <Dialog open={selectedFilamentRequest !== null} onOpenChange={(open) => !open && setSelectedFilamentRequest(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Filament Request Status</DialogTitle>
+            <DialogTitle>Change filament request status</DialogTitle>
             <DialogDescription>
               Update the status for filament request: {selectedFilamentRequest?.brand} - {selectedFilamentRequest?.material} ({selectedFilamentRequest?.colour})
             </DialogDescription>
@@ -375,7 +375,7 @@ export const AdminFilamentRequests = () => {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>New Status</Label>
+              <Label>New status</Label>
               <Select
                 value={newFilamentRequestStatus || undefined}
                 onValueChange={(value) => setNewFilamentRequestStatus(value as FilamentRequestStatusEnum)}
@@ -396,7 +396,7 @@ export const AdminFilamentRequests = () => {
             {newFilamentRequestStatus === FilamentRequestStatusEnum.Approved && (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Link to Existing Filament (Optional)</Label>
+                  <Label>Link to existing filament (optional)</Label>
                   <Select
                     value={selectedFilamentForRequest}
                     onValueChange={setSelectedFilamentForRequest}
@@ -426,7 +426,7 @@ export const AdminFilamentRequests = () => {
                   onClick={() => selectedFilamentRequest && createFilamentFromRequest(selectedFilamentRequest)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add New to Stock
+                  Add new to stock
                 </Button>
                 <p className="text-xs text-muted-foreground">
                   Link to an existing filament or add a new one to your inventory.
@@ -435,7 +435,7 @@ export const AdminFilamentRequests = () => {
             )}
 
             <div className="space-y-2">
-              <Label>Reason / Notes (Optional)</Label>
+              <Label>Reason / notes (optional)</Label>
               <Textarea
                 value={filamentRequestReason}
                 onChange={(e) => setFilamentRequestReason(e.target.value)}
@@ -455,7 +455,7 @@ export const AdminFilamentRequests = () => {
             </Button>
             <Button onClick={handleFilamentRequestStatusChange} disabled={updatingFilamentRequest || newFilamentRequestStatus === null}>
               {updatingFilamentRequest && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Update Status
+              Update status
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -465,7 +465,7 @@ export const AdminFilamentRequests = () => {
       <Dialog open={filamentDialogOpen} onOpenChange={setFilamentDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Filament</DialogTitle>
+            <DialogTitle>Add new filament</DialogTitle>
             <DialogDescription>
               Add a new filament to your inventory
             </DialogDescription>
@@ -518,7 +518,7 @@ export const AdminFilamentRequests = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stockAmount">Stock Amount *</Label>
+                <Label htmlFor="stockAmount">Stock amount *</Label>
                 <Input
                   id="stockAmount"
                   type="number"
@@ -530,7 +530,7 @@ export const AdminFilamentRequests = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="stockUnit">Stock Unit *</Label>
+                <Label htmlFor="stockUnit">Stock unit *</Label>
                 <Input
                   id="stockUnit"
                   value={filamentFormData.stockUnit}
@@ -541,7 +541,7 @@ export const AdminFilamentRequests = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="link">Product Link (Optional)</Label>
+              <Label htmlFor="link">Product link (optional)</Label>
               <Input
                 id="link"
                 type="url"
@@ -552,7 +552,7 @@ export const AdminFilamentRequests = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="photoUrl">Photo URL (Optional)</Label>
+              <Label htmlFor="photoUrl">Photo URL (optional)</Label>
               <Input
                 id="photoUrl"
                 type="url"
@@ -596,7 +596,7 @@ export const AdminFilamentRequests = () => {
               }
             >
               {filamentSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Add Filament
+              Add filament
             </Button>
           </DialogFooter>
         </DialogContent>

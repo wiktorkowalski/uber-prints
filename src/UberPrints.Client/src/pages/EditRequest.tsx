@@ -160,7 +160,7 @@ export const EditRequest = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Request Details</CardTitle>
+          <CardTitle>Request details</CardTitle>
           <CardDescription>
             {isAuthenticated
               ? 'Your request is linked to your account'
@@ -175,7 +175,7 @@ export const EditRequest = () => {
                 name="requesterName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Name *</FormLabel>
+                    <FormLabel>Your name *</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -241,7 +241,7 @@ export const EditRequest = () => {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Notes</FormLabel>
+                    <FormLabel>Additional notes</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Any special instructions or requirements..."
@@ -271,7 +271,7 @@ export const EditRequest = () => {
                     </FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel>
-                        Request Delivery
+                        Request delivery
                       </FormLabel>
                       <FormDescription>
                         Check this if you need the print delivered to you
@@ -307,7 +307,7 @@ export const EditRequest = () => {
               <div className="flex gap-4">
                 <Button type="submit" disabled={submitting} className="flex-1">
                   {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Save Changes
+                  Save changes
                 </Button>
                 <Button
                   type="button"

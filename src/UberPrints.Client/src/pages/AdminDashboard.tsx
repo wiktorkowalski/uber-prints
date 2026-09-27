@@ -120,7 +120,7 @@ export const AdminDashboard = () => {
       <div className="grid md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Requests</CardDescription>
+            <CardDescription>Total requests</CardDescription>
             <CardTitle className="text-3xl">{stats.totalRequests}</CardTitle>
           </CardHeader>
         </Card>
@@ -138,7 +138,7 @@ export const AdminDashboard = () => {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Users</CardDescription>
+            <CardDescription>Total users</CardDescription>
             <CardTitle className="text-3xl">{stats.totalUsers}</CardTitle>
           </CardHeader>
         </Card>
@@ -162,7 +162,7 @@ export const AdminDashboard = () => {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="w-5 h-5" />
-                Live Camera Stream
+                Live camera stream
               </CardTitle>
               <CardDescription className="mt-1">
                 {streamStats ? (
@@ -184,7 +184,7 @@ export const AdminDashboard = () => {
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => window.location.href = '/live-view'}>
-              View Stream
+              View stream
             </Button>
           </div>
         </CardHeader>
@@ -198,7 +198,7 @@ export const AdminDashboard = () => {
 
       {/* Management Cards */}
       <div className="space-y-4">
-        <h2 className="text-xl font-heading font-bold">Management Tools</h2>
+        <h2 className="text-xl font-heading font-bold">Management tools</h2>
 
         <div className="grid md:grid-cols-2 gap-4">
           {/* Print Requests Card */}
@@ -209,7 +209,7 @@ export const AdminDashboard = () => {
                   <div className="flex items-center gap-3">
                     <PrinterIcon className="w-8 h-8 text-primary" />
                     <div>
-                      <CardTitle>Print Requests</CardTitle>
+                      <CardTitle>Print requests</CardTitle>
                       <CardDescription>Manage all print requests</CardDescription>
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export const AdminDashboard = () => {
                   <div className="flex items-center gap-3">
                     <Package className="w-8 h-8 text-stage-waiting" />
                     <div>
-                      <CardTitle>Filament Requests</CardTitle>
+                      <CardTitle>Filament requests</CardTitle>
                       <CardDescription>Review requests</CardDescription>
                     </div>
                   </div>
