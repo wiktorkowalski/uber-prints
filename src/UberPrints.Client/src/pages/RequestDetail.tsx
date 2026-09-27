@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +21,7 @@ import { getRequestStage } from '../lib/requestStage';
 import { StageBar } from '../components/StageBar';
 import { StatusBadge } from '../components/StatusBadge';
 import { ModelThumbnail } from '../components/ModelThumbnail';
+import { Ticket, TicketDivider, TicketRow } from '../components/Ticket';
 import { ArrowLeft, Copy, ExternalLink, Loader2, Package, Trash2, Edit2, Video } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
@@ -28,6 +29,7 @@ import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
 export const RequestDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [request, setRequest] = useState<PrintRequestDto | null>(null);
@@ -139,7 +141,11 @@ export const RequestDetail = () => {
   }
 
   const isOwner = !!user && request.userId === user.id;
-  const isPrinting = getRequestStage(request.currentStatus) === 'printing';
+  const stage = getRequestStage(request.currentStatus);
+  const isPrinting = stage === 'printing';
+  // Set by TrackRequest after a successful token lookup.
+  const cameFromTracking = (location.state as { tracked?: boolean } | null)?.tracked === true;
+  const showTicket = isOwner || cameFromTracking;
   const statusHistory = [...request.statusHistory].sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
@@ -194,6 +200,36 @@ export const RequestDetail = () => {
 
         {/* Right column */}
         <div className="space-y-6">
+          {showTicket && (
+            <Ticket number={`#${request.id.slice(0, 8)}`} stamp={stage}>
+              <div className="text-xs font-medium text-muted-foreground">Your ticket</div>
+              <TicketDivider />
+              <TicketRow label="Requester">{request.requesterName}</TicketRow>
+              <TicketRow label="Created">{formatShortDate(request.createdAt)}</TicketRow>
+              <TicketRow label="Filament">{request.filamentName || 'Not specified'}</TicketRow>
+              {request.guestTrackingToken && (
+                <>
+                  <TicketDivider />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-muted-foreground">Tracking</div>
+                      <div className="break-all font-medium tracking-wider">{request.guestTrackingToken}</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="flex-shrink-0"
+                      onClick={handleCopyToken}
+                      aria-label="Copy tracking token"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </>
+              )}
+            </Ticket>
+          )}
+
           <section className="rounded-lg border border-border bg-card px-6 py-5">
             <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm">
               <dt className="text-muted-foreground">Model</dt>

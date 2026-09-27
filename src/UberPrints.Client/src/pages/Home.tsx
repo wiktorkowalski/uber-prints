@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import { StatusBadge } from '../components/StatusBadge';
 import { LayerStack } from '../components/LayerStack';
+import { Ticket, TicketRow } from '../components/Ticket';
 import { getRequestStage, RequestStage } from '../lib/requestStage';
 import { cn, getModelHost } from '../lib/utils';
 
@@ -97,6 +98,10 @@ export const Home = () => {
     loadQueue();
   }, []);
 
+  // The request on the printer gets a ticket; the rest stay as queue rows.
+  const printingRequest = queue.find(r => getRequestStage(r.currentStatus) === 'printing');
+  const queueRows = queue.filter(r => r !== printingRequest);
+
   return (
     <div className="space-y-6">
       {/* Printer panel */}
@@ -133,27 +138,42 @@ export const Home = () => {
           ) : queue.length === 0 ? (
             <p className="px-5 py-6 text-sm text-muted-foreground">Nothing in the queue.</p>
           ) : (
-            <ol>
-              {queue.map((request, index) => (
-                <li key={request.id} className="border-b border-border last:border-b-0">
+            <>
+              {printingRequest && (
+                <div className={cn('bg-muted/60 p-4 dark:bg-background', queueRows.length > 0 && 'border-b border-border')}>
                   <Link
-                    to={`/requests/${request.id}`}
-                    className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3.5 px-5 py-3 transition-colors hover:bg-muted/50"
+                    to={`/requests/${printingRequest.id}`}
+                    className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <span className="font-heading font-bold text-muted-foreground tabular-nums">{index + 1}</span>
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold">{request.requesterName}</div>
-                      <div className="truncate text-sm text-muted-foreground">
-                        {getModelHost(request.modelUrl)}
-                        {` · ${request.filamentName ?? 'no filament picked'}`}
-                        {request.requestDelivery && ' · delivery'}
-                      </div>
-                    </div>
-                    <StatusBadge status={request.currentStatus} />
+                    <Ticket number={`#${printingRequest.id.slice(0, 8)}`} stamp="printing">
+                      <TicketRow label="Requester">{printingRequest.requesterName}</TicketRow>
+                      <TicketRow label="Filament">{printingRequest.filamentName ?? 'Not picked'}</TicketRow>
+                    </Ticket>
                   </Link>
-                </li>
-              ))}
-            </ol>
+                </div>
+              )}
+              <ol>
+                {queueRows.map((request, index) => (
+                  <li key={request.id} className="border-b border-border last:border-b-0">
+                    <Link
+                      to={`/requests/${request.id}`}
+                      className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3.5 px-5 py-3 transition-colors hover:bg-muted/50"
+                    >
+                      <span className="font-heading font-bold text-muted-foreground tabular-nums">{index + 1}</span>
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold">{request.requesterName}</div>
+                        <div className="truncate text-sm text-muted-foreground">
+                          {getModelHost(request.modelUrl)}
+                          {` · ${request.filamentName ?? 'no filament picked'}`}
+                          {request.requestDelivery && ' · delivery'}
+                        </div>
+                      </div>
+                      <StatusBadge status={request.currentStatus} />
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </>
           )}
         </section>
 
