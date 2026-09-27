@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export const Footer = () => {
   return (
     <footer className="border-t bg-background mt-auto">
@@ -31,7 +33,9 @@ export const Footer = () => {
           </div>
 
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>3D Printing Request System</span>
+            <Link to="/track" className="hover:text-foreground transition-colors">
+              Track a request
+            </Link>
             <span>·</span>
             {__COMMIT_SHA__ === 'dev' ? (
               <span className="font-mono">dev</span>

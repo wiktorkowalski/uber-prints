@@ -75,8 +75,8 @@ export default {
 				}
 			},
 			fontFamily: {
-				sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-				heading: ['Sora', 'system-ui', 'sans-serif'],
+				sans: ['Red Hat Text', 'system-ui', 'sans-serif'],
+				heading: ['Red Hat Display', 'system-ui', 'sans-serif'],
 				mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'monospace']
 			},
 			borderRadius: {
