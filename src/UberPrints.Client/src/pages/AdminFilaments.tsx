@@ -199,12 +199,12 @@ export const AdminFilaments = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Filament Inventory</CardTitle>
+              <CardTitle>Filament inventory</CardTitle>
               <CardDescription>View and manage all filaments</CardDescription>
             </div>
             <Button onClick={openCreateFilamentDialog}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Filament
+              Add filament
             </Button>
           </div>
         </CardHeader>
@@ -218,7 +218,7 @@ export const AdminFilaments = () => {
               </p>
               <Button onClick={openCreateFilamentDialog}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add First Filament
+                Add first filament
               </Button>
             </div>
           ) : (
@@ -278,7 +278,7 @@ export const AdminFilaments = () => {
                         className="text-sm text-primary hover:underline flex items-center gap-1"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        Product Link
+                        Product link
                       </a>
                     )}
                   </div>
@@ -313,7 +313,7 @@ export const AdminFilaments = () => {
       <Dialog open={filamentDialogOpen} onOpenChange={setFilamentDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingFilament ? 'Edit Filament' : 'Add New Filament'}</DialogTitle>
+            <DialogTitle>{editingFilament ? 'Edit filament' : 'Add new filament'}</DialogTitle>
             <DialogDescription>
               {editingFilament
                 ? 'Update filament details and stock levels'
@@ -368,7 +368,7 @@ export const AdminFilaments = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stockAmount">Stock Amount *</Label>
+                <Label htmlFor="stockAmount">Stock amount *</Label>
                 <Input
                   id="stockAmount"
                   type="number"
@@ -380,7 +380,7 @@ export const AdminFilaments = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="stockUnit">Stock Unit *</Label>
+                <Label htmlFor="stockUnit">Stock unit *</Label>
                 <Input
                   id="stockUnit"
                   value={filamentFormData.stockUnit}
@@ -391,7 +391,7 @@ export const AdminFilaments = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="link">Product Link (Optional)</Label>
+              <Label htmlFor="link">Product link (optional)</Label>
               <Input
                 id="link"
                 type="url"
@@ -402,7 +402,7 @@ export const AdminFilaments = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="photoUrl">Photo URL (Optional)</Label>
+              <Label htmlFor="photoUrl">Photo URL (optional)</Label>
               <Input
                 id="photoUrl"
                 type="url"
@@ -449,7 +449,7 @@ export const AdminFilaments = () => {
               }
             >
               {filamentSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {editingFilament ? 'Update Filament' : 'Add Filament'}
+              {editingFilament ? 'Update filament' : 'Add filament'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -459,7 +459,7 @@ export const AdminFilaments = () => {
       <AlertDialog open={deleteFilamentDialogOpen} onOpenChange={setDeleteFilamentDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Filament</AlertDialogTitle>
+            <AlertDialogTitle>Delete filament</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete {filamentToDelete?.name}? This action cannot be undone.
             </AlertDialogDescription>

@@ -166,7 +166,7 @@ export const FilamentRequests = () => {
       {showForm && (
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Request a New Filament</CardTitle>
+            <CardTitle>Request a new filament</CardTitle>
             <CardDescription>
               Request a filament that you'd like to be added to the inventory
             </CardDescription>
@@ -179,7 +179,7 @@ export const FilamentRequests = () => {
                   name="requesterName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Your Name</FormLabel>
+                      <FormLabel>Your name</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -237,7 +237,7 @@ export const FilamentRequests = () => {
                   name="link"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Link (Optional)</FormLabel>
+                      <FormLabel>Product link (optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="https://..." {...field} />
                       </FormControl>
@@ -254,7 +254,7 @@ export const FilamentRequests = () => {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
+                      <FormLabel>Notes (optional)</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Any additional information..."
@@ -270,7 +270,7 @@ export const FilamentRequests = () => {
 
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Submit Request
+                  Submit request
                 </Button>
               </form>
             </Form>
@@ -279,11 +279,11 @@ export const FilamentRequests = () => {
       )}
 
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold">Your Requests</h2>
+        <h2 className="text-2xl font-semibold">Your requests</h2>
         {requests.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No filament requests yet. Click "Request Filament" to create one.
+              No filament requests yet. Click "Request filament" to create one.
             </CardContent>
           </Card>
         ) : (
@@ -322,7 +322,7 @@ export const FilamentRequests = () => {
                       rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
-                      Product Link
+                      Product link
                     </a>
                   </p>
                 )}

@@ -99,7 +99,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
             <div className="flex items-center gap-2">
               <Wind className="h-4 w-4 text-muted-foreground" />
               <div>
-                <div className="text-xs text-muted-foreground">Print Fan</div>
+                <div className="text-xs text-muted-foreground">Print fan</div>
                 <div className="text-sm font-semibold">{status.fanPrint} RPM</div>
               </div>
             </div>
@@ -108,7 +108,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
             <div className="flex items-center gap-2">
               <Wind className="h-4 w-4 text-muted-foreground" />
               <div>
-                <div className="text-xs text-muted-foreground">Hotend Fan</div>
+                <div className="text-xs text-muted-foreground">Hotend fan</div>
                 <div className="text-sm font-semibold">{status.fanHotend} RPM</div>
               </div>
             </div>

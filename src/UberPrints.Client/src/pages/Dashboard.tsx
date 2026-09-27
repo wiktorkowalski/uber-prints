@@ -85,7 +85,7 @@ export const Dashboard = () => {
       {error ? (
         <div className="text-center py-12">
           <p className="text-destructive mb-4">{error}</p>
-          <Button onClick={loadMyRequests}>Try Again</Button>
+          <Button onClick={loadMyRequests}>Try again</Button>
         </div>
       ) : requests.length === 0 ? (
         <div className="rounded-lg border border-border bg-card py-16 text-center">

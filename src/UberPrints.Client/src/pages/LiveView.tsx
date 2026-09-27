@@ -144,7 +144,7 @@ export const LiveView = () => {
     try {
       const response = await api.toggleStreaming();
       toast({
-        title: response.isEnabled ? 'Streaming Enabled' : 'Streaming Disabled',
+        title: response.isEnabled ? 'Streaming enabled' : 'Streaming disabled',
         description: response.message,
       });
       await fetchStatus();
@@ -165,7 +165,7 @@ export const LiveView = () => {
     try {
       const response = await api.resetBuffer();
       toast({
-        title: 'Buffer Reset',
+        title: 'Buffer reset',
         description: response.message,
       });
       await fetchBufferDiagnostics();
@@ -187,7 +187,7 @@ export const LiveView = () => {
       const durationMinutes = bufferDiagnostics?.bufferDurationMinutes || 30;
       const response = await api.trimBuffer(durationMinutes);
       toast({
-        title: 'Buffer Trimmed',
+        title: 'Buffer trimmed',
         description: `Deleted ${response.deletedCount} files (${(response.deletedSize / (1024 * 1024)).toFixed(2)} MB)`,
       });
       await fetchBufferDiagnostics();
@@ -208,7 +208,7 @@ export const LiveView = () => {
 
     if (isNaN(durationMinutes) || durationMinutes < 5 || durationMinutes > 240) {
       toast({
-        title: 'Invalid Duration',
+        title: 'Invalid duration',
         description: 'Buffer duration must be between 5 and 240 minutes',
         variant: 'destructive',
       });
@@ -219,7 +219,7 @@ export const LiveView = () => {
     try {
       const response = await api.updateBufferConfig(durationMinutes);
       toast({
-        title: 'Configuration Updated',
+        title: 'Configuration updated',
         description: response.message,
         variant: response.requiresRestart ? 'default' : 'default',
       });
@@ -241,7 +241,7 @@ export const LiveView = () => {
     try {
       const response = await api.restartStreaming();
       toast({
-        title: response.success ? 'Stream Restarted' : 'Restart Failed',
+        title: response.success ? 'Stream restarted' : 'Restart failed',
         description: response.message,
         variant: response.success ? 'default' : 'destructive',
       });
@@ -369,7 +369,7 @@ export const LiveView = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Camera className="w-6 h-6" />
-              Printer Live View
+              Printer live view
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -477,7 +477,7 @@ export const LiveView = () => {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Live Feed</CardTitle>
+              <CardTitle>Live feed</CardTitle>
               <CardDescription>
                 Real-time view from the 3D printer camera
               </CardDescription>
@@ -518,7 +518,7 @@ export const LiveView = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="w-5 h-5" />
-              Buffer Diagnostics (Admin Only)
+              Buffer diagnostics (admin only)
             </CardTitle>
             <CardDescription>
               Monitor and manage the streaming buffer
@@ -536,7 +536,7 @@ export const LiveView = () => {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Buffer Size</p>
+                    <p className="text-sm font-medium text-muted-foreground">Buffer size</p>
                     <p className="text-2xl font-bold">
                       {bufferDiagnostics.bufferSizeMB.toFixed(2)} MB
                     </p>
@@ -545,7 +545,7 @@ export const LiveView = () => {
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Video Segments</p>
+                    <p className="text-sm font-medium text-muted-foreground">Video segments</p>
                     <p className="text-2xl font-bold">{bufferDiagnostics.tsFileCount}</p>
                     <p className="text-xs text-muted-foreground">.ts files</p>
                   </div>
@@ -555,7 +555,7 @@ export const LiveView = () => {
                     <p className="text-xs text-muted-foreground">.m3u8 files</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Total Files</p>
+                    <p className="text-sm font-medium text-muted-foreground">Total files</p>
                     <p className="text-2xl font-bold">{bufferDiagnostics.totalFileCount}</p>
                     <p className="text-xs text-muted-foreground">
                       {bufferDiagnostics.isStreamActive ? 'Stream active' : 'Stream inactive'}
@@ -578,12 +578,12 @@ export const LiveView = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Settings className="w-4 h-4 text-muted-foreground" />
-                    <h4 className="text-sm font-semibold">Buffer Duration Configuration</h4>
+                    <h4 className="text-sm font-semibold">Buffer duration configuration</h4>
                   </div>
                   <div className="flex items-end gap-2">
                     <div className="flex-1 max-w-xs space-y-2">
                       <Label htmlFor="buffer-duration" className="text-sm">
-                        Buffer Duration (minutes)
+                        Buffer duration (minutes)
                       </Label>
                       <Input
                         id="buffer-duration"
@@ -604,7 +604,7 @@ export const LiveView = () => {
                       disabled={isUpdatingConfig || bufferDurationInput === bufferDiagnostics.bufferDurationMinutes.toString()}
                       size="sm"
                     >
-                      {isUpdatingConfig ? 'Updating...' : 'Update Config'}
+                      {isUpdatingConfig ? 'Updating...' : 'Update config'}
                     </Button>
                   </div>
                   {bufferDiagnostics.isStreamActive && (
@@ -621,7 +621,7 @@ export const LiveView = () => {
 
                 {/* Buffer Management Actions */}
                 <div className="space-y-3">
-                  <h4 className="text-sm font-semibold">Buffer Management</h4>
+                  <h4 className="text-sm font-semibold">Buffer management</h4>
                   <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={handleTrimBuffer}
@@ -639,7 +639,7 @@ export const LiveView = () => {
                       size="sm"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      {isResettingBuffer ? 'Resetting...' : 'Reset Buffer'}
+                      {isResettingBuffer ? 'Resetting...' : 'Reset buffer'}
                     </Button>
                     <Button
                       onClick={fetchBufferDiagnostics}
@@ -666,7 +666,7 @@ export const LiveView = () => {
       {/* Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle>About the Live View</CardTitle>
+          <CardTitle>About the live view</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>

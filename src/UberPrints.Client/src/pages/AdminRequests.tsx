@@ -110,7 +110,7 @@ export const AdminRequests = () => {
       <div className="grid md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Requests</CardDescription>
+            <CardDescription>Total requests</CardDescription>
             <CardTitle className="text-3xl">{requests.length}</CardTitle>
           </CardHeader>
         </Card>
@@ -137,7 +137,7 @@ export const AdminRequests = () => {
       {/* Tabs */}
       <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="all">All Requests</TabsTrigger>
+          <TabsTrigger value="all">All requests</TabsTrigger>
           <TabsTrigger value="pending">Pending ({pendingCount})</TabsTrigger>
           <TabsTrigger value="active">Active ({activeCount})</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
@@ -221,7 +221,7 @@ const RequestsTable = ({ requests, onStatusChange, onEdit, error, onRetry }: Req
         <CardContent className="pt-6">
           <div className="text-center py-8">
             <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={onRetry}>Try Again</Button>
+            <Button onClick={onRetry}>Try again</Button>
           </div>
         </CardContent>
       </Card>
@@ -278,7 +278,7 @@ const RequestsTable = ({ requests, onStatusChange, onEdit, error, onRetry }: Req
                   size="sm"
                   onClick={() => onStatusChange(request)}
                 >
-                  Change Status
+                  Change status
                 </Button>
               </div>
             </div>

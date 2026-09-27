@@ -92,19 +92,19 @@ export const AdminUsers = () => {
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Users</CardDescription>
+            <CardDescription>Total users</CardDescription>
             <CardTitle className="text-3xl">{users.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Authenticated Users</CardDescription>
+            <CardDescription>Authenticated users</CardDescription>
             <CardTitle className="text-3xl">{authenticatedUsers.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Guest Users</CardDescription>
+            <CardDescription>Guest users</CardDescription>
             <CardTitle className="text-3xl">{guestUsers.length}</CardTitle>
           </CardHeader>
         </Card>
@@ -177,7 +177,7 @@ const UsersTable = ({ users }: UsersTableProps) => {
                   {user.globalName && (
                     <div>
                       <span className="font-medium text-foreground">{user.globalName}</span>
-                      <span> • Display Name</span>
+                      <span> • Display name</span>
                     </div>
                   )}
 
@@ -189,7 +189,7 @@ const UsersTable = ({ users }: UsersTableProps) => {
 
                   {user.guestSessionToken && (
                     <div>
-                      Guest Token: <span className="font-mono text-xs">{user.guestSessionToken.substring(0, 12)}...</span>
+                      Guest token: <span className="font-mono text-xs">{user.guestSessionToken.substring(0, 12)}...</span>
                     </div>
                   )}
 
@@ -215,7 +215,7 @@ const UsersTable = ({ users }: UsersTableProps) => {
                   <Package className="w-4 h-4 text-muted-foreground" />
                   <div className="text-right">
                     <div className="text-sm font-semibold">{user.filamentRequestCount}</div>
-                    <div className="text-xs text-muted-foreground">Filament Reqs</div>
+                    <div className="text-xs text-muted-foreground">Filament reqs</div>
                   </div>
                 </div>
               </div>

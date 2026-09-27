@@ -347,14 +347,14 @@ export const RequestDetail = () => {
                   onClick={() => setEditDialogRequest(request)}
                 >
                   <Edit2 className="w-4 h-4 mr-2" />
-                  Edit Request
+                  Edit request
                 </Button>
                 <Button
                   variant="outline"
                   className="bg-card"
                   onClick={() => setStatusDialogRequest(request)}
                 >
-                  Change Status
+                  Change status
                 </Button>
               </>
             )}
@@ -401,7 +401,7 @@ export const RequestDetail = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Request</AlertDialogTitle>
+            <AlertDialogTitle>Delete request</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this print request? This action cannot be undone.
             </AlertDialogDescription>

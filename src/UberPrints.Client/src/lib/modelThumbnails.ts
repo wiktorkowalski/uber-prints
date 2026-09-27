@@ -77,8 +77,8 @@ export function getModelPlatformName(modelUrl: string): string {
     if (hostname.includes('thingiverse.com')) return 'Thingiverse';
     if (hostname.includes('makerworld.com')) return 'MakerWorld';
 
-    return 'External Site';
+    return 'External site';
   } catch {
-    return 'External Site';
+    return 'External site';
   }
 }
