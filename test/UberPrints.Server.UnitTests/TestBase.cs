@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
@@ -64,8 +67,17 @@ public class TestBase
         ChangeTrackingService = new ChangeTrackingService(Context);
 
         // Create controllers with the real context
-        RequestsController = new RequestsController(Context, ChangeTrackingService);
-        AdminController = new AdminController(Context, ChangeTrackingService);
+        var discordService = new DiscordService(
+            Mock.Of<IServiceScopeFactory>(),
+            Configuration,
+            NullLogger<DiscordService>.Instance,
+            new HttpClient());
+        var thermalPrinterService = new ThermalPrinterService(
+            Configuration,
+            NullLogger<ThermalPrinterService>.Instance,
+            new HttpClient());
+        RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService);
+        AdminController = new AdminController(Context, ChangeTrackingService, discordService);
         FilamentsController = new FilamentsController(Context);
         AuthController = new AuthController(Context, Configuration);
 
