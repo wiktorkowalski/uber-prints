@@ -28,7 +28,8 @@ export const TrackRequest = () => {
         description: "Redirecting to your request...",
         variant: "success",
       });
-      navigate(`/requests/${request.id}`, { state: { tracked: true } });
+      // Private requests 404 on /requests/{id} for non-owners; detail page falls back to this
+      navigate(`/requests/${request.id}`, { state: { tracked: true, request } });
     } catch (error: any) {
       console.error('Error tracking request:', error);
       const errorMessage = error.response?.status === 404
