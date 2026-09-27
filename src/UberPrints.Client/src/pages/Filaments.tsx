@@ -9,6 +9,7 @@ import { Skeleton } from '../components/ui/skeleton';
 import { Progress } from '../components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Package, ExternalLink, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
 
 export const Filaments = () => {
   const [filaments, setFilaments] = useState<FilamentDto[]>([]);
@@ -133,7 +134,7 @@ export const Filaments = () => {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-destructive mb-4">{error}</p>
         <Button onClick={loadFilaments}>Try Again</Button>
       </div>
     );
@@ -141,17 +142,16 @@ export const Filaments = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Filaments</h1>
-          <p className="text-muted-foreground">
-            Browse our filament inventory and check availability
-          </p>
-        </div>
-        <Link to="/filament-requests">
-          <Button variant="outline">Request a filament</Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Filaments"
+        description="Browse our filament inventory and check availability"
+        actions={
+          <Link to="/filament-requests">
+            <Button variant="outline">Request a filament</Button>
+          </Link>
+        }
+        className="mb-0"
+      />
 
       {filaments.length === 0 ? (
         <Card>

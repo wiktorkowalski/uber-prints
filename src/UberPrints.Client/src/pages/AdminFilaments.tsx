@@ -20,7 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-import { Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle, Shield } from 'lucide-react';
+import { Package, Loader2, ExternalLink, Edit2, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
 
 export const AdminFilaments = () => {
   const { toast } = useToast();
@@ -187,16 +188,11 @@ export const AdminFilaments = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Manage Filaments
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Manage your filament inventory and stock levels
-        </p>
-      </div>
+      <PageHeader
+        title="Manage filaments"
+        description="Manage your filament inventory and stock levels"
+        className="mb-0"
+      />
 
       {/* Filament Management Card */}
       <Card>
@@ -423,7 +419,7 @@ export const AdminFilaments = () => {
               id="isAvailable"
               checked={filamentFormData.isAvailable ?? true}
               onChange={(e) => setFilamentFormData({ ...filamentFormData, isAvailable: e.target.checked })}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="w-4 h-4 rounded border-input text-primary focus:ring-primary"
             />
             <Label htmlFor="isAvailable" className="text-sm font-medium cursor-pointer">
               Available for selection in print requests

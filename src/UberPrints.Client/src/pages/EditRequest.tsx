@@ -15,7 +15,8 @@ import { Checkbox } from '../components/ui/checkbox';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
-import { ArrowLeft, Loader2, Edit2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
 
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -151,15 +152,11 @@ export const EditRequest = () => {
         </Button>
       </div>
 
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Edit2 className="w-8 h-8" />
-          Edit Request
-        </h1>
-        <p className="text-muted-foreground">
-          Update your 3D printing request details
-        </p>
-      </div>
+      <PageHeader
+        title="Edit request"
+        description="Update your 3D printing request details"
+        className="mb-0"
+      />
 
       <Card>
         <CardHeader>

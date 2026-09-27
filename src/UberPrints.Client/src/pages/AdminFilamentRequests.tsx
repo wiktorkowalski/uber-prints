@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { FilamentRequestDto, FilamentRequestStatusEnum, FilamentDto, CreateFilamentDto, ChangeFilamentRequestStatusDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
@@ -12,8 +12,10 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
-import { ChevronDown, Package, Loader2, ExternalLink, Edit2, Plus, CheckCircle2, Shield } from 'lucide-react';
+import { ChevronDown, Package, Loader2, ExternalLink, Edit2, Plus, CheckCircle2 } from 'lucide-react';
 import { formatRelativeTime } from '../lib/utils';
+import { PageHeader } from '../components/PageHeader';
+import { FilamentRequestStatusBadge } from '../components/FilamentRequestStatusBadge';
 
 const ALL_FILAMENT_REQUEST_STATUS_VALUES: FilamentRequestStatusEnum[] = [
   FilamentRequestStatusEnum.Pending,
@@ -25,23 +27,6 @@ const ALL_FILAMENT_REQUEST_STATUS_VALUES: FilamentRequestStatusEnum[] = [
 
 const getFilamentRequestStatusLabel = (status: FilamentRequestStatusEnum) => {
   return FilamentRequestStatusEnum[status];
-};
-
-const getFilamentRequestStatusColor = (status: FilamentRequestStatusEnum) => {
-  switch (status) {
-    case FilamentRequestStatusEnum.Pending:
-      return 'bg-yellow-500';
-    case FilamentRequestStatusEnum.Approved:
-      return 'bg-green-500';
-    case FilamentRequestStatusEnum.Rejected:
-      return 'bg-red-500';
-    case FilamentRequestStatusEnum.Ordered:
-      return 'bg-blue-500';
-    case FilamentRequestStatusEnum.Received:
-      return 'bg-purple-500';
-    default:
-      return 'bg-gray-500';
-  }
 };
 
 export const AdminFilamentRequests = () => {
@@ -252,29 +237,15 @@ export const AdminFilamentRequests = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Filament Requests
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Review and manage user filament requests
-        </p>
-      </div>
+      <PageHeader
+        title="Filament requests"
+        description="Review and manage user filament requests"
+        className="mb-0"
+      />
 
       {/* Requests Card */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Filament Requests
-          </CardTitle>
-          <CardDescription>
-            Review and manage user filament requests
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {filamentRequests.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No filament requests yet
@@ -296,9 +267,7 @@ export const AdminFilamentRequests = () => {
                           Requested by {request.requesterName} • {formatRelativeTime(request.createdAt)}
                         </p>
                       </div>
-                      <Badge className={getFilamentRequestStatusColor(request.currentStatus)}>
-                        {getFilamentRequestStatusLabel(request.currentStatus)}
-                      </Badge>
+                      <FilamentRequestStatusBadge status={request.currentStatus} />
                     </div>
                     {request.link && (
                       <a
@@ -315,9 +284,9 @@ export const AdminFilamentRequests = () => {
                       <p className="text-sm text-muted-foreground mb-2">{request.notes}</p>
                     )}
                     {request.filamentId && request.filamentName && (
-                      <div className="flex items-center gap-2 mt-2 p-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                      <div className="flex items-center gap-2 mt-2 p-2 bg-stage-done/10 border border-stage-done/30 rounded">
+                        <CheckCircle2 className="w-4 h-4 text-stage-done" />
+                        <p className="text-sm text-stage-done font-medium">
                           In Stock: {request.filamentName}
                         </p>
                       </div>
@@ -600,7 +569,7 @@ export const AdminFilamentRequests = () => {
               id="isAvailable"
               checked={filamentFormData.isAvailable ?? true}
               onChange={(e) => setFilamentFormData({ ...filamentFormData, isAvailable: e.target.checked })}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="w-4 h-4 rounded border-input text-primary focus:ring-primary"
             />
             <Label htmlFor="isAvailable" className="text-sm font-medium cursor-pointer">
               Available for selection in print requests

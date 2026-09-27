@@ -62,13 +62,13 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
             label="Nozzle"
             current={status.nozzleTemperature}
             target={status.nozzleTargetTemperature}
-            icon={<Flame className="h-4 w-4 text-orange-500" />}
+            icon={<Flame className="h-4 w-4 text-muted-foreground" />}
           />
           <TemperatureDisplay
             label="Bed"
             current={status.bedTemperature}
             target={status.bedTargetTemperature}
-            icon={<Box className="h-4 w-4 text-blue-500" />}
+            icon={<Box className="h-4 w-4 text-muted-foreground" />}
           />
         </div>
 
@@ -77,7 +77,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           {/* Flow & Speed */}
           {status.flowRate != null && (
             <div className="flex items-center gap-2">
-              <Droplet className="h-4 w-4 text-cyan-500" />
+              <Droplet className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Flow</div>
                 <div className="text-sm font-semibold">{status.flowRate}%</div>
@@ -86,7 +86,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           )}
           {status.speedRate != null && (
             <div className="flex items-center gap-2">
-              <Gauge className="h-4 w-4 text-purple-500" />
+              <Gauge className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Speed</div>
                 <div className="text-sm font-semibold">{status.speedRate}%</div>
@@ -97,7 +97,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           {/* Fans */}
           {status.fanPrint != null && (
             <div className="flex items-center gap-2">
-              <Wind className="h-4 w-4 text-blue-400" />
+              <Wind className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Print Fan</div>
                 <div className="text-sm font-semibold">{status.fanPrint} RPM</div>
@@ -106,7 +106,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           )}
           {status.fanHotend != null && (
             <div className="flex items-center gap-2">
-              <Wind className="h-4 w-4 text-orange-400" />
+              <Wind className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Hotend Fan</div>
                 <div className="text-sm font-semibold">{status.fanHotend} RPM</div>
@@ -117,7 +117,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           {/* Position */}
           {status.axisX != null && (
             <div className="flex items-center gap-2">
-              <Move3D className="h-4 w-4 text-red-500" />
+              <Move3D className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">X Position</div>
                 <div className="text-sm font-semibold">{status.axisX.toFixed(2)} mm</div>
@@ -126,7 +126,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           )}
           {status.axisY != null && (
             <div className="flex items-center gap-2">
-              <Move3D className="h-4 w-4 text-yellow-500" />
+              <Move3D className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Y Position</div>
                 <div className="text-sm font-semibold">{status.axisY.toFixed(2)} mm</div>
@@ -135,7 +135,7 @@ export function PrinterStatusCard({ status }: PrinterStatusCardProps) {
           )}
           {status.axisZ != null && (
             <div className="flex items-center gap-2">
-              <Move3D className="h-4 w-4 text-green-500" />
+              <Move3D className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-xs text-muted-foreground">Z Height</div>
                 <div className="text-sm font-semibold">{status.axisZ.toFixed(2)} mm</div>

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import type Player from 'video.js/dist/types/player';
@@ -9,12 +10,25 @@ interface VideoPlayerProps {
   onReady?: () => void;
 }
 
+/** Placeholder for the player area while the camera stream starts. */
+export function CameraStarting() {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-muted text-muted-foreground">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="font-heading font-bold text-foreground">Starting camera…</p>
+      <p className="text-sm">This usually takes about 10 seconds.</p>
+    </div>
+  );
+}
+
 /**
  * HLS Video Player component using Video.js
  */
 export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<Player | null>(null);
+  // True once the first frame is decoded; until then the starting overlay covers the player.
+  const [hasFrame, setHasFrame] = useState(false);
 
   useEffect(() => {
     // Make sure Video.js player is only initialized once
@@ -23,7 +37,9 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
 
       const player = videojs(videoElement, {
         controls: true,
-        autoplay: false,
+        // Browsers only allow autoplay without a click when the video is muted.
+        autoplay: 'muted',
+        muted: true,
         preload: 'auto',
         fluid: true,
         liveui: true,
@@ -57,6 +73,8 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
         onReady?.();
       });
 
+      player.one('loadeddata', () => setHasFrame(true));
+
       let initialLoadAttempts = 0;
       const maxInitialAttempts = 3;
 
@@ -74,7 +92,9 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
           // 4 = MEDIA_ERR_SRC_NOT_SUPPORTED (stream might be initializing)
           if (errorCode === 2) {
             console.warn('Network error during streaming (may be temporary):', errorMessage);
-            // Don't call onError for temporary network issues
+            // Don't call onError for temporary network issues, but drop the
+            // starting overlay so the player's own error UI and controls show.
+            setHasFrame(true);
             return;
           }
 
@@ -146,12 +166,21 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
   }, []);
 
   return (
-    <div data-vjs-player>
-      <video
-        ref={videoRef}
-        className="video-js vjs-big-play-centered vjs-fluid"
-        playsInline
-      />
+    <div className="relative">
+      <div data-vjs-player>
+        <video
+          ref={videoRef}
+          className="video-js vjs-big-play-centered vjs-fluid"
+          muted
+          autoPlay
+          playsInline
+        />
+      </div>
+      {!hasFrame && (
+        <div className="absolute inset-0">
+          <CameraStarting />
+        </div>
+      )}
     </div>
   );
 }

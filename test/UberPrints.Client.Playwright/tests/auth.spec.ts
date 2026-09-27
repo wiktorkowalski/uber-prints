@@ -28,7 +28,7 @@ test.describe('Authentication', () => {
     expect(
       currentUrl.includes('/dashboard') ||
         currentUrl.includes('/auth') ||
-        currentUrl === page.context()._options.baseURL + '/'
+        new URL(currentUrl).pathname === '/'
     ).toBeTruthy();
   });
 
@@ -98,7 +98,7 @@ test.describe('Authentication', () => {
       await page.waitForLoadState('networkidle');
 
       // Should show user's requests or empty state
-      const hasRequests = (await page.locator('a[href^="/request/"]').count()) > 0;
+      const hasRequests = (await page.locator('[data-testid="request-row"]').count()) > 0;
       const hasEmptyState = await page.getByText(/no requests/i).isVisible().catch(() => false);
 
       expect(hasRequests || hasEmptyState).toBeTruthy();

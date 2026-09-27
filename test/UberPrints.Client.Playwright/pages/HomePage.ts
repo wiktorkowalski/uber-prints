@@ -6,35 +6,39 @@ import { BasePage } from './BasePage';
  */
 export class HomePage extends BasePage {
   readonly heading: Locator;
-  readonly homeLink: Locator;
+  readonly logoLink: Locator;
   readonly newRequestLink: Locator;
-  readonly allRequestsLink: Locator;
+  readonly requestsLink: Locator;
+  readonly printerLink: Locator;
   readonly filamentsLink: Locator;
   readonly submitRequestButton: Locator;
   readonly viewAllRequestsButton: Locator;
   readonly loginButton: Locator;
-  readonly getStartedHeading: Locator;
+  readonly requestAPrintHeading: Locator;
 
   constructor(page: Page) {
     super(page);
 
-    // Main elements
-    this.heading = page.getByRole('heading', { name: /welcome to uberprints/i });
+    // Main elements: the home page has no h1, the queue panel is always rendered.
+    this.heading = page.getByRole('heading', { name: /^up next$/i });
 
-    // Navigation links (desktop)
-    this.homeLink = page.getByRole('link', { name: /^home$/i });
-    this.newRequestLink = page.getByRole('link', { name: /new request/i }).first();
-    this.allRequestsLink = page.getByRole('link', { name: /all requests/i }).first();
-    this.filamentsLink = page.getByRole('link', { name: /filaments/i }).first();
+    // Navigation links (desktop navbar)
+    const nav = page.getByRole('navigation').first();
+    this.logoLink = nav.getByRole('link', { name: /^uberprints$/i });
+    this.newRequestLink = nav.getByRole('link', { name: /^new request$/i });
+    this.requestsLink = nav.getByRole('link', { name: /^requests$/i });
+    this.printerLink = nav.getByRole('link', { name: /^printer$/i });
+    this.filamentsLink = nav.getByRole('link', { name: /^filaments$/i });
 
-    // Call-to-action buttons
-    this.submitRequestButton = page.getByRole('link', { name: /submit request/i });
-    this.viewAllRequestsButton = page.getByRole('link', { name: /view all requests/i });
+    // Call-to-action links in the page body
+    const main = page.getByRole('main');
+    this.submitRequestButton = main.getByRole('link', { name: /^new request$/i });
+    this.viewAllRequestsButton = main.getByRole('link', { name: /^all requests$/i });
 
     // Authentication
     this.loginButton = page.getByRole('button', { name: /log.*in|sign.*in/i })
       .or(page.getByRole('link', { name: /log.*in|sign.*in/i }));
-    this.getStartedHeading = page.getByRole('heading', { name: /get started/i });
+    this.requestAPrintHeading = page.getByRole('heading', { name: /^request a print$/i });
   }
 
   async goto() {
@@ -48,9 +52,10 @@ export class HomePage extends BasePage {
 
   async verifyNavigationLinks(isMobile: boolean = false) {
     if (!isMobile) {
-      await expect(this.homeLink).toBeVisible();
+      await expect(this.logoLink).toBeVisible();
       await expect(this.newRequestLink).toBeVisible();
-      await expect(this.allRequestsLink).toBeVisible();
+      await expect(this.requestsLink).toBeVisible();
+      await expect(this.printerLink).toBeVisible();
       await expect(this.filamentsLink).toBeVisible();
     }
   }
@@ -62,7 +67,7 @@ export class HomePage extends BasePage {
 
   async clickSubmitRequest() {
     await this.submitRequestButton.click();
-    await this.page.waitForURL(/.*\/request\/new/);
+    await this.page.waitForURL(/.*\/requests\/new/);
   }
 
   async clickViewAllRequests() {
@@ -72,11 +77,11 @@ export class HomePage extends BasePage {
 
   async navigateToNewRequest() {
     await this.newRequestLink.click();
-    await this.page.waitForURL(/.*\/request\/new/);
+    await this.page.waitForURL(/.*\/requests\/new/);
   }
 
   async navigateToAllRequests() {
-    await this.allRequestsLink.click();
+    await this.requestsLink.click();
     await this.page.waitForURL(/.*\/requests/);
   }
 
@@ -90,6 +95,7 @@ export class HomePage extends BasePage {
   }
 
   async verifyGuestMode() {
-    await expect(this.getStartedHeading).toBeVisible();
+    await expect(this.loginButton).toBeVisible();
+    await expect(this.requestAPrintHeading).toBeVisible();
   }
 }

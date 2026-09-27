@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Package, Clock, CheckCircle2 } from 'lucide-react';
 import { getDisplayName } from '../lib/utils';
+import { PageHeader } from '../components/PageHeader';
 
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -171,15 +172,11 @@ export const NewRequest = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Package className="w-8 h-8" />
-          Submit New Request
-        </h1>
-        <p className="text-muted-foreground">
-          Fill out the form below to submit your 3D printing request
-        </p>
-      </div>
+      <PageHeader
+        title="New request"
+        description="Fill out the form below to submit your 3D printing request"
+        className="mb-0"
+      />
 
       <Card>
         <CardHeader>
@@ -309,7 +306,7 @@ export const NewRequest = () => {
                               .map((filament) => (
                                 <SelectItem key={filament.id} value={filament.id}>
                                   <span className="flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    <CheckCircle2 className="w-4 h-4 text-stage-done" />
                                     {filament.name} - {filament.material} ({filament.colour}) - {filament.stockAmount}{filament.stockUnit}
                                   </span>
                                 </SelectItem>
@@ -326,7 +323,7 @@ export const NewRequest = () => {
                               .map((filament) => (
                                 <SelectItem key={filament.id} value={filament.id}>
                                   <span className="flex items-center gap-2 text-muted-foreground">
-                                    <Clock className="w-4 h-4 text-yellow-500" />
+                                    <Clock className="w-4 h-4 text-stage-waiting" />
                                     {filament.name} - {filament.material} ({filament.colour})
                                     {!filament.isAvailable && <span className="text-xs">(Pending approval)</span>}
                                     {filament.isAvailable && filament.stockAmount === 0 && <span className="text-xs">(Out of stock)</span>}
@@ -431,13 +428,13 @@ export const NewRequest = () => {
                       <FormDescription>
                         Get Discord DM notifications when your request status changes
                       </FormDescription>
-                      <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950 rounded text-xs text-blue-900 dark:text-blue-100">
+                      <div className="mt-2 p-2 bg-accent rounded text-xs text-accent-foreground">
                         <strong>Note:</strong> You must{' '}
                         <a
                           href="https://discord.com/oauth2/authorize?client_id=1402663574962438194"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="underline hover:text-blue-700 dark:hover:text-blue-300"
+                          className="underline hover:text-primary"
                         >
                           add the bot to your Discord
                         </a>
