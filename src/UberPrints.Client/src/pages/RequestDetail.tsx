@@ -27,7 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-import { getStatusLabel, getStatusColor, formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
+import { formatDate, formatRelativeTime, sanitizeUrl } from '../lib/utils';
+import { StageBar } from '../components/StageBar';
+import { StatusBadge } from '../components/StatusBadge';
 import { ArrowLeft, ExternalLink, Loader2, Package, Clock, User, Trash2, Edit2, History } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
@@ -282,14 +284,8 @@ export const RequestDetail = () => {
                 Submitted {formatRelativeTime(request.createdAt)}
               </CardDescription>
             </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                request.currentStatus
-              )}`}
-            >
-              {getStatusLabel(request.currentStatus)}
-            </span>
           </div>
+          <StageBar status={request.currentStatus} className="pt-4" />
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
@@ -397,16 +393,9 @@ export const RequestDetail = () => {
                     key={history.id}
                     className="flex gap-4 pb-4 border-b last:border-b-0 last:pb-0"
                   >
-                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-primary" />
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
-                        <span
-                          className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                            history.status
-                          )}`}
-                        >
-                          {getStatusLabel(history.status)}
-                        </span>
+                        <StatusBadge status={history.status} />
                         <span className="text-xs text-muted-foreground">
                           {formatDate(history.timestamp)}
                         </span>

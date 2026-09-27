@@ -1,24 +1,14 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { RequestStatusEnum, UserDto } from "../types/api"
+import { STATUS_LABELS } from "./requestStage"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function getStatusLabel(status: RequestStatusEnum): string {
-  const labels: Record<RequestStatusEnum, string> = {
-    [RequestStatusEnum.Pending]: 'Pending',
-    [RequestStatusEnum.Accepted]: 'Accepted',
-    [RequestStatusEnum.Rejected]: 'Rejected',
-    [RequestStatusEnum.OnHold]: 'On Hold',
-    [RequestStatusEnum.Paused]: 'Paused',
-    [RequestStatusEnum.WaitingForMaterials]: 'Waiting for Materials',
-    [RequestStatusEnum.Delivering]: 'Delivering',
-    [RequestStatusEnum.WaitingForPickup]: 'Waiting for Pickup',
-    [RequestStatusEnum.Completed]: 'Completed',
-  };
-  return labels[status] || 'Unknown';
+  return STATUS_LABELS[status] || 'Unknown';
 }
 
 export function getStatusColor(status: RequestStatusEnum): string {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { PrintRequestDto, RequestStatusEnum } from '../types/api';
+import { PrintRequestDto } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -12,6 +12,7 @@ import { ExternalLink, Package, User, Truck } from 'lucide-react';
 import { ModelThumbnail } from '../components/ModelThumbnail';
 import { StatusBadge } from '../components/StatusBadge';
 import { PageHeader } from '../components/PageHeader';
+import { getRequestStage, MAIN_STAGES, MainRequestStage, STAGE_LABELS } from '../lib/requestStage';
 
 export const RequestList = () => {
   const { user } = useAuth();
@@ -36,18 +37,17 @@ export const RequestList = () => {
     }
   };
 
-  const getRequestsByStatus = (status: RequestStatusEnum | 'all' | 'mine') => {
-    if (status === 'all') {
+  const getFilteredRequests = (filter: MainRequestStage | 'all' | 'mine') => {
+    if (filter === 'all') {
       return requests;
     }
-    if (status === 'mine') {
+    if (filter === 'mine') {
       return user ? requests.filter(r => r.userId === user.id) : [];
     }
-    return requests.filter(r => r.currentStatus === status);
+    return requests.filter(r => getRequestStage(r.currentStatus) === filter);
   };
 
-  const pendingCount = getRequestsByStatus(RequestStatusEnum.Pending).length;
-  const myRequestsCount = user ? getRequestsByStatus('mine').length : 0;
+  const myRequestsCount = user ? getFilteredRequests('mine').length : 0;
 
   if (loading) {
     return (
@@ -104,16 +104,13 @@ export const RequestList = () => {
 
     return (
       <div className="grid gap-4">
-        {filteredRequests.map((request, index) => (
+        {filteredRequests.map((request) => (
           <Link
             key={request.id}
             to={`/requests/${request.id}`}
             className="block"
           >
-            <div
-              className="group card-interactive p-6 animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
+            <div className="group card-interactive p-6">
               <div className="flex gap-6">
                 {/* Model Thumbnail */}
                 <div className="flex-shrink-0 overflow-hidden rounded-lg">
@@ -188,7 +185,7 @@ export const RequestList = () => {
         ]}
         actions={
           <Link to="/requests/new">
-            <Button className="transition-all hover:scale-105 shadow-md">
+            <Button>
               <Package className="w-4 h-4 mr-2" />
               New Request
             </Button>
@@ -214,13 +211,16 @@ export const RequestList = () => {
         </div>
       ) : (
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="h-auto flex-wrap justify-start">
             <TabsTrigger value="all" className="gap-1.5">
               All <span className="text-xs opacity-70">({requests.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="pending" className="gap-1.5">
-              Pending <span className="text-xs opacity-70">({pendingCount})</span>
-            </TabsTrigger>
+            {MAIN_STAGES.map((stage) => (
+              <TabsTrigger key={stage} value={stage} className="gap-1.5">
+                {STAGE_LABELS[stage]}{' '}
+                <span className="text-xs opacity-70">({getFilteredRequests(stage).length})</span>
+              </TabsTrigger>
+            ))}
             {user && (
               <TabsTrigger value="mine" className="gap-1.5">
                 Mine <span className="text-xs opacity-70">({myRequestsCount})</span>
@@ -229,16 +229,18 @@ export const RequestList = () => {
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            {renderRequestsList(getRequestsByStatus('all'))}
+            {renderRequestsList(getFilteredRequests('all'))}
           </TabsContent>
 
-          <TabsContent value="pending" className="mt-6">
-            {renderRequestsList(getRequestsByStatus(RequestStatusEnum.Pending))}
-          </TabsContent>
+          {MAIN_STAGES.map((stage) => (
+            <TabsContent key={stage} value={stage} className="mt-6">
+              {renderRequestsList(getFilteredRequests(stage))}
+            </TabsContent>
+          ))}
 
           {user && (
             <TabsContent value="mine" className="mt-6">
-              {renderRequestsList(getRequestsByStatus('mine'))}
+              {renderRequestsList(getFilteredRequests('mine'))}
             </TabsContent>
           )}
         </Tabs>
