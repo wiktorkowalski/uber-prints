@@ -7,13 +7,14 @@ interface ModelThumbnailProps {
   modelUrl: string;
   size?: number;
   className?: string;
+  showPlatform?: boolean;
 }
 
 /**
  * Displays a thumbnail image for a 3D model URL
  * Fetches thumbnail from supported platforms or shows placeholder
  */
-export function ModelThumbnail({ modelUrl, size = 128, className = '' }: ModelThumbnailProps) {
+export function ModelThumbnail({ modelUrl, size = 128, className = '', showPlatform = true }: ModelThumbnailProps) {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -87,11 +88,13 @@ export function ModelThumbnail({ modelUrl, size = 128, className = '' }: ModelTh
       )}
 
       {/* Platform badge */}
-      <div className="absolute bottom-1 right-1">
-        <Badge variant={getPlatformVariant()} className="text-xs px-1.5 py-0.5">
-          {getPlatformLabel()}
-        </Badge>
-      </div>
+      {showPlatform && (
+        <div className="absolute bottom-1 right-1">
+          <Badge variant={getPlatformVariant()} className="text-xs px-1.5 py-0.5">
+            {getPlatformLabel()}
+          </Badge>
+        </div>
+      )}
     </div>
   );
 }

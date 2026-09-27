@@ -83,3 +83,35 @@ export function getDisplayName(user: UserDto | null | undefined): string {
   if (!user) return 'Unknown';
   return user.globalName || user.username || 'Unknown';
 }
+
+/** Short date like "25 Sep", with the year added when it is not the current year. */
+export function formatShortDate(dateString: string): string {
+  const date = new Date(dateString);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(date);
+}
+
+/** Relative time for the last week, short date after that. Fits narrow table cells. */
+export function formatCompactTime(dateString: string): string {
+  const diffDays = (Date.now() - new Date(dateString).getTime()) / 86_400_000;
+  return diffDays < 7 ? formatRelativeTime(dateString) : formatShortDate(dateString);
+}
+
+/** Hostname of a model URL without "www.", or the raw string when it does not parse. */
+export function getModelHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+/** Short date with time like "25 Sep 18:11". */
+export function formatShortDateTime(dateString: string): string {
+  const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(dateString));
+  return `${formatShortDate(dateString)} ${time}`;
+}
