@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog';
-import { formatShortDate, formatShortDateTime, sanitizeUrl } from '../lib/utils';
+import { formatShortDate, formatShortDateTime, sanitizeUrl, getChangeFieldLabel } from '../lib/utils';
 import { getRequestStage } from '../lib/requestStage';
 import { StageBar } from '../components/StageBar';
 import { StatusBadge } from '../components/StatusBadge';
@@ -265,7 +265,7 @@ export const RequestDetail = () => {
                   <li key={change.id} className="grid grid-cols-[120px_minmax(0,1fr)] gap-3 text-sm">
                     <span className="text-muted-foreground tabular-nums">{formatShortDateTime(change.changedAt)}</span>
                     <div className="min-w-0 space-y-0.5">
-                      <p className="font-semibold">{change.fieldName}</p>
+                      <p className="font-semibold">{getChangeFieldLabel(change.fieldName)}</p>
                       <p className="break-words">
                         <span className="text-muted-foreground line-through">{change.oldValue || '(empty)'}</span>
                         {' → '}

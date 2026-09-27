@@ -115,3 +115,17 @@ export function formatShortDateTime(dateString: string): string {
   const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date(dateString));
   return `${formatShortDate(dateString)} ${time}`;
 }
+
+// Human labels for ChangeTrackingService field names
+const CHANGE_FIELD_LABELS: Record<string, string> = {
+  RequesterName: 'Requester name',
+  ModelUrl: 'Model link',
+  Notes: 'Notes',
+  RequestDelivery: 'Delivery',
+  IsPublic: 'Visibility',
+  FilamentId: 'Filament',
+};
+
+export function getChangeFieldLabel(fieldName: string): string {
+  return CHANGE_FIELD_LABELS[fieldName] ?? fieldName;
+}

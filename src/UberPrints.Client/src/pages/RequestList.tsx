@@ -152,7 +152,7 @@ export const RequestList = () => {
           </div>
 
           <section className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className={`hidden items-center border-b border-border bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground ${ROW_GRID}`}>
+            <div className={`hidden items-center border-b border-border bg-muted/50 px-4 py-3 text-[13px] font-medium text-muted-foreground ${ROW_GRID}`}>
               <span />
               <span>Model and requester</span>
               <span>Filament</span>
