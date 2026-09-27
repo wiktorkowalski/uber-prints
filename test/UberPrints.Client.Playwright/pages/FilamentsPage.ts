@@ -12,7 +12,7 @@ export class FilamentsPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.heading = page.getByRole('heading', { name: /available filaments/i });
+    this.heading = page.getByRole('heading', { name: /^filaments$/i, level: 1 });
     this.inStockFilter = page.getByLabel(/in stock only/i).or(page.getByText(/show.*in stock/i));
     this.filamentCards = page.locator('[data-testid="filament-card"]')
       .or(page.locator('.filament'))

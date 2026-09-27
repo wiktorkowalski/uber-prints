@@ -34,7 +34,7 @@ test.describe('End-to-End User Workflows', () => {
     // Step 4: Verify redirect (should go to request detail, requests list, dashboard, or track page)
     const currentUrl = newRequestPage.getUrl();
     expect(
-      currentUrl.includes('/request/') ||
+      currentUrl.includes('/requests/') ||
         currentUrl.includes('/requests') ||
         currentUrl.includes('/dashboard') ||
         currentUrl.includes('/track')
@@ -83,7 +83,7 @@ test.describe('End-to-End User Workflows', () => {
       await newRequestPage.submit();
 
       // Should show validation error or stay on page
-      const onFormPage = newRequestPage.urlContains('/request/new');
+      const onFormPage = newRequestPage.urlContains('/requests/new');
       expect(onFormPage, 'Should stay on form with invalid URL').toBeTruthy();
     }
   });
@@ -100,7 +100,7 @@ test.describe('End-to-End User Workflows', () => {
     await homePage.page.waitForLoadState('domcontentloaded');
 
     // Should have navigated away from home
-    const isStillOnHome = homePage.urlContains('/#') || homePage.getUrl() === homePage.page.context()._options.baseURL + '/';
+    const isStillOnHome = homePage.urlContains('/#') || new URL(homePage.getUrl()).pathname === '/';
 
     // May navigate or may stay depending on focused element
     expect(true).toBeTruthy(); // Keyboard navigation test passed

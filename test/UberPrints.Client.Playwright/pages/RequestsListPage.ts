@@ -1,6 +1,10 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
+/** Matches every status label the StatusBadge renders. */
+export const REQUEST_STATUS_PATTERN =
+  /pending|accepted|rejected|on hold|paused|waiting for materials|delivering|waiting for pickup|completed/i;
+
 /**
  * Page Object for the Requests List page
  */
@@ -14,11 +18,9 @@ export class RequestsListPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.heading = page.getByRole('heading', { name: 'All Print Requests', level: 1 });
+    this.heading = page.getByRole('heading', { name: 'Requests', level: 1 });
     this.tabs = page.getByRole('tab');
-    this.requestCards = page.locator('[data-testid="request-card"]')
-      .or(page.locator('.request-card'))
-      .or(page.locator('a[href^="/request/"]'));
+    this.requestCards = page.locator('[data-testid="request-row"]');
     this.filterButton = page.getByRole('button', { name: /filter|sort/i });
     this.statusFilter = page.getByLabel(/status|filter by/i);
   }
@@ -80,10 +82,12 @@ export class RequestsListPage extends BasePage {
    */
   async getRequestStatus(index: number = 0): Promise<string | null> {
     const card = this.requestCards.nth(index);
-    const statusBadge = card.getByText(/pending|accepted|completed|rejected|on hold/i);
-
-    if (await statusBadge.isVisible()) {
-      return await statusBadge.textContent();
+    // The row renders one badge for mobile and one for desktop; read whichever is visible.
+    const badges = card.getByText(REQUEST_STATUS_PATTERN);
+    for (let i = 0; i < (await badges.count()); i++) {
+      if (await badges.nth(i).isVisible()) {
+        return await badges.nth(i).textContent();
+      }
     }
 
     return null;
@@ -94,7 +98,7 @@ export class RequestsListPage extends BasePage {
    */
   async verifyRequestDetailsVisible() {
     const detailsVisible = await this.page
-      .getByText(/model url|tracking token|status history/i)
+      .getByRole('heading', { name: /^history$/i })
       .isVisible()
       .catch(() => false);
 

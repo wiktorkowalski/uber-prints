@@ -13,8 +13,9 @@ import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
 import { getDisplayName } from '../lib/utils';
+import { PageHeader } from '../components/PageHeader';
+import { FilamentRequestStatusBadge } from '../components/FilamentRequestStatusBadge';
 
 const formSchema = z.object({
   requesterName: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
@@ -29,27 +30,6 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-const getStatusColor = (status: FilamentRequestStatusEnum) => {
-  switch (status) {
-    case FilamentRequestStatusEnum.Pending:
-      return 'bg-yellow-500';
-    case FilamentRequestStatusEnum.Approved:
-      return 'bg-green-500';
-    case FilamentRequestStatusEnum.Rejected:
-      return 'bg-red-500';
-    case FilamentRequestStatusEnum.Ordered:
-      return 'bg-blue-500';
-    case FilamentRequestStatusEnum.Received:
-      return 'bg-purple-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
-
-const getStatusLabel = (status: FilamentRequestStatusEnum) => {
-  return FilamentRequestStatusEnum[status];
-};
 
 export const FilamentRequests = () => {
   const { user } = useAuth();
@@ -171,14 +151,17 @@ export const FilamentRequests = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Filament Requests</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showForm ? 'Hide Form' : 'Request Filament'}
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        title="Filament requests"
+        actions={
+          <Button onClick={() => setShowForm(!showForm)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {showForm ? 'Hide form' : 'Request filament'}
+          </Button>
+        }
+        className="mb-6"
+      />
 
       {showForm && (
         <Card className="mb-8">
@@ -317,9 +300,7 @@ export const FilamentRequests = () => {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(request.currentStatus)}>
-                      {getStatusLabel(request.currentStatus)}
-                    </Badge>
+                    <FilamentRequestStatusBadge status={request.currentStatus} />
                     {request.currentStatus === FilamentRequestStatusEnum.Pending && (
                       <Button
                         variant="ghost"
@@ -339,7 +320,7 @@ export const FilamentRequests = () => {
                       href={request.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       Product Link
                     </a>
@@ -349,7 +330,7 @@ export const FilamentRequests = () => {
                   <p className="text-sm text-muted-foreground">{request.notes}</p>
                 )}
                 {request.filamentName && (
-                  <p className="text-sm mt-2 text-green-600">
+                  <p className="text-sm mt-2 text-stage-done">
                     Linked to filament: {request.filamentName}
                   </p>
                 )}

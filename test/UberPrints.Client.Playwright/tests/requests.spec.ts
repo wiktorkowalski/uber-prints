@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/test-fixtures';
+import { REQUEST_STATUS_PATTERN } from '../pages/RequestsListPage';
 
 test.describe('View Requests', () => {
   test('should display requests list page', async ({ requestsListPage }) => {
@@ -18,7 +19,7 @@ test.describe('View Requests', () => {
       // Check for status badge
       const status = await requestsListPage.getRequestStatus(0);
       if (status) {
-        expect(status).toMatch(/pending|accepted|completed|rejected|on hold/i);
+        expect(status).toMatch(REQUEST_STATUS_PATTERN);
       }
     } else {
       // If no requests, verify empty state or informational message

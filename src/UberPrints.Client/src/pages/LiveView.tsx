@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { VideoPlayer } from '../components/VideoPlayer';
+import { CameraStarting, VideoPlayer } from '../components/VideoPlayer';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -13,6 +13,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { PrinterStatusCard } from '../components/PrinterStatusCard';
 import { PrinterStatusDto } from '../types/api';
+import { PageHeader } from '../components/PageHeader';
 
 interface StreamStatus {
   isEnabled: boolean;
@@ -363,7 +364,7 @@ export const LiveView = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -382,21 +383,13 @@ export const LiveView = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Camera className="w-8 h-8" />
-            Printer Live View
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Watch the 3D printer in action
-          </p>
-        </div>
-
-        {isAdmin && (
-          <div className="flex gap-2">
+    <div className="space-y-6">
+      <PageHeader
+        title="Printer"
+        description="Watch the 3D printer in action"
+        className="mb-0"
+        actions={isAdmin && (
+          <>
             <Button
               onClick={handleRestartStream}
               disabled={isRestarting || !status?.isEnabled || isTogglingStream}
@@ -412,11 +405,11 @@ export const LiveView = () => {
               variant={status?.isEnabled ? 'outline' : 'default'}
             >
               <Power className="w-4 h-4 mr-2" />
-              {status?.isEnabled ? 'Disable Stream' : 'Enable Stream'}
+              {status?.isEnabled ? 'Disable stream' : 'Enable stream'}
             </Button>
-          </div>
+          </>
         )}
-      </div>
+      />
 
       <Separator />
 
@@ -463,15 +456,6 @@ export const LiveView = () => {
         </Alert>
       )}
 
-      {status && status.isEnabled && status.isActive && !isStreamReady && !error && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Stream is starting, waiting for video feed... This usually takes a few seconds.
-          </AlertDescription>
-        </Alert>
-      )}
-
       {status && status.isEnabled && !status.isActive && !error && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -489,7 +473,7 @@ export const LiveView = () => {
       )}
 
       {/* Video Player */}
-      {status?.isEnabled && status?.isActive && isStreamReady && !error && (
+      {status?.isEnabled && status?.isActive && !error && (
         <>
           <Card>
             <CardHeader>
@@ -500,16 +484,20 @@ export const LiveView = () => {
             </CardHeader>
             <CardContent>
               <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                <VideoPlayer
-                  streamUrl={streamUrl}
-                  onError={(err) => {
-                    console.error('Video player error:', err);
-                    setError('Failed to load video stream. Please try refreshing the page.');
-                  }}
-                  onReady={() => {
-                    console.log('Video player ready');
-                  }}
-                />
+                {isStreamReady ? (
+                  <VideoPlayer
+                    streamUrl={streamUrl}
+                    onError={(err) => {
+                      console.error('Video player error:', err);
+                      setError('Failed to load video stream. Please try refreshing the page.');
+                    }}
+                    onReady={() => {
+                      console.log('Video player ready');
+                    }}
+                  />
+                ) : (
+                  <CameraStarting />
+                )}
               </div>
               <p className="text-sm text-muted-foreground mt-4">
                 The video may take a few seconds to load. If you experience issues, try refreshing the page.
@@ -526,7 +514,7 @@ export const LiveView = () => {
 
       {/* Admin Debug Section */}
       {isAdmin && (
-        <Card className="border-amber-500/50 bg-amber-50/5">
+        <Card className="border-stage-waiting/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="w-5 h-5" />

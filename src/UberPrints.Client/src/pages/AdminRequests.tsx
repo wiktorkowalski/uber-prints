@@ -5,12 +5,13 @@ import { PrintRequestDto, RequestStatusEnum } from '../types/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
-import { getStatusLabel, getStatusColor, formatRelativeTime, sanitizeUrl } from '../lib/utils';
-import { Package, ExternalLink, Edit2, Shield } from 'lucide-react';
+import { formatRelativeTime, sanitizeUrl } from '../lib/utils';
+import { StatusBadge } from '../components/StatusBadge';
+import { Package, ExternalLink, Edit2 } from 'lucide-react';
 import { EditRequestDialog } from '../components/admin/EditRequestDialog';
 import { ChangeStatusDialog } from '../components/admin/ChangeStatusDialog';
+import { PageHeader } from '../components/PageHeader';
 
 export const AdminRequests = () => {
   const [requests, setRequests] = useState<PrintRequestDto[]>([]);
@@ -99,16 +100,11 @@ export const AdminRequests = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Manage Print Requests
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          View and manage all print requests
-        </p>
-      </div>
+      <PageHeader
+        title="Manage requests"
+        description="View and manage all print requests"
+        className="mb-0"
+      />
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-4 gap-4">
@@ -224,7 +220,7 @@ const RequestsTable = ({ requests, onStatusChange, onEdit, error, onRetry }: Req
       <Card>
         <CardContent className="pt-6">
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-destructive mb-4">{error}</p>
             <Button onClick={onRetry}>Try Again</Button>
           </div>
         </CardContent>
@@ -262,9 +258,7 @@ const RequestsTable = ({ requests, onStatusChange, onEdit, error, onRetry }: Req
                   >
                     {request.requesterName}
                   </Link>
-                  <Badge className={getStatusColor(request.currentStatus)}>
-                    {getStatusLabel(request.currentStatus)}
-                  </Badge>
+                  <StatusBadge status={request.currentStatus} />
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {formatRelativeTime(request.createdAt)}

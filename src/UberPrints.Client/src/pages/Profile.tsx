@@ -8,10 +8,11 @@ import { Label } from '../components/ui/label';
 import { Skeleton } from '../components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Separator } from '../components/ui/separator';
-import { User, Edit2, Save, X, Loader2 } from 'lucide-react';
+import { Edit2, Save, X, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { PageHeader } from '../components/PageHeader';
 
 const displayNameSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name must be less than 100 characters'),
@@ -141,16 +142,11 @@ export const Profile = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <User className="w-8 h-8" />
-          Profile
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          View and manage your profile information from Discord
-        </p>
-      </div>
+      <PageHeader
+        title="Profile"
+        description="View and manage your profile information from Discord"
+        className="mb-0"
+      />
 
       {error && (
         <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-md">
