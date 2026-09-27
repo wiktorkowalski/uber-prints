@@ -31,36 +31,21 @@ public class RequestsController : ControllerBase
   [HttpGet]
   public async Task<IActionResult> GetRequests()
   {
-    // Get current user ID if authenticated
-    Guid? currentUserId = null;
-    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
-    {
-      currentUserId = userId;
-    }
-    else if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
-    {
-      var guestToken = guestTokenHeader.ToString();
-      if (!string.IsNullOrEmpty(guestToken))
-      {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
-        if (user != null)
-        {
-          currentUserId = user.Id;
-        }
-      }
-    }
+    var currentUserId = await GetCurrentUserIdAsync();
 
     var requests = await _context.PrintRequests
         .Include(r => r.Filament)
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
-        .Where(r => r.IsPublic || r.UserId == currentUserId)
+        // Null check stops anonymous callers matching private rows with null UserId
+        .Where(r => r.IsPublic || (currentUserId != null && r.UserId == currentUserId))
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
 
-    var dtos = requests.Select(MapToDto).ToList();
+    var dtos = requests
+        .Select(r => MapToDto(r, CanSeeTrackingToken(r, currentUserId)))
+        .ToList();
     return Ok(dtos);
   }
 
@@ -81,37 +66,15 @@ public class RequestsController : ControllerBase
       return NotFound();
     }
 
-    // Check privacy: allow if public or user owns the request
-    if (!request.IsPublic)
-    {
-      // Get current user ID if authenticated
-      Guid? currentUserId = null;
-      var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-      if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
-      {
-        currentUserId = userId;
-      }
-      else if (Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
-      {
-        var guestToken = guestTokenHeader.ToString();
-        if (!string.IsNullOrEmpty(guestToken))
-        {
-          var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
-          if (user != null)
-          {
-            currentUserId = user.Id;
-          }
-        }
-      }
+    var currentUserId = await GetCurrentUserIdAsync();
 
-      // If request is private and user doesn't own it, return NotFound (not Forbidden to avoid info leak)
-      if (request.UserId != currentUserId)
-      {
-        return NotFound();
-      }
+    // If request is private and user doesn't own it, return NotFound (not Forbidden to avoid info leak)
+    if (!request.IsPublic && (!currentUserId.HasValue || request.UserId != currentUserId))
+    {
+      return NotFound();
     }
 
-    var dto = MapToDto(request);
+    var dto = MapToDto(request, CanSeeTrackingToken(request, currentUserId));
     return Ok(dto);
   }
 
@@ -132,7 +95,8 @@ public class RequestsController : ControllerBase
       return NotFound();
     }
 
-    var dto = MapToDto(request);
+    // Caller already holds the token
+    var dto = MapToDto(request, includeTrackingToken: true);
     return Ok(dto);
   }
 
@@ -233,7 +197,8 @@ public class RequestsController : ControllerBase
       }
     });
 
-    var responseDto = MapToDto(request);
+    // Creator needs the token to track the request later
+    var responseDto = MapToDto(request, includeTrackingToken: true);
     return CreatedAtAction(nameof(GetRequest), new { id = request.Id }, responseDto);
   }
 
@@ -324,7 +289,8 @@ public class RequestsController : ControllerBase
 
     await _context.SaveChangesAsync();
 
-    var responseDto = MapToDto(request);
+    // Ownership verified above
+    var responseDto = MapToDto(request, includeTrackingToken: true);
     return Ok(responseDto);
   }
 
@@ -379,13 +345,42 @@ public class RequestsController : ControllerBase
     return NoContent();
   }
 
-  private PrintRequestDto MapToDto(PrintRequest request)
+  private async Task<Guid?> GetCurrentUserIdAsync()
+  {
+    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    if (userIdClaim != null && Guid.TryParse(userIdClaim, out var userId))
+    {
+      return userId;
+    }
+
+    if (!Request.Headers.TryGetValue("X-Guest-Session-Token", out var guestTokenHeader))
+    {
+      return null;
+    }
+
+    var guestToken = guestTokenHeader.ToString();
+    if (string.IsNullOrEmpty(guestToken))
+    {
+      return null;
+    }
+
+    var user = await _context.Users.FirstOrDefaultAsync(u => u.GuestSessionToken == guestToken);
+    return user?.Id;
+  }
+
+  private bool CanSeeTrackingToken(PrintRequest request, Guid? currentUserId)
+  {
+    return User.IsInRole("Admin")
+        || (currentUserId.HasValue && request.UserId == currentUserId);
+  }
+
+  private static PrintRequestDto MapToDto(PrintRequest request, bool includeTrackingToken)
   {
     return new PrintRequestDto
     {
       Id = request.Id,
       UserId = request.UserId,
-      GuestTrackingToken = request.GuestTrackingToken,
+      GuestTrackingToken = includeTrackingToken ? request.GuestTrackingToken : null,
       RequesterName = request.RequesterName,
       ModelUrl = request.ModelUrl,
       Notes = request.Notes,

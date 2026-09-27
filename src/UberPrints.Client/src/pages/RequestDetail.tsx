@@ -54,6 +54,12 @@ export const RequestDetail = () => {
       const data = await api.getRequest(id);
       setRequest(data);
     } catch (err: any) {
+      // Tracking a private request from a non-owner session: use the track response
+      const trackedRequest = (location.state as { request?: PrintRequestDto } | null)?.request;
+      if (err.response?.status === 404 && trackedRequest?.id === id) {
+        setRequest(trackedRequest);
+        return;
+      }
       console.error('Error loading request:', err);
       setError(err.response?.status === 404 ? 'Request not found' : 'Failed to load request');
     } finally {

@@ -176,8 +176,7 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     Environment.SetEnvironmentVariable("Discord__ClientSecret", "test-client-secret");
     Environment.SetEnvironmentVariable("Frontend__Url", "http://localhost:5173");
 
-    _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:18")
+    _dbContainer = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("uberprints_test")
         .WithUsername("postgres")
         .WithPassword("postgres_test_pwd")

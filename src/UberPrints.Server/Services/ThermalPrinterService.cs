@@ -27,235 +27,7 @@ public class ThermalPrinterService
     try
     {
       var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
-      var requestUrl = $"{frontendUrl}/requests/{request.Id}";
-
-      // Extract filename from URL if possible
-      var modelFileName = "N/A";
-      if (!string.IsNullOrEmpty(request.ModelUrl))
-      {
-        try
-        {
-          var uri = new Uri(request.ModelUrl);
-          modelFileName = Path.GetFileName(uri.LocalPath);
-          if (string.IsNullOrEmpty(modelFileName))
-          {
-            modelFileName = request.ModelUrl;
-          }
-        }
-        catch
-        {
-          modelFileName = request.ModelUrl;
-        }
-      }
-
-      // Truncate long strings for printing
-      var truncatedFileName = modelFileName.Length > 30
-          ? modelFileName.Substring(0, 27) + "..."
-          : modelFileName;
-
-      var truncatedNotes = request.Notes?.Length > 100
-          ? request.Notes.Substring(0, 97) + "..."
-          : request.Notes ?? "None";
-
-      var printRequest = new ThermalPrintRequest
-      {
-        Content = new List<ThermalPrintContent>
-        {
-          // Header
-          new ThermalPrintContent
-          {
-            Type = "Separator",
-            SeparatorChar = "=",
-            SeparatorLength = 24,
-            Alignment = "Center",
-            Style = new[] { "DoubleHeight", "DoubleWidth" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = "NEW PRINT REQUEST",
-            Alignment = "Center",
-            Style = new[] { "Bold", "DoubleHeight", "DoubleWidth" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "Separator",
-            SeparatorChar = "=",
-            SeparatorLength = 24,
-            Alignment = "Center",
-            Style = new[] { "DoubleHeight", "DoubleWidth" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Order details
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Order #: {request.Id.ToString().Substring(0, 8)}",
-            Alignment = "Left",
-            Style = new[] { "Bold" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Created: {request.CreatedAt:yyyy-MM-dd HH:mm}",
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Requester info
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Requester: {request.RequesterName}",
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Delivery: {(request.RequestDelivery ? "Yes" : "No")}",
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Filament info (will be populated if available)
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = request.Filament != null
-                ? $"Filament: {request.Filament.Brand} {request.Filament.Colour}"
-                : "Filament: Not specified",
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Model info
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Model: {truncatedFileName}",
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Description
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = "Description:",
-            Alignment = "Left",
-            Style = new[] { "Bold" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = truncatedNotes,
-            Alignment = "Left"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Separator before QR
-          new ThermalPrintContent
-          {
-            Type = "Separator",
-            SeparatorChar = "-",
-            SeparatorLength = 32,
-            Alignment = "Center"
-          },
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = "SCAN TO VIEW DETAILS",
-            Alignment = "Center",
-            Style = new[] { "Bold" }
-          },
-          new ThermalPrintContent
-          {
-            Type = "Separator",
-            SeparatorChar = "-",
-            SeparatorLength = 32,
-            Alignment = "Center"
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // QR Code - ExtraLarge size
-          new ThermalPrintContent
-          {
-            Type = "QRCode",
-            Content = requestUrl,
-            Alignment = "Center",
-            QrCodeOptions = new QRCodeOptions
-            {
-              Model = "Model2",
-              Size = "ExtraLarge",
-              CorrectionLevel = "Percent15"
-            }
-          },
-          new ThermalPrintContent
-          {
-            Type = "LineFeed",
-            Lines = 1
-          },
-
-          // Tracking token
-          new ThermalPrintContent
-          {
-            Type = "Text",
-            Content = $"Track: {request.GuestTrackingToken?.Substring(0, 8) ?? "N/A"}",
-            Alignment = "Center"
-          },
-
-          // Footer separator
-          new ThermalPrintContent
-          {
-            Type = "Separator",
-            SeparatorChar = "=",
-            SeparatorLength = 32,
-            Alignment = "Center"
-          },
-
-          // Cut paper
-          new ThermalPrintContent
-          {
-            Type = "Cut",
-            PartialCut = false
-          }
-        },
-        Source = "UberPrints",
-        Options = new PrintOptions
-        {
-          AutoCut = true,
-          FeedLinesAfterPrint = 3
-        }
-      };
+      var printRequest = BuildNewRequestTicket(request, frontendUrl);
 
       var jsonContent = JsonSerializer.Serialize(printRequest, new JsonSerializerOptions
       {
@@ -287,8 +59,252 @@ public class ThermalPrinterService
     }
   }
 
+  internal static ThermalPrintRequest BuildNewRequestTicket(PrintRequest request, string frontendUrl)
+  {
+    var requestUrl = $"{frontendUrl}/requests/{request.Id}";
+
+    // Extract filename from URL if possible
+    var modelFileName = "N/A";
+    if (!string.IsNullOrEmpty(request.ModelUrl))
+    {
+      try
+      {
+        var uri = new Uri(request.ModelUrl);
+        modelFileName = Path.GetFileName(uri.LocalPath);
+        if (string.IsNullOrEmpty(modelFileName))
+        {
+          modelFileName = request.ModelUrl;
+        }
+      }
+      catch
+      {
+        modelFileName = request.ModelUrl;
+      }
+    }
+
+    // Truncate long strings for printing
+    var truncatedFileName = modelFileName.Length > 30
+        ? modelFileName.Substring(0, 27) + "..."
+        : modelFileName;
+
+    var truncatedNotes = request.Notes?.Length > 100
+        ? request.Notes.Substring(0, 97) + "..."
+        : request.Notes ?? "None";
+
+    var printRequest = new ThermalPrintRequest
+    {
+      Content =
+      [
+        // Header
+        new ThermalPrintContent
+        {
+          Type = "Separator",
+          SeparatorChar = "=",
+          SeparatorLength = 24,
+          Alignment = "Center",
+          Style = ["DoubleHeight", "DoubleWidth"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = "NEW PRINT REQUEST",
+          Alignment = "Center",
+          Style = ["Bold", "DoubleHeight", "DoubleWidth"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Separator",
+          SeparatorChar = "=",
+          SeparatorLength = 24,
+          Alignment = "Center",
+          Style = ["DoubleHeight", "DoubleWidth"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Order details
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = $"Order #: {request.Id.ToString().Substring(0, 8)}",
+          Alignment = "Left",
+          Style = ["Bold"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = $"Created: {request.CreatedAt:yyyy-MM-dd HH:mm}",
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Requester info
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = $"Requester: {request.RequesterName}",
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = $"Delivery: {(request.RequestDelivery ? "Yes" : "No")}",
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Filament info (will be populated if available)
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = request.Filament != null
+              ? $"Filament: {request.Filament.Brand} {request.Filament.Colour}"
+              : "Filament: Not specified",
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Model info
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = $"Model: {truncatedFileName}",
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Description
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = "Description:",
+          Alignment = "Left",
+          Style = ["Bold"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = truncatedNotes,
+          Alignment = "Left"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Separator before QR
+        new ThermalPrintContent
+        {
+          Type = "Separator",
+          SeparatorChar = "-",
+          SeparatorLength = 32,
+          Alignment = "Center"
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = "SCAN TO VIEW DETAILS",
+          Alignment = "Center",
+          Style = ["Bold"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Separator",
+          SeparatorChar = "-",
+          SeparatorLength = 32,
+          Alignment = "Center"
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // QR Code - ExtraLarge size
+        new ThermalPrintContent
+        {
+          Type = "QRCode",
+          Content = requestUrl,
+          Alignment = "Center",
+          QrCodeOptions = new QRCodeOptions
+          {
+            Model = "Model2",
+            Size = "ExtraLarge",
+            CorrectionLevel = "Percent15"
+          }
+        },
+        new ThermalPrintContent
+        {
+          Type = "LineFeed",
+          Lines = 1
+        },
+
+        // Tracking token: full code, the track endpoint matches it exactly.
+        // 16 chars fit one DoubleWidth line (24 chars max).
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = "TRACKING CODE",
+          Alignment = "Center",
+          Style = ["Bold"]
+        },
+        new ThermalPrintContent
+        {
+          Type = "Text",
+          Content = request.GuestTrackingToken ?? "N/A",
+          Alignment = "Center",
+          Style = ["Bold", "DoubleHeight", "DoubleWidth"]
+        },
+
+        // Footer separator
+        new ThermalPrintContent
+        {
+          Type = "Separator",
+          SeparatorChar = "=",
+          SeparatorLength = 32,
+          Alignment = "Center"
+        },
+
+        // Cut paper
+        new ThermalPrintContent
+        {
+          Type = "Cut",
+          PartialCut = false
+        }
+      ],
+      Source = "UberPrints",
+      Options = new PrintOptions
+      {
+        AutoCut = true,
+        FeedLinesAfterPrint = 3
+      }
+    };
+
+    return printRequest;
+  }
+
   // DTOs for thermal printer API
-  private class ThermalPrintRequest
+  internal sealed class ThermalPrintRequest
   {
     [JsonPropertyName("name")]
     public string? Name { get; set; }
@@ -300,7 +316,7 @@ public class ThermalPrinterService
     public string? ImageBase64 { get; set; }
 
     [JsonPropertyName("content")]
-    public List<ThermalPrintContent> Content { get; set; } = new();
+    public List<ThermalPrintContent> Content { get; set; } = [];
 
     [JsonPropertyName("source")]
     public string? Source { get; set; }
@@ -309,7 +325,7 @@ public class ThermalPrinterService
     public PrintOptions? Options { get; set; }
   }
 
-  private class ThermalPrintContent
+  internal sealed class ThermalPrintContent
   {
     [JsonPropertyName("type")]
     public string Type { get; set; } = string.Empty;
@@ -345,7 +361,7 @@ public class ThermalPrinterService
     public BarcodeOptions? BarcodeOptions { get; set; }
   }
 
-  private class QRCodeOptions
+  internal sealed class QRCodeOptions
   {
     [JsonPropertyName("model")]
     public string? Model { get; set; }
@@ -357,7 +373,7 @@ public class ThermalPrinterService
     public string? CorrectionLevel { get; set; }
   }
 
-  private class ImageOptions
+  internal sealed class ImageOptions
   {
     [JsonPropertyName("maxWidth")]
     public int? MaxWidth { get; set; }
@@ -369,7 +385,7 @@ public class ThermalPrinterService
     public bool? PreserveAspectRatio { get; set; }
   }
 
-  private class BarcodeOptions
+  internal sealed class BarcodeOptions
   {
     [JsonPropertyName("type")]
     public string? Type { get; set; }
@@ -384,7 +400,7 @@ public class ThermalPrinterService
     public string? HriPosition { get; set; }
   }
 
-  private class PrintOptions
+  internal sealed class PrintOptions
   {
     [JsonPropertyName("autoCut")]
     public bool AutoCut { get; set; } = true;
