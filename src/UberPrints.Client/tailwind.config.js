@@ -66,7 +66,8 @@ export default {
 			fontFamily: {
 				sans: ['Red Hat Text', 'system-ui', 'sans-serif'],
 				heading: ['Red Hat Display', 'system-ui', 'sans-serif'],
-				mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'monospace']
+				mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'monospace'],
+				ticket: ['Azeret Mono', 'ui-monospace', 'monospace']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

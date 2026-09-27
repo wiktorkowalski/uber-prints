@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Red+Hat+Text:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Red+Hat+Text:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -276,5 +276,21 @@
 
   .page-description {
     @apply text-muted-foreground text-base lg:text-lg;
+  }
+
+  /* Thermal receipt ticket: paper surface with a zigzag tear at the bottom. */
+  .ticket {
+    @apply relative bg-card text-card-foreground font-ticket;
+    padding-bottom: calc(1rem + 8px);
+    -webkit-mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+      conic-gradient(from 135deg at 50% 0, #000 90deg, #0000 0) bottom / 16px 8px repeat-x;
+    mask:
+      linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat,
+      conic-gradient(from 135deg at 50% 0, #000 90deg, #0000 0) bottom / 16px 8px repeat-x;
+  }
+
+  .ticket-stamp {
+    @apply absolute right-4 top-4 -rotate-6 rounded-md border-2 border-current px-2 py-0.5 font-heading text-xs font-extrabold uppercase tracking-wide;
   }
 }
