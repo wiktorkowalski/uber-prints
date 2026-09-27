@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { Skeleton } from '../components/ui/skeleton';
 import { formatRelativeTime } from '../lib/utils';
-import { Shield, Users, Clock, PrinterIcon, Package } from 'lucide-react';
+import { Users, Clock, PrinterIcon, Package } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
 
 export const AdminUsers = () => {
   const { toast } = useToast();
@@ -81,16 +82,11 @@ export const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Users & Guests
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          View all authenticated users and guest sessions
-        </p>
-      </div>
+      <PageHeader
+        title="Users and guests"
+        description="View all authenticated users and guest sessions"
+        className="mb-0"
+      />
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-3 gap-4">
@@ -168,7 +164,7 @@ const UsersTable = ({ users }: UsersTableProps) => {
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
                   <h3 className="text-lg font-semibold break-all">{user.username}</h3>
                   {user.isAdmin && (
-                    <Badge variant="default" className="bg-purple-600">
+                    <Badge variant="default" className="bg-stage-pickup">
                       Admin
                     </Badge>
                   )}

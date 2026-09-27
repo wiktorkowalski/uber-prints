@@ -16,17 +16,17 @@ export class NewRequestPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    this.heading = page.getByRole('heading', { name: /submit new request/i });
+    this.heading = page.getByRole('heading', { name: /^new request$/i, level: 1 });
     this.requesterNameInput = page.getByPlaceholder(/john doe/i);
-    this.modelUrlInput = page.getByPlaceholder(/thingiverse/i);
+    this.modelUrlInput = page.getByPlaceholder(/printables\.com\/model/i);
     this.filamentSelect = page.getByRole('combobox').first();
     this.notesInput = page.getByPlaceholder(/special instructions|requirements/i);
     this.deliveryCheckbox = page.getByRole('checkbox', { name: /delivery/i });
-    this.submitButton = page.getByRole('button', { name: /submit/i });
+    this.submitButton = page.getByRole('button', { name: /submit request/i });
   }
 
   async goto() {
-    await super.goto('/request/new');
+    await super.goto('/requests/new');
     await this.waitForFormReady();
   }
 
@@ -140,7 +140,7 @@ export class NewRequestPage extends BasePage {
     await this.submit();
 
     // Wait for navigation or response
-    await this.page.waitForURL((url) => !url.pathname.includes('/request/new'), {
+    await this.page.waitForURL((url) => !url.pathname.includes('/requests/new'), {
       timeout: 5000,
     }).catch(() => {
       // May stay on page if validation fails
@@ -160,7 +160,7 @@ export class NewRequestPage extends BasePage {
     }
 
     // Should still be on the form page
-    expect(this.page.url()).toContain('/request/new');
+    expect(this.page.url()).toContain('/requests/new');
   }
 
   /**

@@ -5,9 +5,10 @@ import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
-import { Shield, Package, PrinterIcon, Users, Camera, ArrowRight } from 'lucide-react';
+import { Package, PrinterIcon, Users, Camera, ArrowRight } from 'lucide-react';
 import { PrinterStatusCard } from '../components/PrinterStatusCard';
 import { PrinterStatusDto, RequestStatusEnum } from '../types/api';
+import { PageHeader } from '../components/PageHeader';
 
 export const AdminDashboard = () => {
   const { toast } = useToast();
@@ -109,16 +110,11 @@ export const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Shield className="w-8 h-8" />
-          Admin Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          System overview and quick access to management tools
-        </p>
-      </div>
+      <PageHeader
+        title="Admin"
+        description="System overview and quick access to management tools"
+        className="mb-0"
+      />
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-5 gap-4">
@@ -131,7 +127,7 @@ export const AdminDashboard = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Pending</CardDescription>
-            <CardTitle className="text-3xl text-amber-600">{stats.pendingRequests}</CardTitle>
+            <CardTitle className="text-3xl text-stage-waiting">{stats.pendingRequests}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -172,8 +168,8 @@ export const AdminDashboard = () => {
                 {streamStats ? (
                   streamStats.isEnabled ? (
                     streamStats.isActive ? (
-                      <span className="flex items-center gap-1 text-green-600">
-                        <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse" />
+                      <span className="flex items-center gap-1 text-stage-done">
+                        <span className="w-2 h-2 bg-stage-done rounded-full animate-pulse" />
                         Live
                       </span>
                     ) : (
@@ -202,16 +198,16 @@ export const AdminDashboard = () => {
 
       {/* Management Cards */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Management Tools</h2>
+        <h2 className="text-xl font-heading font-bold">Management Tools</h2>
 
         <div className="grid md:grid-cols-2 gap-4">
           {/* Print Requests Card */}
           <Link to="/admin/requests">
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="h-full hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <PrinterIcon className="w-8 h-8 text-blue-500" />
+                    <PrinterIcon className="w-8 h-8 text-primary" />
                     <div>
                       <CardTitle>Print Requests</CardTitle>
                       <CardDescription>Manage all print requests</CardDescription>
@@ -230,11 +226,11 @@ export const AdminDashboard = () => {
 
           {/* Filaments Card */}
           <Link to="/admin/filaments">
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="h-full hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Package className="w-8 h-8 text-purple-500" />
+                    <Package className="w-8 h-8 text-primary" />
                     <div>
                       <CardTitle>Filaments</CardTitle>
                       <CardDescription>Manage inventory</CardDescription>
@@ -253,11 +249,11 @@ export const AdminDashboard = () => {
 
           {/* Filament Requests Card */}
           <Link to="/admin/filament-requests">
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="h-full hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Package className="w-8 h-8 text-amber-500" />
+                    <Package className="w-8 h-8 text-stage-waiting" />
                     <div>
                       <CardTitle>Filament Requests</CardTitle>
                       <CardDescription>Review requests</CardDescription>
@@ -276,11 +272,11 @@ export const AdminDashboard = () => {
 
           {/* Users & Guests Card */}
           <Link to="/admin/users">
-            <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="h-full hover:border-primary transition-colors cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Users className="w-8 h-8 text-green-500" />
+                    <Users className="w-8 h-8 text-primary" />
                     <div>
                       <CardTitle>Users & Guests</CardTitle>
                       <CardDescription>Manage users</CardDescription>

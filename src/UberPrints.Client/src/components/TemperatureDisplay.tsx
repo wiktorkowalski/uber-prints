@@ -23,8 +23,8 @@ export function TemperatureDisplay({ label, current, target, icon }: Temperature
         <div className="text-xs text-muted-foreground">{label}</div>
         <div className="flex items-baseline gap-2">
           <span className={`text-lg font-semibold ${
-            isHeating ? 'text-orange-500' :
-            isAtTarget ? 'text-green-500' :
+            isHeating ? 'text-stage-waiting' :
+            isAtTarget ? 'text-stage-done' :
             'text-foreground'
           }`}>
             {formatTemp(current)}

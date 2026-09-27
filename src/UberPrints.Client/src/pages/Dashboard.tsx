@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { PrintRequestDto, RequestStatusEnum } from '../types/api';
+import { PrintRequestDto } from '../types/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Skeleton } from '../components/ui/skeleton';
-import { getStatusLabel, getStatusColor, formatRelativeTime, getDisplayName } from '../lib/utils';
-import { Package, Plus, ExternalLink, User, AlertCircle } from 'lucide-react';
+import { Package, Info } from 'lucide-react';
+import { PageHeader } from '../components/PageHeader';
+import { RequestListHeader, RequestRow, RequestRowsSkeleton } from '../components/RequestRow';
 
 export const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -18,6 +18,7 @@ export const Dashboard = () => {
   const loadMyRequests = async () => {
     try {
       setLoading(true);
+      setError(null);
       const allRequests = await api.getRequests();
       // Filter to only show user's requests (both authenticated and guest)
       const myRequests = allRequests.filter(r => r.userId === user?.id);
@@ -35,213 +36,74 @@ export const Dashboard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  const newRequestButton = (
+    <Link to="/requests/new">
+      <Button>
+        <Package className="w-4 h-4 mr-2" />
+        New request
+      </Button>
+    </Link>
+  );
+
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-48" />
-            <Skeleton className="h-4 w-64" />
-          </div>
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader className="pb-3">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-8 w-16" />
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <Skeleton className="h-5 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <Skeleton className="h-10 w-48" />
+        <RequestRowsSkeleton rows={3} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <User className="w-8 h-8" />
-            My Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {isAuthenticated
-              ? `Welcome back, ${getDisplayName(user)}!`
-              : 'Your print requests from this browser'}
-          </p>
-        </div>
-        <Link to="/requests/new">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            New Request
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="My requests"
+        description={isAuthenticated ? undefined : 'Requests made from this browser'}
+        actions={newRequestButton}
+        className="mb-0"
+      />
 
-      {/* Guest User Notice */}
       {!isAuthenticated && (
-        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                  You're using a guest session
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                  Your requests are saved to this browser only. Sign in with Discord to access your requests from any device and get notifications about status updates.
-                </p>
-                <Button
-                  size="sm"
-                  onClick={() => window.location.href = api.getDiscordLoginUrl()}
-                >
-                  Sign in with Discord
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-start gap-3 rounded-lg border border-border bg-card p-4">
+          <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-heading font-bold mb-1">You're using a guest session</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Your requests are saved to this browser only. Sign in with Discord to see them on any device and get status updates.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.location.href = api.getDiscordLoginUrl()}
+            >
+              Sign in with Discord
+            </Button>
+          </div>
+        </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Requests</CardDescription>
-            <CardTitle className="text-3xl">{requests.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Pending/In Progress</CardDescription>
-            <CardTitle className="text-3xl">
-              {requests.filter(r => ![RequestStatusEnum.Completed, RequestStatusEnum.Rejected].includes(r.currentStatus)).length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Completed</CardDescription>
-            <CardTitle className="text-3xl">
-              {requests.filter(r => r.currentStatus === RequestStatusEnum.Completed).length}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
-
-      {/* Requests List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Requests</CardTitle>
-          <CardDescription>
-            All your 3D printing requests in one place
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="text-center py-8">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={loadMyRequests}>Try Again</Button>
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No requests yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Start by submitting your first 3D printing request!
-              </p>
-              <Link to="/requests/new">
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Submit Request
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {requests.map((request) => (
-                <Link
-                  key={request.id}
-                  to={`/requests/${request.id}`}
-                  className="block border rounded-lg p-4 hover:border-primary transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-semibold">{request.requesterName}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatRelativeTime(request.createdAt)}
-                      </p>
-                    </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        request.currentStatus
-                      )}`}
-                    >
-                      {getStatusLabel(request.currentStatus)}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-muted-foreground">
-                      <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">{request.modelUrl}</span>
-                    </div>
-                    {request.filamentName && (
-                      <div className="text-muted-foreground">
-                        Filament: <span className="font-medium">{request.filamentName}</span>
-                      </div>
-                    )}
-                    {request.requestDelivery && (
-                      <div className="text-muted-foreground">
-                        🚚 Delivery requested
-                      </div>
-                    )}
-                    {request.notes && (
-                      <p className="text-muted-foreground line-clamp-1 mt-2">
-                        {request.notes}
-                      </p>
-                    )}
-                    {request.guestTrackingToken && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2 pt-2 border-t">
-                        <span>Track:</span>
-                        <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-                          {request.guestTrackingToken}
-                        </code>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {error ? (
+        <div className="text-center py-12">
+          <p className="text-destructive mb-4">{error}</p>
+          <Button onClick={loadMyRequests}>Try Again</Button>
+        </div>
+      ) : requests.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card py-16 text-center">
+          <Package className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-xl font-heading font-bold mb-2">No requests yet</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Your print requests show up here.
+          </p>
+          {newRequestButton}
+        </div>
+      ) : (
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <RequestListHeader />
+          {requests.map((request) => (
+            <RequestRow key={request.id} request={request} />
+          ))}
+        </section>
+      )}
     </div>
   );
 };

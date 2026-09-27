@@ -69,7 +69,7 @@ test.describe('New Print Request', () => {
     await newRequestPage.submitRequest(testData);
 
     // Should redirect away from form
-    expect(newRequestPage.urlContains('/request/new')).toBeFalsy();
+    expect(newRequestPage.urlContains('/requests/new')).toBeFalsy();
   });
 
   test('should validate invalid URL format', async ({ newRequestPage }) => {
@@ -87,7 +87,7 @@ test.describe('New Print Request', () => {
       await newRequestPage.submit();
 
       // Should show error or stay on page
-      const onFormPage = newRequestPage.urlContains('/request/new');
+      const onFormPage = newRequestPage.urlContains('/requests/new');
       expect(onFormPage, 'Should stay on form page with invalid URL').toBeTruthy();
     }
   });
@@ -100,6 +100,6 @@ test.describe('New Print Request', () => {
     await newRequestPage.submitRequest(deliveryData);
 
     // Should redirect after submission
-    expect(newRequestPage.urlContains('/request/new')).toBeFalsy();
+    expect(newRequestPage.urlContains('/requests/new')).toBeFalsy();
   });
 });

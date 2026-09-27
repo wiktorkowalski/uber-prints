@@ -7,17 +7,12 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Skeleton } from '../components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { formatCompactTime, getModelHost } from '../lib/utils';
 import { Package, Search } from 'lucide-react';
-import { ModelThumbnail } from '../components/ModelThumbnail';
-import { StatusBadge } from '../components/StatusBadge';
+import { RequestListHeader, RequestRow, RequestRowsSkeleton } from '../components/RequestRow';
 import { PageHeader } from '../components/PageHeader';
 import { getRequestStage, MAIN_STAGES, MainRequestStage, STAGE_LABELS } from '../lib/requestStage';
 
 type RequestFilter = MainRequestStage | 'all' | 'mine';
-
-// Desktop column template: thumbnail, model and requester, filament, created, stage.
-const ROW_GRID = 'md:grid md:grid-cols-[56px_minmax(0,2fr)_minmax(0,1.3fr)_130px_170px] md:gap-4';
 
 export const RequestList = () => {
   const { user } = useAuth();
@@ -79,18 +74,7 @@ export const RequestList = () => {
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-10 w-full max-w-xl" />
-        <div className="rounded-lg border border-border bg-card">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0">
-              <Skeleton className="h-14 w-14 flex-shrink-0 rounded-md" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-3 w-28" />
-              </div>
-              <Skeleton className="h-4 w-20" />
-            </div>
-          ))}
-        </div>
+        <RequestRowsSkeleton />
       </div>
     );
   }
@@ -152,13 +136,7 @@ export const RequestList = () => {
           </div>
 
           <section className="overflow-hidden rounded-lg border border-border bg-card">
-            <div className={`hidden items-center border-b border-border bg-muted/50 px-4 py-3 text-[13px] font-medium text-muted-foreground ${ROW_GRID}`}>
-              <span />
-              <span>Model and requester</span>
-              <span>Filament</span>
-              <span>Created</span>
-              <span>Stage</span>
-            </div>
+            <RequestListHeader />
 
             {visibleRequests.length === 0 ? (
               <div className="py-12 text-center">
@@ -167,48 +145,7 @@ export const RequestList = () => {
               </div>
             ) : (
               visibleRequests.map((request) => (
-                <Link
-                  key={request.id}
-                  to={`/requests/${request.id}`}
-                  className={`flex items-center gap-3 border-b border-border px-4 py-2.5 transition-colors last:border-b-0 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none ${ROW_GRID}`}
-                >
-                  <ModelThumbnail
-                    modelUrl={request.modelUrl}
-                    size={56}
-                    showPlatform={false}
-                    className="flex-shrink-0 overflow-hidden rounded-md"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="truncate font-heading text-base font-bold">
-                        {request.requesterName}
-                        {user && request.userId === user.id && (
-                          <span className="ml-2 text-xs font-semibold text-primary">yours</span>
-                        )}
-                      </div>
-                      {/* Mobile: badge sits on the title line so the meta line gets the full width. */}
-                      <StatusBadge status={request.currentStatus} className="flex-shrink-0 md:hidden" />
-                    </div>
-                    <div className="truncate text-sm text-muted-foreground">
-                      <span className="tabular-nums">#{request.id.slice(0, 8)}</span>
-                      {' · '}
-                      {getModelHost(request.modelUrl)}
-                      {request.requestDelivery && ' · delivery'}
-                      {/* Filament and date columns are hidden on mobile, so fold them into the meta line. */}
-                      <span className="md:hidden">
-                        {request.filamentName && ` · ${request.filamentName}`}
-                        {` · ${formatCompactTime(request.createdAt)}`}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="hidden truncate text-sm md:block">
-                    {request.filamentName ?? <span className="text-muted-foreground">Not picked</span>}
-                  </span>
-                  <span className="hidden truncate text-sm text-muted-foreground md:block">
-                    {formatCompactTime(request.createdAt)}
-                  </span>
-                  <StatusBadge status={request.currentStatus} className="hidden md:inline-flex" />
-                </Link>
+                <RequestRow key={request.id} request={request} isOwn={!!user && request.userId === user.id} />
               ))
             )}
           </section>
