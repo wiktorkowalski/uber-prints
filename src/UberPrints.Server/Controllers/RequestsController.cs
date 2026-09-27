@@ -38,7 +38,8 @@ public class RequestsController : ControllerBase
         .Include(r => r.User)
         .Include(r => r.StatusHistory)
             .ThenInclude(sh => sh.ChangedByUser)
-        .Where(r => r.IsPublic || r.UserId == currentUserId)
+        // Null check stops anonymous callers matching private rows with null UserId
+        .Where(r => r.IsPublic || (currentUserId != null && r.UserId == currentUserId))
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
 
