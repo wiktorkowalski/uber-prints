@@ -283,37 +283,49 @@ export const LiveView = () => {
   // Check if playlist is ready
   const checkPlaylistReady = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await fetch(streamUrl, { method: 'HEAD' });
+      const response = await fetch(streamUrl, { method: 'HEAD', cache: 'no-store' });
       return response.ok;
     } catch {
       return false;
     }
   }, [streamUrl]);
 
-  // Poll for playlist availability when stream becomes active
+  // FFmpeg needs ~10 s to write the first playlist. Mount the player only once the
+  // playlist exists, so Video.js does not request a missing file. Back off to keep
+  // the 404s from the HEAD probe few; the "Starting camera…" overlay shows meanwhile.
   useEffect(() => {
     if (!status?.isActive || isStreamReady) return;
 
-    let attempts = 0;
-    const maxAttempts = 10;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    let delayMs = 1000;
+    let waitedMs = 0;
+    let warned = false;
 
-    const pollInterval = setInterval(async () => {
-      attempts++;
+    const poll = async () => {
       const ready = await checkPlaylistReady();
+      if (cancelled) return;
 
       if (ready) {
-        console.log('Stream playlist is ready');
         setIsStreamReady(true);
-        clearInterval(pollInterval);
-      } else if (attempts >= maxAttempts) {
-        console.warn('Stream playlist not ready after maximum attempts');
-        clearInterval(pollInterval);
-        // Still set ready to true to show the player (it has retry logic)
-        setIsStreamReady(true);
+        return;
       }
-    }, 1000); // Check every second
 
-    return () => clearInterval(pollInterval);
+      waitedMs += delayMs;
+      if (!warned && waitedMs >= 30000) {
+        warned = true;
+        console.warn('Stream playlist still not ready after 30 s, still waiting');
+      }
+      delayMs = Math.min(delayMs * 1.5, 3000);
+      timer = setTimeout(poll, delayMs);
+    };
+
+    timer = setTimeout(poll, delayMs);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [status?.isActive, isStreamReady, checkPlaylistReady]);
 
   // Reset stream ready state when stream stops
