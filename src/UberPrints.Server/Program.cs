@@ -53,6 +53,13 @@ builder.Services.AddOptions<PrusaLinkOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddOptions<ThermalPrinterOptions>()
+    .Bind(builder.Configuration.GetSection(ThermalPrinterOptions.SectionName))
+    .Validate(
+        options => string.IsNullOrEmpty(options.ApiUrl) || Uri.TryCreate(options.ApiUrl, UriKind.Absolute, out _),
+        "ThermalPrinter ApiUrl must be empty or an absolute URL")
+    .ValidateOnStart();
+
 // Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

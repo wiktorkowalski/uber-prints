@@ -191,7 +191,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 - HLS segments stored in `wwwroot/stream/` directory, served as static files
 
 **Thermal Printer Integration**: Automatic receipt printing for new print requests:
-- `ThermalPrinterService` calls external thermal printer API at `https://printer.vicio.ovh/api/printer/custom`
+- `ThermalPrinterService` posts to `ThermalPrinter:ApiUrl` (`appsettings.json`: `https://printer.vicio.ovh/api/Printer`; `appsettings.Development.json` and `appsettings.Testing.json` set it empty = printing disabled, so local runs, E2E and tests never print paper)
 - Fire-and-forget pattern: failures don't block request creation
 - Prints receipt with request ID, requester name, filament details, QR code linking to request page
 - Triggered automatically on new print request creation
@@ -398,7 +398,7 @@ cp .env.example .env
 **Required for Discord Notifications**: Discord bot must be created at https://discord.com/developers/applications with bot token and DM permissions
 
 **External Services**:
-- Thermal printer API at `https://printer.vicio.ovh/api/printer/custom` (hardcoded, automatically called on new requests)
+- Thermal printer API at `https://printer.vicio.ovh/api/Printer` via `ThermalPrinter:ApiUrl` (empty in Development/Testing; called on new requests)
 
 **How environment variables work:**
 - Local development: `Program.cs` uses DotNetEnv to load `.env` file automatically

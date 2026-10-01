@@ -16,15 +16,18 @@ public class AdminController : ControllerBase
   private readonly ApplicationDbContext _context;
   private readonly IChangeTrackingService _changeTrackingService;
   private readonly DiscordService _discordService;
+  private readonly IServiceScopeFactory _scopeFactory;
 
   public AdminController(
       ApplicationDbContext context,
       IChangeTrackingService changeTrackingService,
-      DiscordService discordService)
+      DiscordService discordService,
+      IServiceScopeFactory scopeFactory)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
     _discordService = discordService;
+    _scopeFactory = scopeFactory;
   }
 
   [HttpGet("requests")]
@@ -86,8 +89,8 @@ public class AdminController : ControllerBase
 
       _ = Task.Run(async () =>
       {
-        // Create new scope for background work to avoid disposed context
-        using var scope = HttpContext.RequestServices.CreateScope();
+        // HttpContext is recycled once the response completes, so the scope must come from the root provider
+        using var scope = _scopeFactory.CreateScope();
         var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
 

@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Options;
+using UberPrints.Server.Configuration;
 using UberPrints.Server.Models;
 
 namespace UberPrints.Server.Services;
@@ -10,20 +12,28 @@ public class ThermalPrinterService
   private readonly IConfiguration _configuration;
   private readonly ILogger<ThermalPrinterService> _logger;
   private readonly HttpClient _httpClient;
-  private const string PRINTER_API_URL = "https://printer.vicio.ovh/api/Printer";
+  private readonly ThermalPrinterOptions _options;
 
   public ThermalPrinterService(
       IConfiguration configuration,
       ILogger<ThermalPrinterService> logger,
-      HttpClient httpClient)
+      HttpClient httpClient,
+      IOptions<ThermalPrinterOptions> options)
   {
     _configuration = configuration;
     _logger = logger;
     _httpClient = httpClient;
+    _options = options.Value;
   }
 
   public async Task PrintNewRequestAsync(PrintRequest request)
   {
+    if (string.IsNullOrEmpty(_options.ApiUrl))
+    {
+      _logger.LogDebug("Thermal printer disabled (no ApiUrl), skipping ticket for request {RequestId}", request.Id);
+      return;
+    }
+
     try
     {
       var frontendUrl = _configuration["Frontend:Url"] ?? "http://localhost:5173";
@@ -36,7 +46,7 @@ public class ThermalPrinterService
 
       var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-      var response = await _httpClient.PostAsync(PRINTER_API_URL, content);
+      var response = await _httpClient.PostAsync(_options.ApiUrl, content);
 
       if (response.IsSuccessStatusCode)
       {

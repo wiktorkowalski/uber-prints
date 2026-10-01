@@ -15,17 +15,20 @@ public class RequestsController : ControllerBase
   private readonly IChangeTrackingService _changeTrackingService;
   private readonly DiscordService _discordService;
   private readonly ThermalPrinterService _thermalPrinterService;
+  private readonly IServiceScopeFactory _scopeFactory;
 
   public RequestsController(
       ApplicationDbContext context,
       IChangeTrackingService changeTrackingService,
       DiscordService discordService,
-      ThermalPrinterService thermalPrinterService)
+      ThermalPrinterService thermalPrinterService,
+      IServiceScopeFactory scopeFactory)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
     _discordService = discordService;
     _thermalPrinterService = thermalPrinterService;
+    _scopeFactory = scopeFactory;
   }
 
   [HttpGet]
@@ -179,8 +182,8 @@ public class RequestsController : ControllerBase
     // Send notifications and print receipt (fire-and-forget to not block response)
     _ = Task.Run(async () =>
     {
-      // Create new scope for background work to avoid disposed context
-      using var scope = HttpContext.RequestServices.CreateScope();
+      // HttpContext is recycled once the response completes, so the scope must come from the root provider
+      using var scope = _scopeFactory.CreateScope();
       var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
       var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
       var scopedPrinterService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();

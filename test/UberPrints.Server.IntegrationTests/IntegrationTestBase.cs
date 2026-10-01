@@ -189,6 +189,8 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     Environment.SetEnvironmentVariable("Discord__ClientId", "test-client-id");
     Environment.SetEnvironmentVariable("Discord__ClientSecret", "test-client-secret");
     Environment.SetEnvironmentVariable("Frontend__Url", "http://localhost:5173");
+    // .invalid never resolves, so even without the HTTP stub no ticket could reach the real printer
+    Environment.SetEnvironmentVariable("ThermalPrinter__ApiUrl", "https://printer.invalid/api/Printer");
     Environment.SetEnvironmentVariable("PrusaLink__IpAddress", "127.0.0.1");
     Environment.SetEnvironmentVariable("PrusaLink__ApiKey", "test-api-key");
     Environment.SetEnvironmentVariable("Camera__RtspUrl", "rtsp://127.0.0.1/test");
