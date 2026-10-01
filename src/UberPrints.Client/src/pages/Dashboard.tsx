@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { PrintRequestDto } from '../types/api';
@@ -10,31 +10,29 @@ import { PageHeader } from '../components/PageHeader';
 import { RequestListHeader, RequestRow, RequestRowsSkeleton } from '../components/RequestRow';
 
 export const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [requests, setRequests] = useState<PrintRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadMyRequests = async () => {
+  const loadMyRequests = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const allRequests = await api.getRequests();
-      // Filter to only show user's requests (both authenticated and guest)
-      const myRequests = allRequests.filter(r => r.userId === user?.id);
-      setRequests(myRequests);
+      // The server resolves ownership from the JWT or guest session token; guests have no user object here
+      setRequests(await api.getMyRequests());
     } catch (err) {
       console.error('Error loading requests:', err);
       setError('Failed to load your requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  // Wait for auth so a guest session token exists; reload when the user logs in or out
   useEffect(() => {
-    loadMyRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    if (!authLoading) loadMyRequests();
+  }, [authLoading, user, loadMyRequests]);
 
   const newRequestButton = (
     <Link to="/requests/new">

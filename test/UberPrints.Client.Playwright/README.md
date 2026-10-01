@@ -2,55 +2,23 @@
 
 End-to-end tests for the UberPrints client application using Playwright.
 
-## 🚀 Two Test Configurations Available
+## How it runs
 
-### 1. **Standard** (Default) - Manual Setup
-- ✅ Fast test startup
-- ❌ Requires manual backend/database setup
-- Best for: Active development
+`npm test` uses `playwright.config.ts`, whose `global-setup-full.ts` does everything:
 
-### 2. **Full Orchestration** (Recommended for CI) - **NEW!**
-- ✅ **Zero manual setup - just Docker!**
-- ✅ Automatic PostgreSQL (Testcontainers)
-- ✅ Automatic migrations & seeding
-- ✅ Automatic backend & frontend
-- Best for: CI/CD, first-time setup
-
-**See [FULL_ORCHESTRATION.md](./FULL_ORCHESTRATION.md) for complete details**
-
-## Quick Start
-
-### Option A: Full Orchestration (Zero Setup Required!)
-
-```bash
-# 1. Ensure Docker is running
-docker ps
-
-# 2. Install dependencies
-npm install
-npx playwright install
-
-# 3. Run tests - everything starts automatically!
-npm run test:full
-```
-
-That's it! PostgreSQL, backend, frontend - all handled automatically.
-
-### Option B: Standard (Manual Setup)
-
-Requires you to start servers manually first (see below).
+1. Starts a throwaway PostgreSQL container (Testcontainers)
+2. Runs migrations and seeds `seed-testdata.sql`
+3. Starts the backend (`dotnet run --no-build`, Development) on port 5203 with safe overrides: empty Discord bot token, empty thermal printer URL, PrusaLink and camera pointed at localhost, test JWT/Discord OAuth values. No real DMs, tickets or printer calls, and no `.env` needed.
+4. Starts the Vite dev server on port 5173
+5. Runs the tests, then stops everything (backend log: `e2e-backend.log`, gitignored)
 
 ## Prerequisites
 
-**For Full Orchestration:**
-- Node.js 18 or higher
+- Node.js 18+
 - Docker (for Testcontainers)
+- .NET SDK; run `dotnet build` from the repo root first (setup uses `--no-build`)
 
-**For Standard:**
-- Node.js 18 or higher
-- PostgreSQL database
-- UberPrints backend server (ASP.NET Core)
-- UberPrints frontend client (React + Vite)
+If Testcontainers fails with "No host port found for host IP", run with `TESTCONTAINERS_RYUK_DISABLED=true`.
 
 ## Installation
 
@@ -61,79 +29,6 @@ npx playwright install
 ```
 
 ## Running Tests
-
-### 🎯 Recommended: Full Orchestration
-
-**No manual setup required! Just run:**
-
-```bash
-npm run test:full          # Run all tests
-npm run test:full:ui       # Run with UI mode
-npm run test:full:headed   # Run in headed mode
-```
-
-The test runner will:
-1. Start PostgreSQL container (Testcontainers)
-2. Run database migrations
-3. Seed test data
-4. Start backend server
-5. Start frontend server
-6. Run all tests
-7. Clean up everything
-
-**See [FULL_ORCHESTRATION.md](./FULL_ORCHESTRATION.md) for details**
-
----
-
-### Standard Mode (Manual Setup)
-
-**IMPORTANT**: Before running tests in standard mode, you need to have both the backend and frontend servers running.
-
-### Automatic Test Data Seeding
-
-The tests will **automatically seed the database** with test filaments if none exist. The global setup:
-1. Checks if filaments exist in the database
-2. If none found, automatically runs the SQL seed script
-3. Tries Docker first (`docker exec ... psql`), then falls back to `psql`
-4. Verifies the seeding was successful
-
-**No manual intervention required!** Just make sure your database is running.
-
-If automatic seeding fails, you can manually seed with:
-```bash
-docker exec -i uberprints-db psql -U postgres -d uberprints < test/UberPrints.Client.Playwright/seed-testdata.sql
-```
-
-### Option 1: Manual Server Start (Recommended)
-
-In separate terminal windows:
-
-```bash
-# Terminal 1: Start backend
-cd src/UberPrints.Server
-dotnet run
-
-# Terminal 2: Start frontend
-cd src/UberPrints.Client
-npm run dev
-
-# Terminal 3: Run tests (will auto-seed database if needed)
-cd test/UberPrints.Client.Playwright
-npm test
-```
-
-### Option 2: Use the Helper Script
-
-```bash
-cd test/UberPrints.Client.Playwright
-./run-tests.sh
-```
-
-This script will:
-- Check if servers are already running
-- Start them if needed
-- Run the tests
-- Clean up on exit
 
 ### Run all tests (headless)
 ```bash
@@ -252,32 +147,12 @@ test/UberPrints.Client.Playwright/
 
 ## Configuration
 
-The tests are configured in `playwright.config.ts` with:
+`playwright.config.ts`:
 
-- **Base URL**: `http://localhost:5173` (Vite dev server)
-- **Browsers**: Chromium, Firefox, WebKit
-- **Mobile**: Mobile Chrome (Pixel 5), Mobile Safari (iPhone 12)
-- **Server Mode**: `reuseExistingServer: true` (expects servers to be running)
+- **Base URL**: `http://localhost:5173` (Vite dev server, proxies `/api` to the backend on 5203)
+- **Browsers**: Chromium, Firefox, WebKit, plus Mobile Chrome (Pixel 5) and Mobile Safari (iPhone 12)
 - **Retries**: 2 on CI, 0 locally
-- **Traces**: Captured on first retry
-- **Screenshots**: Captured on failure
-
-## Web Servers
-
-By default, the configuration expects you to manually start the servers. If you want Playwright to automatically start them:
-
-1. Edit `playwright.config.ts`
-2. Change `reuseExistingServer: true` to `reuseExistingServer: false`
-
-**Required Servers:**
-
-1. **Backend**: `dotnet run` from `src/UberPrints.Server`
-   - URL: `https://localhost:7001`
-
-2. **Frontend**: `npm run dev` from `src/UberPrints.Client`
-   - URL: `http://localhost:5173`
-
-**Note**: Auto-starting servers can be slow. Manual startup is recommended for faster test iterations.
+- **Traces**: captured on first retry; **screenshots** on failure
 
 ## Writing New Tests
 
@@ -409,7 +284,7 @@ page.getByText(/success/i)
 - Use `networkidle`: `await page.waitForLoadState('networkidle')`
 
 ### Server won't start
-- Check if ports 5173 and 7001 are available
+- Check if ports 5173 and 5203 are available (setup frees them by killing only node/dotnet processes)
 - Verify backend and frontend build successfully
 - Check `playwright.config.ts` paths are correct
 

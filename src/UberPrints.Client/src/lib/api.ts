@@ -155,6 +155,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getMyRequests(): Promise<PrintRequestDto[]> {
+    const response = await this.client.get<PrintRequestDto[]>('/api/requests/mine');
+    return response.data;
+  }
+
   async getRequest(id: string): Promise<PrintRequestDto> {
     const response = await this.client.get<PrintRequestDto>(`/api/requests/${id}`);
     return response.data;
