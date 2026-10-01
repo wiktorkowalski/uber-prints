@@ -1,5 +1,7 @@
 using System.Net;
+using AspNet.Security.OAuth.Discord;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using UberPrints.Server.Services;
 using Xunit;
 
@@ -22,6 +24,17 @@ public class OutboundHttpTests : IntegrationTestBase
     var httpClient = Factory.Services.GetRequiredService<IHttpClientFactory>().CreateClient(clientName);
 
     var response = await httpClient.GetAsync("https://outbound.invalid/");
+
+    Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+  }
+
+  [Fact]
+  public async Task DiscordOAuthBackchannel_NeverReachesNetwork()
+  {
+    var options = Factory.Services.GetRequiredService<IOptionsMonitor<DiscordAuthenticationOptions>>()
+      .Get(DiscordAuthenticationDefaults.AuthenticationScheme);
+
+    var response = await options.Backchannel.GetAsync("https://outbound.invalid/");
 
     Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
   }

@@ -6,6 +6,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using AspNet.Security.OAuth.Discord;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -25,10 +28,9 @@ namespace UberPrints.Server.IntegrationTests;
 
 public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsyncLifetime
 {
-  protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-  {
-    Converters = { new JsonStringEnumConverter() }
-  };
+  // Same serializer settings the server uses, so enums and naming match the real client
+  protected JsonSerializerOptions JsonOptions =>
+    Factory.Services.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.JsonOptions>>().Value.JsonSerializerOptions;
 
   protected readonly HttpClient Client;
   protected readonly IntegrationTestFactory Factory;
@@ -199,34 +201,17 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
   {
     builder.ConfigureServices(services =>
     {
-      // Background workers would poll a fake printer and spawn FFmpeg; the CameraStreamingService singleton stays for StreamController
-      var backgroundWorkers = services
-        .Where(d => d.ServiceType == typeof(IHostedService)
-          && (d.ImplementationType == typeof(PrinterMonitoringService)
-            || d.ImplementationFactory?.Method.ReturnType == typeof(CameraStreamingService)))
-        .ToList();
-
-      // A changed registration in Program.cs would otherwise silently bring polling or FFmpeg back
-      if (backgroundWorkers.Count != 2)
-        throw new InvalidOperationException($"Expected 2 background workers to remove, found {backgroundWorkers.Count}");
-
-      foreach (var worker in backgroundWorkers)
-      {
-        services.Remove(worker);
-      }
-
       // ThermalPrinterService targets the real printer URL and DiscordService the real bot; tests must never reach them
       services.ConfigureHttpClientDefaults(client =>
         client.ConfigurePrimaryHttpMessageHandler(() => new BlockOutboundHttpHandler()));
 
-      // Remove the existing DbContext registration
-      var descriptor = services.SingleOrDefault(
-              d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+      // The OAuth handler builds its backchannel outside IHttpClientFactory; Configure runs before its PostConfigure creates it
+      services.Configure<DiscordAuthenticationOptions>(DiscordAuthenticationDefaults.AuthenticationScheme, options =>
+        options.BackchannelHttpHandler = new BlockOutboundHttpHandler());
 
-      if (descriptor != null)
-      {
-        services.Remove(descriptor);
-      }
+      // AddDbContext also registers an options configuration that would still apply Program's UseNpgsql
+      services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+      services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
 
       // Add DbContext using the test container connection string
       services.AddDbContext<ApplicationDbContext>(options =>

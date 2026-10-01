@@ -20,11 +20,13 @@ public class AuthController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IConfiguration _configuration;
+  private readonly IHttpClientFactory _httpClientFactory;
 
-  public AuthController(ApplicationDbContext context, IConfiguration configuration)
+  public AuthController(ApplicationDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
   {
     _context = context;
     _configuration = configuration;
+    _httpClientFactory = httpClientFactory;
   }
 
   [HttpGet("login")]
@@ -67,7 +69,7 @@ public class AuthController : ControllerBase
     {
       try
       {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
         var response = await httpClient.GetAsync("https://discord.com/api/users/@me");

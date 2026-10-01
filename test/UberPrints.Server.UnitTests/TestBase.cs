@@ -79,7 +79,7 @@ public class TestBase
     RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService);
     AdminController = new AdminController(Context, ChangeTrackingService, discordService);
     FilamentsController = new FilamentsController(Context);
-    AuthController = new AuthController(Context, Configuration);
+    AuthController = new AuthController(Context, Configuration, new ServiceCollection().AddHttpClient().BuildServiceProvider().GetRequiredService<IHttpClientFactory>());
 
     // Set up authentication for RequestsController
     SetupControllerContext(RequestsController, TestAuthenticatedUser.Id);
