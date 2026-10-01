@@ -73,8 +73,8 @@ export const test = base.extend<UberPrintsFixtures>({
 
     if (hasNoFilaments) {
       console.log('⚠️  No filaments found in database!');
-      console.log('Please seed the database with test filaments:');
-      console.log('  docker exec -i uberprints-db psql -U postgres -d uberprints < test/UberPrints.Client.Playwright/seed-testdata.sql');
+      console.log('global-setup-full.ts seeds them from seed-testdata.sql into the Testcontainers database.');
+      console.log('Check the "Seeding database" step in the setup output.');
       console.log('');
       console.log('Or manually add filaments via the admin panel.');
 

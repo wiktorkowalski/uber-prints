@@ -116,10 +116,11 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
       ASPNETCORE_ENVIRONMENT: 'Development',
       ASPNETCORE_URLS: 'http://localhost:5203',
       ConnectionStrings__DefaultConnection: connectionString,
-      // Use test environment secrets if needed
-      JWT_SECRET_KEY: process.env.JWT_SECRET_KEY || 'test-secret-key-minimum-32-characters-long-for-testing',
-      DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || 'test-discord-client-id',
-      DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || 'test-discord-client-secret',
+      // Test-only values under the keys the backend binds (Jwt:SecretKey, Discord:ClientId,
+      // Discord:ClientSecret), so it starts without a .env. Never put real secrets here.
+      Jwt__SecretKey: 'e2e-test-secret-key-minimum-32-characters-long',
+      Discord__ClientId: 'e2e-test-discord-client-id',
+      Discord__ClientSecret: 'e2e-test-discord-client-secret',
       // Never send real Discord DMs or thermal tickets from E2E runs.
       // Explicit env vars win over .env (DotNetEnv clobberExistingVars: false).
       Discord__BotToken: '',
@@ -127,6 +128,8 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
       // Keep the monitoring worker off the real LAN printer
       PrusaLink__IpAddress: '127.0.0.1',
       PrusaLink__ApiKey: 'e2e-test-key',
+      // Keep the camera service off the real LAN camera
+      Camera__RtspUrl: 'rtsp://127.0.0.1:1/e2e',
     },
     stdio: 'pipe',
     detached: true, // Create new process group
@@ -331,22 +334,49 @@ function killProcessTree(pid: number, signal: string = 'SIGTERM'): void {
   }
 }
 
+/** Only dev servers we may have started: Vite (node) and the backend (dotnet or its apphost). */
+const KILLABLE_COMMANDS = ['node', 'dotnet', 'UberPrints.Server'];
+
 /**
- * Kill processes on specific ports (as backup)
+ * Kill leftover node/dotnet processes listening on a port (as backup).
+ * Other processes on the port are left alone and logged, so they fail the run visibly.
  */
 function killProcessOnPort(port: number): void {
+  if (process.platform === 'win32') {
+    console.warn(`  ⚠️  Port cleanup is not supported on Windows; free port ${port} manually if needed`);
+    return;
+  }
+
+  let pids: string[];
   try {
-    if (process.platform !== 'win32') {
-      execSync(`lsof -ti:${port} | xargs kill -9 2>/dev/null || true`, {
-        stdio: 'ignore',
-      });
-    } else {
-      execSync(`FOR /F "tokens=5" %P IN ('netstat -a -n -o ^| findstr :${port}') DO TaskKill.exe /F /PID %P`, {
-        stdio: 'ignore',
-      });
-    }
+    pids = execSync(`lsof -ti tcp:${port} -sTCP:LISTEN`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] })
+      .split('\n')
+      .map((pid) => pid.trim())
+      .filter(Boolean);
   } catch {
-    // Ignore errors
+    return; // lsof exits non-zero when nothing listens on the port
+  }
+
+  for (const pid of pids) {
+    let command = '';
+    try {
+      command = execSync(`ps -o comm= -p ${pid}`, { encoding: 'utf-8' }).trim();
+    } catch {
+      continue; // Process already exited
+    }
+
+    const name = path.basename(command);
+    if (!KILLABLE_COMMANDS.includes(name)) {
+      console.warn(`  ⚠️  Port ${port} is held by ${name} (pid ${pid}); not killing it`);
+      continue;
+    }
+
+    console.log(`  🔪 Killing ${name} (pid ${pid}) on port ${port}`);
+    try {
+      process.kill(Number(pid), 'SIGKILL');
+    } catch {
+      // Process exited between lookup and kill
+    }
   }
 }
 
