@@ -199,7 +199,7 @@ function CameraPreview({ stream }: { stream: StreamStatus | null }) {
   return (
     <div className="relative flex aspect-video items-center justify-center bg-zinc-950 text-zinc-400">
       {isLive && (
-        <span className="absolute left-4 top-4 rounded bg-stage-rejected px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="absolute left-4 top-4 rounded bg-stage-rejected px-2.5 py-1 text-xs font-semibold text-background">
           LIVE
         </span>
       )}

@@ -15,6 +15,7 @@ import { api } from '../../lib/api';
 import { cn, getDisplayName } from '../../lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';
+import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
   { to: '/requests', label: 'Requests' },
@@ -127,7 +128,8 @@ export const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <Link to="/requests/new" className="hidden sm:block">
               <Button size="sm">
                 <Plus className="w-4 h-4 mr-1.5" />
