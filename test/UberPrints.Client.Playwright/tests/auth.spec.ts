@@ -92,19 +92,15 @@ test.describe('Authentication', () => {
   });
 
   test('should track requests with guest session', async ({ page }) => {
+    // /dashboard is not a protected route, so a guest stays on it
     await page.goto('/dashboard');
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByRole('heading', { name: 'My requests', level: 1 })).toBeVisible();
+    await expect(page.getByText("You're using a guest session")).toBeVisible();
 
-    if (page.url().includes('/dashboard')) {
-      await page.waitForLoadState('networkidle');
-
-      // Should show user's requests or empty state
-      const hasRequests = (await page.locator('[data-testid="request-row"]').count()) > 0;
-      const hasEmptyState = await page.getByText(/no requests/i).isVisible().catch(() => false);
-
-      expect(hasRequests || hasEmptyState).toBeTruthy();
-    } else {
-      // Dashboard may redirect if not accessible
-      test.skip(true, 'Dashboard not accessible in current state');
-    }
+    // Either the guest's request rows or the empty state renders
+    await expect(
+      page.locator('[data-testid="request-row"]').first().or(page.getByText('No requests yet'))
+    ).toBeVisible();
   });
 });

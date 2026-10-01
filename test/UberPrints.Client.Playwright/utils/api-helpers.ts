@@ -67,16 +67,21 @@ export class ApiHelpers {
   }
 
   /**
-   * Create a print request via API
+   * Create a print request via API.
+   * The backend needs a session, so pass the token from createGuestSession().
    */
-  async createRequest(data: {
-    requesterName: string;
-    modelUrl: string;
-    filamentId: string;
-    notes?: string;
-    requestDelivery?: boolean;
-  }): Promise<any> {
+  async createRequest(
+    data: {
+      requesterName: string;
+      modelUrl: string;
+      filamentId: string;
+      notes?: string;
+      requestDelivery?: boolean;
+    },
+    guestSessionToken?: string
+  ): Promise<any> {
     const response = await this.apiContext.post(`${this.baseUrl}/api/requests`, {
+      headers: guestSessionToken ? { 'X-Guest-Session-Token': guestSessionToken } : {},
       data: {
         requesterName: data.requesterName,
         modelUrl: data.modelUrl,
@@ -150,7 +155,8 @@ export class ApiHelpers {
    */
   async getInStockFilaments(): Promise<any[]> {
     const filaments = await this.getFilaments();
-    return filaments.filter((f) => f.inStock);
+    // FilamentDto has no inStock flag; stock is the amount left
+    return filaments.filter((f) => f.stockAmount > 0);
   }
 
   /**
