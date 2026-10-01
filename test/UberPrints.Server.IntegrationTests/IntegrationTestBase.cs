@@ -181,7 +181,8 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
   {
     // Set test configuration as environment variables BEFORE Program.cs runs
     // ASP.NET Core maps Jwt__SecretKey (double underscore) to Jwt:SecretKey (colon) in configuration
-    // The .env file loads with clobberExistingVars: false, so these existing vars take precedence
+    // The repo .env would add vars this factory does not override (e.g. Discord__BotToken), so skip it entirely
+    Environment.SetEnvironmentVariable("UBERPRINTS_SKIP_DOTENV", "1");
     Environment.SetEnvironmentVariable("Jwt__SecretKey", "TestSecretKeyForIntegrationTests1234567890");
     Environment.SetEnvironmentVariable("Jwt__Issuer", "UberPrints");
     Environment.SetEnvironmentVariable("Jwt__Audience", "UberPrints");
