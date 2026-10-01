@@ -12,14 +12,14 @@ using UberPrints.Server.Services;
 using UberPrints.Server.Services.Notifications;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-// Load environment variables from .env file (for local development)
-// Looks for .env in the project root (2 levels up from bin/Debug/net10.0)
-var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
-Env.Load(envPath, new LoadOptions(
-    setEnvVars: true,           // Set environment variables
-    clobberExistingVars: false, // Don't override existing env vars (they take precedence)
-    onlyExactPath: true         // Only load if file exists at exact path
-));
+// Local development only; Docker has no .env and relies on real environment variables
+var envPath = DotEnvLocator.Find(Directory.GetCurrentDirectory());
+if (envPath is not null)
+  Env.Load(envPath, new LoadOptions(
+      setEnvVars: true,
+      clobberExistingVars: false, // Real environment variables win over .env values
+      onlyExactPath: true
+  ));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -207,6 +207,11 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (envPath is not null)
+  app.Logger.LogInformation("Loaded environment variables from {EnvFilePath}", envPath);
+else
+  app.Logger.LogDebug("No .env file found; using process environment variables only");
 
 // Apply pending database migrations on startup
 using (var scope = app.Services.CreateScope())

@@ -40,11 +40,11 @@ public class OutboundHttpTests : IntegrationTestBase
   [Fact]
   public async Task CreateRequest_PrintsTicketThroughNotificationWorker()
   {
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto());
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto(), JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
-    var response = await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "Worker test"));
+    var response = await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "Worker test"), JsonOptions);
     response.EnsureSuccessStatusCode();
     var created = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(created);

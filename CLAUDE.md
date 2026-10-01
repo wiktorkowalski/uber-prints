@@ -19,10 +19,10 @@ UberPrints is a 3D print request management system where users can request 3D pr
 - FFmpeg for RTSP-to-HLS video conversion (external dependency)
 
 **Frontend:**
-- Vite 6.x for fast builds and HMR
-- React 19 with TypeScript
-- TanStack Router for routing
-- HLS.js for video playback
+- Vite 5.x for fast builds and HMR
+- React 18 with TypeScript
+- React Router 6 (`react-router-dom`) for routing
+- Video.js for HLS video playback
 - Axios for API communication
 - React Hook Form + Zod for form validation
 - shadcn/ui component library (Radix UI primitives + Tailwind CSS)
@@ -301,7 +301,7 @@ The React frontend (`src/UberPrints.Client/`) uses:
 - **Axios** for API communication (configured in `lib/api.ts`)
 - **shadcn/ui** components in `components/ui/` (built on Radix UI)
 - **React Hook Form + Zod** for form handling and validation
-- **Vite proxy** configuration to proxy `/api` requests to backend at `https://localhost:7001` (dev only)
+- **Vite proxy** configuration to proxy `/api` and `/stream` requests to backend at `http://localhost:5203` (dev only)
 - **Production build** outputs to `src/UberPrints.Server/wwwroot/` and is served by ASP.NET Core
 
 In development, run frontend and backend separately (frontend uses Vite proxy for API calls).
@@ -314,7 +314,6 @@ Key frontend pages:
 - `RequestDetail.tsx`: View single request details
 - `Dashboard.tsx`: User dashboard
 - `AdminDashboard.tsx`: Admin panel with printer management (protected)
-- `PrinterStatus.tsx`: Real-time printer status and print queue monitoring (public)
 - `LiveView.tsx`: Live camera stream with DVR playback (public, with admin controls)
 - `AuthCallback.tsx`: Handles OAuth callback and JWT token storage
 
