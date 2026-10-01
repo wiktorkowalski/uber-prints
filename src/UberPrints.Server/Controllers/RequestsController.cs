@@ -4,6 +4,7 @@ using UberPrints.Server.Data;
 using UberPrints.Server.Models;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Services;
+using UberPrints.Server.Services.Notifications;
 
 namespace UberPrints.Server.Controllers;
 
@@ -13,25 +14,16 @@ public class RequestsController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IChangeTrackingService _changeTrackingService;
-  private readonly DiscordService _discordService;
-  private readonly ThermalPrinterService _thermalPrinterService;
-  private readonly IServiceScopeFactory _scopeFactory;
-  private readonly ILogger<RequestsController> _logger;
+  private readonly NotificationQueue _notificationQueue;
 
   public RequestsController(
       ApplicationDbContext context,
       IChangeTrackingService changeTrackingService,
-      DiscordService discordService,
-      ThermalPrinterService thermalPrinterService,
-      IServiceScopeFactory scopeFactory,
-      ILogger<RequestsController> logger)
+      NotificationQueue notificationQueue)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
-    _discordService = discordService;
-    _thermalPrinterService = thermalPrinterService;
-    _scopeFactory = scopeFactory;
-    _logger = logger;
+    _notificationQueue = notificationQueue;
   }
 
   [HttpGet]
@@ -176,41 +168,10 @@ public class RequestsController : ControllerBase
 
     await _context.SaveChangesAsync();
 
-    // Reload request with filament data for notifications and printing
+    // Response DTO shows the filament name
     await _context.Entry(request).Reference(r => r.Filament).LoadAsync();
 
-    // Capture locals only, so the background task doesn't keep this controller and its HttpContext alive
-    var requestId = request.Id;
-    var scopeFactory = _scopeFactory;
-    var logger = _logger;
-
-    // Send notifications and print receipt (fire-and-forget to not block response)
-    _ = Task.Run(async () =>
-    {
-      try
-      {
-        // HttpContext is recycled once the response completes, so the scope must come from the root provider
-        using var scope = scopeFactory.CreateScope();
-        var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
-        var scopedPrinterService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();
-
-        // Reload request with all needed data
-        var backgroundRequest = await scopedContext.PrintRequests
-            .Include(r => r.Filament)
-            .FirstOrDefaultAsync(r => r.Id == requestId);
-
-        if (backgroundRequest != null)
-        {
-          await scopedDiscordService.NotifyAdminsNewRequestAsync(backgroundRequest);
-          await scopedPrinterService.PrintNewRequestAsync(backgroundRequest);
-        }
-      }
-      catch (Exception ex)
-      {
-        logger.LogError(ex, "Background notifications failed for new request {RequestId}", requestId);
-      }
-    });
+    _notificationQueue.Enqueue(new NewRequestNotification(request.Id));
 
     // Creator needs the token to track the request later
     var responseDto = MapToDto(request, includeTrackingToken: true);

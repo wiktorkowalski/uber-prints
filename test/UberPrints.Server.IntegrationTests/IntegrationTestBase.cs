@@ -317,7 +317,7 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     using var scope = Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    // CreateRequest's fire-and-forget notification task can still hold row locks, so TRUNCATE may deadlock with it
+    // NotificationWorker may still be reading a request a test just created, so TRUNCATE may deadlock with it
     for (var attempt = 1; ; attempt++)
     {
       try
