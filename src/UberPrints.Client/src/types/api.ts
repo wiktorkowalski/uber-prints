@@ -240,6 +240,14 @@ export enum PrinterStateEnum {
   Ready = 'Ready',
 }
 
+// Prusa Link /api/version payload, passed through by POST /api/printers/test-connection
+export interface PrusaLinkVersion {
+  api?: string | null;
+  server?: string | null;
+  text?: string | null;
+  firmware?: string | null;
+}
+
 export interface PrinterDto {
   id: string;
   name: string;

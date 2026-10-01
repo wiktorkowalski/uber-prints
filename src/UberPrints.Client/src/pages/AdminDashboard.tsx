@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useToast } from '../hooks/use-toast';
@@ -27,17 +27,7 @@ export const AdminDashboard = () => {
   const [printerStatus, setPrinterStatus] = useState<PrinterStatusDto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadStats();
-    loadStreamStats();
-    loadPrinterStatus();
-
-    // Poll printer status every 10 seconds
-    const interval = setInterval(loadPrinterStatus, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       // Get requests
@@ -67,7 +57,17 @@ export const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadStats();
+    loadStreamStats();
+    loadPrinterStatus();
+
+    // Poll printer status every 10 seconds
+    const interval = setInterval(loadPrinterStatus, 10000);
+    return () => clearInterval(interval);
+  }, [loadStats]);
 
   const loadStreamStats = async () => {
     try {

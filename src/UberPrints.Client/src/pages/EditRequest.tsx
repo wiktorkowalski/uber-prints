@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { api } from '../lib/api';
+import { getApiErrorMessage, getHttpStatus } from '../lib/errors';
 import { FilamentDto, PrintRequestDto } from '../types/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -13,8 +14,9 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
+import { useLatestRef } from '../hooks/use-latest-ref';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 
@@ -51,11 +53,10 @@ export const EditRequest = () => {
     },
   });
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  // Ownership check reads the user at load time; a later auth change must not re-fetch.
+  const userRef = useLatestRef(user);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
 
     try {
@@ -66,7 +67,8 @@ export const EditRequest = () => {
       ]);
 
       // Check if user owns this request
-      if (user && requestData.userId !== user.id) {
+      const currentUser = userRef.current;
+      if (currentUser && requestData.userId !== currentUser.id) {
         toast({
           title: "Unauthorized",
           description: "You can only edit your own requests",
@@ -88,18 +90,22 @@ export const EditRequest = () => {
         isPublic: requestData.isPublic,
         filamentId: requestData.filamentId,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading data:', error);
       toast({
         title: "Failed to load request",
-        description: error.response?.status === 404 ? 'Request not found' : 'Failed to load request',
+        description: getHttpStatus(error) === 404 ? 'Request not found' : 'Failed to load request',
         variant: "destructive",
       });
       navigate('/requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast, navigate, form, userRef]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const onSubmit = async (values: FormValues) => {
     if (!id) return;
@@ -122,9 +128,9 @@ export const EditRequest = () => {
         variant: "success",
       });
       navigate(`/requests/${id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating request:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to update request. Please try again.';
+      const errorMessage = getApiErrorMessage(error, 'Failed to update request. Please try again.');
       toast({
         title: "Failed to update request",
         description: errorMessage,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
+import { getApiErrorMessage } from '../../lib/errors';
 import { PrintRequestDto, RequestStatusEnum } from '../../types/api';
 import { useToast } from '../../hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -61,11 +62,11 @@ export const ChangeStatusDialog = ({ request, open, onOpenChange, onSuccess }: C
 
       onSuccess();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating status:', err);
       toast({
         title: "Failed to update status",
-        description: err.response?.data?.message || 'Failed to update status',
+        description: getApiErrorMessage(err, 'Failed to update status'),
         variant: "destructive",
       });
     } finally {

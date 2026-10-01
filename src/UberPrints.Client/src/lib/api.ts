@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import {
   PrintRequestDto,
+  PrusaLinkVersion,
   CreatePrintRequestDto,
   UpdatePrintRequestDto,
   UpdatePrintRequestAdminDto,
@@ -285,7 +286,7 @@ class ApiClient {
       // Try to refresh - backend will validate token expiry securely
       await this.refreshToken();
       return true;
-    } catch (error) {
+    } catch {
       // If refresh fails, token is invalid or expired
       return false;
     }
@@ -449,7 +450,7 @@ class ApiClient {
     return response.data;
   }
 
-  async testPrinterConnection(): Promise<{ connected: boolean; version?: any }> {
+  async testPrinterConnection(): Promise<{ connected: boolean; version?: PrusaLinkVersion | null }> {
     const response = await this.client.post('/api/printers/test-connection');
     return response.data;
   }

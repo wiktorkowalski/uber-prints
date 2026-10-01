@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../lib/api';
+import { getApiErrorMessage, getHttpStatus } from '../lib/errors';
 import { PrintRequestDto } from '../types/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
+import { useLatestRef } from '../hooks/use-latest-ref';
 import { Button } from '../components/ui/button';
 import { Skeleton } from '../components/ui/skeleton';
 import {
@@ -40,32 +42,35 @@ export const RequestDetail = () => {
   const [statusDialogRequest, setStatusDialogRequest] = useState<PrintRequestDto | null>(null);
   const [editDialogRequest, setEditDialogRequest] = useState<PrintRequestDto | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadRequest();
-    }
-  }, [id]);
+  // Fallback request passed by TrackRequest; a later navigation state change must not re-fetch.
+  const locationStateRef = useLatestRef(location.state);
 
-  const loadRequest = async () => {
+  const loadRequest = useCallback(async () => {
     if (!id) return;
 
     try {
       setLoading(true);
       const data = await api.getRequest(id);
       setRequest(data);
-    } catch (err: any) {
+    } catch (err) {
       // Tracking a private request from a non-owner session: use the track response
-      const trackedRequest = (location.state as { request?: PrintRequestDto } | null)?.request;
-      if (err.response?.status === 404 && trackedRequest?.id === id) {
+      const trackedRequest = (locationStateRef.current as { request?: PrintRequestDto } | null)?.request;
+      if (getHttpStatus(err) === 404 && trackedRequest?.id === id) {
         setRequest(trackedRequest);
         return;
       }
       console.error('Error loading request:', err);
-      setError(err.response?.status === 404 ? 'Request not found' : 'Failed to load request');
+      setError(getHttpStatus(err) === 404 ? 'Request not found' : 'Failed to load request');
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, locationStateRef]);
+
+  useEffect(() => {
+    if (id) {
+      loadRequest();
+    }
+  }, [id, loadRequest]);
 
   const handleDelete = async () => {
     if (!request) return;
@@ -79,11 +84,11 @@ export const RequestDetail = () => {
         variant: "success",
       });
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error deleting request:', err);
       toast({
         title: "Failed to delete request",
-        description: err.response?.data?.message || 'Failed to delete request',
+        description: getApiErrorMessage(err, 'Failed to delete request'),
         variant: "destructive",
       });
     } finally {
