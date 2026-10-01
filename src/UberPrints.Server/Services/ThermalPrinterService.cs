@@ -30,7 +30,7 @@ public class ThermalPrinterService
   {
     if (string.IsNullOrEmpty(_options.ApiUrl))
     {
-      _logger.LogDebug("Thermal printer disabled (no ApiUrl), skipping ticket for request {RequestId}", request.Id);
+      _logger.LogInformation("Thermal printer disabled (ThermalPrinter:ApiUrl is empty), skipping ticket for request {RequestId}", request.Id);
       return;
     }
 

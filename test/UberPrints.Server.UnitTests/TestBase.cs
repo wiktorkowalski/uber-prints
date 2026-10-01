@@ -79,8 +79,8 @@ public class TestBase
         NullLogger<ThermalPrinterService>.Instance,
         new HttpClient(new BlockOutboundHttpHandler()),
         Options.Create(new ThermalPrinterOptions()));
-    RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService, Mock.Of<IServiceScopeFactory>());
-    AdminController = new AdminController(Context, ChangeTrackingService, discordService, Mock.Of<IServiceScopeFactory>());
+    RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService, Mock.Of<IServiceScopeFactory>(), NullLogger<RequestsController>.Instance);
+    AdminController = new AdminController(Context, ChangeTrackingService, discordService, Mock.Of<IServiceScopeFactory>(), NullLogger<AdminController>.Instance);
     FilamentsController = new FilamentsController(Context);
     var httpClientFactory = new Mock<IHttpClientFactory>();
     httpClientFactory

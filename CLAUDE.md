@@ -191,7 +191,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 - HLS segments stored in `wwwroot/stream/` directory, served as static files
 
 **Thermal Printer Integration**: Automatic receipt printing for new print requests:
-- `ThermalPrinterService` posts to `ThermalPrinter:ApiUrl` (`appsettings.json`: `https://printer.vicio.ovh/api/Printer`; `appsettings.Development.json` and `appsettings.Testing.json` set it empty = printing disabled, so local runs, E2E and tests never print paper)
+- `ThermalPrinterService` posts to `ThermalPrinter:ApiUrl` (`appsettings.json`: `https://printer.vicio.ovh/api/Printer`; `appsettings.Development.json` and `appsettings.Testing.json` set it empty = printing disabled for `dotnet run` and E2E. Integration tests override it with a `.invalid` host and block all outbound HTTP with a stub handler)
 - Fire-and-forget pattern: failures don't block request creation
 - Prints receipt with request ID, requester name, filament details, QR code linking to request page
 - Triggered automatically on new print request creation
