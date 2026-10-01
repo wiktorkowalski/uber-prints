@@ -32,13 +32,13 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
-    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 1"));
-    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 2"));
-    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 3"));
+    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 1"), JsonOptions);
+    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 2"), JsonOptions);
+    await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "User 3"), JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/admin/requests");
@@ -55,12 +55,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var request = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     var changeStatusDto = new ChangeStatusDto
@@ -70,7 +70,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{request.Id}/status", changeStatusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{request.Id}/status", changeStatusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -89,12 +89,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var request = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
@@ -103,19 +103,19 @@ public class AdminControllerTests : IntegrationTestBase
     {
       Status = RequestStatusEnum.Accepted,
       AdminNotes = "Accepted"
-    });
+    }, JsonOptions);
 
     await Client.PutAsJsonAsync($"/api/admin/requests/{request.Id}/status", new ChangeStatusDto
     {
       Status = RequestStatusEnum.OnHold,
       AdminNotes = "Waiting for materials"
-    });
+    }, JsonOptions);
 
     var response = await Client.PutAsJsonAsync($"/api/admin/requests/{request.Id}/status", new ChangeStatusDto
     {
       Status = RequestStatusEnum.Completed,
       AdminNotes = "Work completed"
-    });
+    }, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -137,7 +137,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{nonExistentId}/status", changeStatusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{nonExistentId}/status", changeStatusDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -164,7 +164,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PostAsJsonAsync("/api/admin/filaments", createDto);
+    var response = await Client.PostAsJsonAsync("/api/admin/filaments", createDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -188,7 +188,7 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
     var updateDto = new UpdateFilamentDto
@@ -204,7 +204,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filaments/{filament.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filaments/{filament.Id}", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -240,7 +240,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filaments/{nonExistentId}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filaments/{nonExistentId}", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -251,7 +251,7 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto(stockAmount: 1000);
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
     var updateStockDto = new UpdateStockDto
@@ -296,7 +296,7 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
@@ -329,12 +329,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    await Client.PostAsJsonAsync("/api/requests", requestDto);
+    await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
 
     // Act
     var response = await Client.DeleteAsync($"/api/admin/filaments/{filament.Id}");
@@ -350,7 +350,7 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var createdFilament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(createdFilament);
 
@@ -387,17 +387,17 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange - Create initial request
     var filament1Dto = TestDataFactory.CreateFilamentDto(name: "Filament 1");
-    var filament1Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament1Dto);
+    var filament1Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament1Dto, JsonOptions);
     var filament1 = await filament1Response.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament1);
 
     var filament2Dto = TestDataFactory.CreateFilamentDto(name: "Filament 2");
-    var filament2Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament2Dto);
+    var filament2Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament2Dto, JsonOptions);
     var filament2 = await filament2Response.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament2);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament1.Id, "Original Name");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -413,7 +413,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -433,12 +433,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange - Create request with filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.NotNull(createdRequest.FilamentId);
@@ -455,7 +455,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -470,7 +470,7 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange - Create public request
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
@@ -483,7 +483,7 @@ public class AdminControllerTests : IntegrationTestBase
       IsPublic = true,
       FilamentId = filament.Id
     };
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.True(createdRequest.IsPublic);
@@ -500,7 +500,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -514,12 +514,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -537,7 +537,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -562,7 +562,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{nonExistentId}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{nonExistentId}", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -573,12 +573,12 @@ public class AdminControllerTests : IntegrationTestBase
   {
     // Arrange - Create request
     var filamentDto = TestDataFactory.CreateFilamentDto();
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
-    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
+    var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto, JsonOptions);
     var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -595,7 +595,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/requests/{createdRequest.Id}", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -630,7 +630,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand A",
       Colour = "Red"
-    });
+    }, JsonOptions);
 
     await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
     {
@@ -638,7 +638,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PETG",
       Brand = "Brand B",
       Colour = "Blue"
-    });
+    }, JsonOptions);
 
     await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
     {
@@ -646,7 +646,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "ABS",
       Brand = "Brand C",
       Colour = "Green"
-    });
+    }, JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/admin/filament-requests");
@@ -671,7 +671,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand",
       Colour = "Red"
-    });
+    }, JsonOptions);
     var request1 = await request1Response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
 
     await Task.Delay(10); // Small delay to ensure different timestamps
@@ -682,7 +682,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PETG",
       Brand = "Brand",
       Colour = "Blue"
-    });
+    }, JsonOptions);
     var request2 = await request2Response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
 
     await Task.Delay(10);
@@ -693,7 +693,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "ABS",
       Brand = "Brand",
       Colour = "Green"
-    });
+    }, JsonOptions);
     var request3 = await request3Response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
 
     // Act
@@ -720,7 +720,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Test Brand",
       Colour = "White"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -729,7 +729,7 @@ public class AdminControllerTests : IntegrationTestBase
     {
       Status = FilamentRequestStatusEnum.Approved,
       Reason = "Approved for purchase"
-    });
+    }, JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/admin/filament-requests");
@@ -753,7 +753,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Prusament",
       Colour = "Galaxy Black"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.Equal(FilamentRequestStatusEnum.Pending, createdRequest.CurrentStatus);
@@ -765,7 +765,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -789,7 +789,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "Expensive Material",
       Brand = "Premium Brand",
       Colour = "Gold"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -800,7 +800,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -816,7 +816,7 @@ public class AdminControllerTests : IntegrationTestBase
   public async Task ChangeFilamentRequestStatus_LinksFilamentWhenApproved()
   {
     // Arrange - Create a filament
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000));
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000), JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
@@ -827,7 +827,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Test Brand",
       Colour = "Blue"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.Null(createdRequest.FilamentId);
@@ -841,7 +841,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -862,7 +862,7 @@ public class AdminControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand",
       Colour = "Red"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -871,19 +871,19 @@ public class AdminControllerTests : IntegrationTestBase
     {
       Status = FilamentRequestStatusEnum.Pending,
       Reason = "Needs more info"
-    });
+    }, JsonOptions);
 
     await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
     {
       Status = FilamentRequestStatusEnum.Approved,
       Reason = "Info received, approved"
-    });
+    }, JsonOptions);
 
     var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", new ChangeFilamentRequestStatusDto
     {
       Status = FilamentRequestStatusEnum.Received,
       Reason = "Filament purchased and added to inventory"
-    });
+    }, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -911,7 +911,7 @@ public class AdminControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{nonExistentId}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{nonExistentId}/status", statusDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
