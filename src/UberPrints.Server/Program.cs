@@ -56,17 +56,17 @@ builder.Services.AddOptions<PrusaLinkOptions>()
 // Configure forwarded headers for reverse proxy support (Cloudflare Tunnel)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    // Trust all proxies (Cloudflare Tunnel)
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
+  options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+  // Trust all proxies (Cloudflare Tunnel)
+  options.KnownIPNetworks.Clear();
+  options.KnownProxies.Clear();
 });
 
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+      options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -103,11 +103,11 @@ builder.Services.AddHealthChecks()
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for local development
+  options.IdleTimeout = TimeSpan.FromMinutes(30);
+  options.Cookie.HttpOnly = true;
+  options.Cookie.IsEssential = true;
+  options.Cookie.SameSite = SameSiteMode.Lax;
+  options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for local development
 });
 
 // Configure Authentication with both Cookie and JWT Bearer support
@@ -121,53 +121,53 @@ builder.Configuration.GetSection(DiscordOptions.SectionName).Bind(discordOptions
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = "Discord";
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+  options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+  options.DefaultChallengeScheme = "Discord";
+  options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddCookie(options =>
 {
-    options.LoginPath = "/api/auth/login";
-    options.Cookie.Name = "UberPrints.Auth";
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-        ? CookieSecurePolicy.None
-        : CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+  options.LoginPath = "/api/auth/login";
+  options.Cookie.Name = "UberPrints.Auth";
+  options.Cookie.HttpOnly = true;
+  options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+      ? CookieSecurePolicy.None
+      : CookieSecurePolicy.Always;
+  options.Cookie.SameSite = SameSiteMode.Lax;
+  options.ExpireTimeSpan = TimeSpan.FromDays(7);
 
-    // Return 401 instead of redirecting for API requests
-    options.Events.OnRedirectToLogin = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        return Task.CompletedTask;
-    };
-    options.Events.OnRedirectToAccessDenied = context =>
-    {
-        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-        return Task.CompletedTask;
-    };
+  // Return 401 instead of redirecting for API requests
+  options.Events.OnRedirectToLogin = context =>
+  {
+    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+    return Task.CompletedTask;
+  };
+  options.Events.OnRedirectToAccessDenied = context =>
+  {
+    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+    return Task.CompletedTask;
+  };
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtOptions.Issuer,
-        ValidAudience = jwtOptions.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
-    };
+  options.TokenValidationParameters = new TokenValidationParameters
+  {
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ValidIssuer = jwtOptions.Issuer,
+    ValidAudience = jwtOptions.Audience,
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
+  };
 })
 .AddDiscord(options =>
 {
-    options.ClientId = discordOptions.ClientId;
-    options.ClientSecret = discordOptions.ClientSecret;
-    options.Scope.Add("identify");
-    options.SaveTokens = true;
-    options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+  options.ClientId = discordOptions.ClientId;
+  options.ClientSecret = discordOptions.ClientSecret;
+  options.Scope.Add("identify");
+  options.SaveTokens = true;
+  options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 });
 
 builder.Services.AddAuthorization();
@@ -178,13 +178,13 @@ builder.Configuration.GetSection(FrontendOptions.SectionName).Bind(frontendOptio
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins(frontendOptions.Url)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+  options.AddDefaultPolicy(policy =>
+  {
+    policy.WithOrigins(frontendOptions.Url)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+  });
 });
 
 builder.Services.AddOpenApi();
@@ -194,42 +194,42 @@ var app = builder.Build();
 // Apply pending database migrations on startup
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    var context = services.GetRequiredService<ApplicationDbContext>();
+  var services = scope.ServiceProvider;
+  var logger = services.GetRequiredService<ILogger<Program>>();
+  var context = services.GetRequiredService<ApplicationDbContext>();
 
-    try
+  try
+  {
+    logger.LogInformation("Checking for pending database migrations...");
+    var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+
+    if (pendingMigrations.Any())
     {
-        logger.LogInformation("Checking for pending database migrations...");
-        var pendingMigrations = context.Database.GetPendingMigrations().ToList();
+      logger.LogInformation("Found {Count} pending migration(s): {Migrations}",
+          pendingMigrations.Count,
+          string.Join(", ", pendingMigrations));
 
-        if (pendingMigrations.Any())
-        {
-            logger.LogInformation("Found {Count} pending migration(s): {Migrations}",
-                pendingMigrations.Count,
-                string.Join(", ", pendingMigrations));
-
-            logger.LogInformation("Applying database migrations...");
-            context.Database.Migrate();
-            logger.LogInformation("Database migrations applied successfully.");
-        }
-        else
-        {
-            logger.LogInformation("Database is up to date. No pending migrations.");
-        }
+      logger.LogInformation("Applying database migrations...");
+      context.Database.Migrate();
+      logger.LogInformation("Database migrations applied successfully.");
     }
-    catch (Exception ex)
+    else
     {
-        logger.LogError(ex, "An error occurred while migrating the database.");
-        throw;
+      logger.LogInformation("Database is up to date. No pending migrations.");
     }
+  }
+  catch (Exception ex)
+  {
+    logger.LogError(ex, "An error occurred while migrating the database.");
+    throw;
+  }
 }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+  app.MapOpenApi();
+  app.MapScalarApiReference();
 }
 
 // Use forwarded headers (must be before other middleware)
@@ -246,27 +246,27 @@ contentTypeProvider.Mappings[".ts"] = "video/mp2t";
 // Serve static files from wwwroot with custom headers for HLS files
 app.UseStaticFiles(new StaticFileOptions
 {
-    ContentTypeProvider = contentTypeProvider,
-    OnPrepareResponse = ctx =>
+  ContentTypeProvider = contentTypeProvider,
+  OnPrepareResponse = ctx =>
+  {
+    // Set appropriate cache headers for HLS files
+    if (ctx.File.PhysicalPath?.Contains("/stream/") == true)
     {
-        // Set appropriate cache headers for HLS files
-        if (ctx.File.PhysicalPath?.Contains("/stream/") == true)
-        {
-            if (ctx.File.Name.EndsWith(".m3u8"))
-            {
-                // Playlist should not be cached
-                ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-            }
-            else if (ctx.File.Name.EndsWith(".ts"))
-            {
-                // Segments can be cached briefly
-                ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=1");
-            }
+      if (ctx.File.Name.EndsWith(".m3u8"))
+      {
+        // Playlist should not be cached
+        ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+      else if (ctx.File.Name.EndsWith(".ts"))
+      {
+        // Segments can be cached briefly
+        ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=1");
+      }
 
-            // Add CORS headers for stream files
-            ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
-        }
+      // Add CORS headers for stream files
+      ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
     }
+  }
 });
 
 app.UseAuthentication();
@@ -278,7 +278,7 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {
-    Predicate = healthCheck => healthCheck.Tags.Contains("database")
+  Predicate = healthCheck => healthCheck.Tags.Contains("database")
 });
 app.MapHealthChecks("/health/live");
 
