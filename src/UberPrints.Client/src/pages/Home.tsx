@@ -98,9 +98,11 @@ export const Home = () => {
     loadQueue();
   }, []);
 
-  // The request on the printer gets a ticket; the rest stay as queue rows.
+  // The oldest accepted request gets a ticket; the rest stay as queue rows.
   const printingRequest = queue.find(r => getRequestStage(r.currentStatus) === 'printing');
   const queueRows = queue.filter(r => r !== printingRequest);
+  // Requests aren't linked to printer jobs, so only stamp the ticket when the printer is actually busy
+  const printerBusy = printer?.currentState === PrinterStateEnum.Printing || printer?.currentState === PrinterStateEnum.Paused;
 
   return (
     <div className="space-y-6">
@@ -141,13 +143,19 @@ export const Home = () => {
             <>
               {printingRequest && (
                 <div className={cn('bg-muted/60 p-4 dark:bg-background', queueRows.length > 0 && 'border-b border-border')}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {printerBusy ? 'On the printer' : 'Next for the printer'}
+                  </p>
                   <Link
                     to={`/requests/${printingRequest.id}`}
                     className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <Ticket number={`#${printingRequest.id.slice(0, 8)}`} stamp="printing">
+                    <Ticket number={`#${printingRequest.id.slice(0, 8)}`} stamp={printerBusy ? 'printing' : undefined}>
                       <TicketRow label="Requester">{printingRequest.requesterName}</TicketRow>
                       <TicketRow label="Filament">{printingRequest.filamentName ?? 'Not picked'}</TicketRow>
+                      {printerBusy && printer?.currentFileName && (
+                        <TicketRow label="File">{printer.currentFileName}</TicketRow>
+                      )}
                     </Ticket>
                   </Link>
                 </div>
