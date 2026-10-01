@@ -131,17 +131,6 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
       player.on('warning', (event: Event) => {
         console.warn('Video.js warning:', event);
       });
-
-      // Suppress common live streaming console errors
-      const originalConsoleError = console.error;
-      console.error = (...args: unknown[]) => {
-        const errorMsg = args[0]?.toString() || '';
-        // Suppress the common duration error for live streams
-        if (errorMsg.includes('duration') || errorMsg.includes('seekable')) {
-          return;
-        }
-        originalConsoleError.apply(console, args);
-      };
     }
   }, [onError, onReady, streamUrlRef]);
 
