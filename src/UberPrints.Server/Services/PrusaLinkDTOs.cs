@@ -112,21 +112,6 @@ public class StorageInfo
   public long? TotalSpace { get; set; }
 }
 
-public class PrusaLinkVersionResponse
-{
-  [JsonPropertyName("api")]
-  public string? Api { get; set; }
-
-  [JsonPropertyName("server")]
-  public string? Server { get; set; }
-
-  [JsonPropertyName("text")]
-  public string? Text { get; set; }
-
-  [JsonPropertyName("firmware")]
-  public string? Firmware { get; set; }
-}
-
 public class PrusaLinkJobResponse
 {
   [JsonPropertyName("id")]
