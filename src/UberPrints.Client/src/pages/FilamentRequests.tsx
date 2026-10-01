@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { api } from '../lib/api';
+import { getApiErrorMessage } from '../lib/errors';
 import { FilamentRequestDto, FilamentRequestStatusEnum } from '../types/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { getDisplayName } from '../lib/utils';
@@ -51,17 +52,7 @@ export const FilamentRequests = () => {
     },
   });
 
-  useEffect(() => {
-    loadRequests();
-  }, []);
-
-  useEffect(() => {
-    if (user) {
-      form.setValue('requesterName', getDisplayName(user));
-    }
-  }, [user, form]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     try {
       const data = await api.getMyFilamentRequests();
       setRequests(data);
@@ -75,7 +66,17 @@ export const FilamentRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
+
+  useEffect(() => {
+    if (user) {
+      form.setValue('requesterName', getDisplayName(user));
+    }
+  }, [user, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -106,9 +107,9 @@ export const FilamentRequests = () => {
       });
       setShowForm(false);
       loadRequests();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating filament request:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to submit request. Please try again.';
+      const errorMessage = getApiErrorMessage(error, 'Failed to submit request. Please try again.');
       toast({
         title: 'Failed to submit request',
         description: errorMessage,

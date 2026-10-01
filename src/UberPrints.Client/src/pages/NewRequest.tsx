@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { api } from '../lib/api';
+import { getApiErrorMessage } from '../lib/errors';
 import { FilamentDto } from '../types/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -15,7 +16,7 @@ import { Checkbox } from '../components/ui/checkbox';
 import { Skeleton } from '../components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Info, ExternalLink } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
 import { Loader2, Package, Clock, CheckCircle2 } from 'lucide-react';
 import { getDisplayName } from '../lib/utils';
@@ -95,9 +96,9 @@ export const NewRequest = () => {
         variant: "success",
       });
       navigate(`/requests/${request.id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating request:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to submit request. Please try again.';
+      const errorMessage = getApiErrorMessage(error, 'Failed to submit request. Please try again.');
       toast({
         title: "Failed to submit request",
         description: errorMessage,

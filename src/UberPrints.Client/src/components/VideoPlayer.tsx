@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
+import { useLatestRef } from '../hooks/use-latest-ref';
 import type Player from 'video.js/dist/types/player';
 
 interface VideoPlayerProps {
@@ -29,6 +30,8 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
   const playerRef = useRef<Player | null>(null);
   // True once the first frame is decoded; until then the starting overlay covers the player.
   const [hasFrame, setHasFrame] = useState(false);
+  // The init effect runs once; retries read the current URL instead of the one at init.
+  const streamUrlRef = useLatestRef(streamUrl);
 
   useEffect(() => {
     // Make sure Video.js player is only initialized once
@@ -107,7 +110,7 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
               if (player && !player.isDisposed()) {
                 // Reset player and reload source
                 player.src({
-                  src: streamUrl,
+                  src: streamUrlRef.current,
                   type: 'application/x-mpegURL',
                 });
                 player.load();
@@ -125,13 +128,13 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
       });
 
       // Handle warning events that don't stop playback
-      player.on('warning', (event: any) => {
+      player.on('warning', (event: Event) => {
         console.warn('Video.js warning:', event);
       });
 
       // Suppress common live streaming console errors
       const originalConsoleError = console.error;
-      console.error = (...args: any[]) => {
+      console.error = (...args: unknown[]) => {
         const errorMsg = args[0]?.toString() || '';
         // Suppress the common duration error for live streams
         if (errorMsg.includes('duration') || errorMsg.includes('seekable')) {
@@ -140,7 +143,7 @@ export function VideoPlayer({ streamUrl, onError, onReady }: VideoPlayerProps) {
         originalConsoleError.apply(console, args);
       };
     }
-  }, [onError, onReady]);
+  }, [onError, onReady, streamUrlRef]);
 
   // Update source when streamUrl changes
   useEffect(() => {

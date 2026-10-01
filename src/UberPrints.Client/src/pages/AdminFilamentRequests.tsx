@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { getApiErrorMessage } from '../lib/errors';
 import { FilamentRequestDto, FilamentRequestStatusEnum, FilamentDto, CreateFilamentDto, ChangeFilamentRequestStatusDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
@@ -55,16 +56,12 @@ export const AdminFilamentRequests = () => {
   const [creatingFilamentForRequest, setCreatingFilamentForRequest] = useState<FilamentRequestDto | null>(null);
   const [filamentSubmitting, setFilamentSubmitting] = useState(false);
 
-  useEffect(() => {
-    loadFilamentRequests();
-  }, []);
-
-  const loadFilamentRequests = async () => {
+  const loadFilamentRequests = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getAdminFilamentRequests();
       setFilamentRequests(data);
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to load filament requests",
         description: "Could not load filament requests",
@@ -73,13 +70,17 @@ export const AdminFilamentRequests = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadFilamentRequests();
+  }, [loadFilamentRequests]);
 
   const loadFilaments = async () => {
     try {
       const data = await api.getFilaments();
       setFilaments(data);
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to load filaments",
         description: "Could not load filament inventory",
@@ -144,7 +145,7 @@ export const AdminFilamentRequests = () => {
 
           await loadFilamentRequests();
           setCreatingFilamentForRequest(null);
-        } catch (err: any) {
+        } catch (err) {
           console.error('Error auto-approving filament request:', err);
           toast({
             title: "Filament created but not linked",
@@ -154,11 +155,11 @@ export const AdminFilamentRequests = () => {
         }
       }
       setFilamentDialogOpen(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving filament:', err);
       toast({
         title: "Failed to save filament",
-        description: err.response?.data?.message || 'Could not save filament',
+        description: getApiErrorMessage(err, 'Could not save filament'),
         variant: "destructive",
       });
     } finally {
@@ -194,11 +195,11 @@ export const AdminFilamentRequests = () => {
       setSelectedFilamentForRequest('');
 
       await loadFilamentRequests();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating filament request status:', err);
       toast({
         title: "Failed to update status",
-        description: err.response?.data?.message || 'Failed to update status',
+        description: getApiErrorMessage(err, 'Failed to update status'),
         variant: "destructive",
       });
     } finally {

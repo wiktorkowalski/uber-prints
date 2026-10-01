@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import { getHttpStatus } from '../lib/errors';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -30,9 +31,9 @@ export const TrackRequest = () => {
       });
       // Private requests 404 on /requests/{id} for non-owners; detail page falls back to this
       navigate(`/requests/${request.id}`, { state: { tracked: true, request } });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error tracking request:', error);
-      const errorMessage = error.response?.status === 404
+      const errorMessage = getHttpStatus(error) === 404
         ? 'No request found with that tracking token'
         : 'Failed to track request. Please try again.';
       toast({
