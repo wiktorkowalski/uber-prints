@@ -6,6 +6,19 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UberPrints</title>
+  <script>
+    // Apply the theme before first paint, so dark users never see a light flash.
+    // Keep the key in sync with src/lib/theme.ts.
+    (function () {
+      var theme = 'system';
+      try {
+        theme = localStorage.getItem('uberprints-theme') || 'system';
+      } catch (e) {}
+      var dark = theme === 'dark' ||
+        (theme !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (dark) document.documentElement.classList.add('dark');
+    })();
+  </script>
 </head>
 
 <body>

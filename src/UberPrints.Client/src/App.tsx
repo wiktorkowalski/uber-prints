@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
@@ -34,95 +35,97 @@ const RedirectToRequestEdit = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Layout><Home /></Layout>} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/requests" element={<Layout><RequestList /></Layout>} />
-          <Route path="/requests/:id" element={<Layout><RequestDetail /></Layout>} />
-          <Route path="/requests/:id/edit" element={<Layout><EditRequest /></Layout>} />
-          <Route path="/requests/new" element={<Layout><NewRequest /></Layout>} />
-          <Route path="/track" element={<Layout><TrackRequest /></Layout>} />
-          <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
-          <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
-          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/live-view" element={<Layout><LiveView /></Layout>} />
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <Toaster />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Layout><Home /></Layout>} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/requests" element={<Layout><RequestList /></Layout>} />
+            <Route path="/requests/:id" element={<Layout><RequestDetail /></Layout>} />
+            <Route path="/requests/:id/edit" element={<Layout><EditRequest /></Layout>} />
+            <Route path="/requests/new" element={<Layout><NewRequest /></Layout>} />
+            <Route path="/track" element={<Layout><TrackRequest /></Layout>} />
+            <Route path="/filaments" element={<Layout><Filaments /></Layout>} />
+            <Route path="/filament-requests" element={<Layout><FilamentRequests /></Layout>} />
+            <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/live-view" element={<Layout><LiveView /></Layout>} />
 
-          {/* Protected routes - require authentication */}
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Layout><Profile /></Layout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected routes - require authentication */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Layout><Profile /></Layout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Admin routes - require admin role */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Layout><AdminDashboard /></Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/requests"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Layout><AdminRequests /></Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/filaments"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Layout><AdminFilaments /></Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/filament-requests"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Layout><AdminFilamentRequests /></Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Layout><AdminUsers /></Layout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Admin routes - require admin role */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Layout><AdminDashboard /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/requests"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Layout><AdminRequests /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/filaments"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Layout><AdminFilaments /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/filament-requests"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Layout><AdminFilamentRequests /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Layout><AdminUsers /></Layout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Redirects from old routes to new routes (backwards compatibility) */}
-          <Route path="/request/new" element={<Navigate to="/requests/new" replace />} />
-          <Route path="/request/:id/edit" element={<RedirectToRequestEdit />} />
-          <Route path="/request/:id" element={<RedirectToRequestDetail />} />
+            {/* Redirects from old routes to new routes (backwards compatibility) */}
+            <Route path="/request/new" element={<Navigate to="/requests/new" replace />} />
+            <Route path="/request/:id/edit" element={<RedirectToRequestEdit />} />
+            <Route path="/request/:id" element={<RedirectToRequestDetail />} />
 
-          {/* 404 page */}
-          <Route
-            path="*"
-            element={
-              <Layout>
-                <div className="text-center py-12">
-                  <h1 className="text-4xl font-bold mb-4">404</h1>
-                  <p className="text-muted-foreground">Page not found</p>
-                </div>
-              </Layout>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+            {/* 404 page */}
+            <Route
+              path="*"
+              element={
+                <Layout>
+                  <div className="text-center py-12">
+                    <h1 className="text-4xl font-bold mb-4">404</h1>
+                    <p className="text-muted-foreground">Page not found</p>
+                  </div>
+                </Layout>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
