@@ -12,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
  * - Run all tests
  * - Clean up everything
  *
- * Usage: npx playwright test --config=playwright.config.full.ts
+ * Usage: npx playwright test (setup lives in global-setup-full.ts)
  */
 export default defineConfig({
   testDir: './tests',

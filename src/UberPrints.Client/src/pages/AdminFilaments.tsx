@@ -52,7 +52,8 @@ export const AdminFilaments = () => {
       setLoading(true);
       const data = await api.getFilaments();
       setFilaments(data);
-    } catch {
+    } catch (err) {
+      console.error('Error loading filaments:', err);
       toast({
         title: "Failed to load filaments",
         description: "Could not load filament inventory",

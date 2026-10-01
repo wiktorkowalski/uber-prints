@@ -16,7 +16,6 @@ import { Checkbox } from '../components/ui/checkbox';
 import { LoadingSpinner } from '../components/ui/loading-spinner';
 import { useAuth } from '../hooks/use-auth';
 import { useToast } from '../hooks/use-toast';
-import { useLatestRef } from '../hooks/use-latest-ref';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 
@@ -34,7 +33,7 @@ type FormValues = z.infer<typeof formSchema>;
 export const EditRequest = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [request, setRequest] = useState<PrintRequestDto | null>(null);
   const [filaments, setFilaments] = useState<FilamentDto[]>([]);
@@ -53,9 +52,6 @@ export const EditRequest = () => {
     },
   });
 
-  // Ownership check reads the user at load time; a later auth change must not re-fetch.
-  const userRef = useLatestRef(user);
-
   const loadData = useCallback(async () => {
     if (!id) return;
 
@@ -65,18 +61,6 @@ export const EditRequest = () => {
         api.getRequest(id),
         api.getFilaments(true), // Only get in-stock filaments
       ]);
-
-      // Check if user owns this request
-      const currentUser = userRef.current;
-      if (currentUser && requestData.userId !== currentUser.id) {
-        toast({
-          title: "Unauthorized",
-          description: "You can only edit your own requests",
-          variant: "destructive",
-        });
-        navigate(`/requests/${id}`);
-        return;
-      }
 
       setRequest(requestData);
       setFilaments(filamentsData);
@@ -101,11 +85,27 @@ export const EditRequest = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, toast, navigate, form, userRef]);
+  }, [id, toast, navigate, form]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Mirrors RequestDetail: only the signed-in owner gets the Edit link. The PUT endpoint
+  // rejects everyone else (admins edit via the dialog on the detail page), so wait for
+  // auth to resolve and send non-owners back. The server stays the real guard.
+  const isOwner = !!user && !!request && request.userId === user.id;
+  const ownershipResolved = !authLoading && !!request;
+
+  useEffect(() => {
+    if (!ownershipResolved || isOwner) return;
+    toast({
+      title: "Unauthorized",
+      description: "You can only edit your own requests",
+      variant: "destructive",
+    });
+    navigate(`/requests/${id}`, { replace: true });
+  }, [ownershipResolved, isOwner, id, toast, navigate]);
 
   const onSubmit = async (values: FormValues) => {
     if (!id) return;
@@ -141,11 +141,11 @@ export const EditRequest = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return <LoadingSpinner message="Loading request..." />;
   }
 
-  if (!request) {
+  if (!request || !isOwner) {
     return null;
   }
 
