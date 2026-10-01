@@ -211,6 +211,10 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
         services.Remove(worker);
       }
 
+      // ThermalPrinterService targets the real printer URL and DiscordService the real bot; tests must never reach them
+      services.ConfigureHttpClientDefaults(client =>
+        client.ConfigurePrimaryHttpMessageHandler(() => new BlockOutboundHttpHandler()));
+
       // Remove the existing DbContext registration
       var descriptor = services.SingleOrDefault(
               d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
@@ -261,6 +265,12 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     });
 
     builder.UseEnvironment("Testing");
+  }
+
+  private sealed class BlockOutboundHttpHandler : HttpMessageHandler
+  {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+      Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable));
   }
 
   // Authorization handler that allows all requests (for testing only)
