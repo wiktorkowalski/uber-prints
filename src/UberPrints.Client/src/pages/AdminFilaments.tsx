@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { getApiErrorMessage } from '../lib/errors';
 import { FilamentDto, CreateFilamentDto, UpdateFilamentDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
@@ -46,16 +47,12 @@ export const AdminFilaments = () => {
   const [filamentToDelete, setFilamentToDelete] = useState<FilamentDto | null>(null);
   const [deletingFilament, setDeletingFilament] = useState(false);
 
-  useEffect(() => {
-    loadFilaments();
-  }, []);
-
-  const loadFilaments = async () => {
+  const loadFilaments = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getFilaments();
       setFilaments(data);
-    } catch (err) {
+    } catch {
       toast({
         title: "Failed to load filaments",
         description: "Could not load filament inventory",
@@ -64,7 +61,11 @@ export const AdminFilaments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadFilaments();
+  }, [loadFilaments]);
 
   const openCreateFilamentDialog = () => {
     setEditingFilament(null);
@@ -118,11 +119,11 @@ export const AdminFilaments = () => {
       }
       setFilamentDialogOpen(false);
       await loadFilaments();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving filament:', err);
       toast({
         title: "Failed to save filament",
-        description: err.response?.data?.message || 'Could not save filament',
+        description: getApiErrorMessage(err, 'Could not save filament'),
         variant: "destructive",
       });
     } finally {
@@ -142,11 +143,11 @@ export const AdminFilaments = () => {
         variant: "success",
       });
       await loadFilaments();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error deleting filament:', err);
       toast({
         title: "Failed to delete filament",
-        description: err.response?.data?.message || 'Could not delete filament',
+        description: getApiErrorMessage(err, 'Could not delete filament'),
         variant: "destructive",
       });
     } finally {

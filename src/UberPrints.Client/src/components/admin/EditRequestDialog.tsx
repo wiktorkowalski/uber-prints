@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
+import { getApiErrorMessage } from '../../lib/errors';
 import { PrintRequestDto, FilamentDto } from '../../types/api';
 import { useToast } from '../../hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
@@ -38,21 +39,7 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
   });
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (open && request) {
-      setEditFormData({
-        requesterName: request.requesterName,
-        modelUrl: request.modelUrl,
-        notes: request.notes || '',
-        requestDelivery: request.requestDelivery,
-        isPublic: request.isPublic,
-        filamentId: request.filamentId,
-      });
-      loadFilaments();
-    }
-  }, [open, request]);
-
-  const loadFilaments = async () => {
+  const loadFilaments = useCallback(async () => {
     try {
       setFilamentsLoading(true);
       const data = await api.getFilaments();
@@ -67,7 +54,21 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
     } finally {
       setFilamentsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (open && request) {
+      setEditFormData({
+        requesterName: request.requesterName,
+        modelUrl: request.modelUrl,
+        notes: request.notes || '',
+        requestDelivery: request.requestDelivery,
+        isPublic: request.isPublic,
+        filamentId: request.filamentId,
+      });
+      loadFilaments();
+    }
+  }, [open, request, loadFilaments]);
 
   const handleSubmit = async () => {
     if (!request) return;
@@ -84,11 +85,11 @@ export const EditRequestDialog = ({ request, open, onOpenChange, onSuccess }: Ed
 
       onSuccess();
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error updating request:', err);
       toast({
         title: "Failed to update request",
-        description: err.response?.data?.message || 'Failed to update request',
+        description: getApiErrorMessage(err, 'Failed to update request'),
         variant: "destructive",
       });
     } finally {

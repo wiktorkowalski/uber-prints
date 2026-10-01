@@ -1,27 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { UserDto } from '../types/api';
 import { api } from '../lib/api';
 import { toast } from '../hooks/use-toast';
-
-interface AuthContextType {
-  user: UserDto | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  login: (token: string) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+import { AuthContext, AuthContextType } from '../hooks/use-auth';
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -35,7 +16,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userData = await api.getCurrentUser();
       setUser(userData);
-    } catch (error) {
+    } catch {
       // User not authenticated or token expired
       setUser(null);
       api.clearToken();
@@ -147,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Attempt to refresh token - backend will determine if needed
         await api.refreshToken();
-      } catch (error) {
+      } catch {
         // Token refresh failed, will be handled by 401 interceptor
       }
     };

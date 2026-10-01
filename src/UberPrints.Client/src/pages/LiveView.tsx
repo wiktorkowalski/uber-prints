@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { CameraStarting, VideoPlayer } from '../components/VideoPlayer';
 import { api } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/use-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { Badge } from '../components/ui/badge';
@@ -148,7 +148,7 @@ export const LiveView = () => {
         description: response.message,
       });
       await fetchStatus();
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to toggle streaming',
@@ -169,7 +169,7 @@ export const LiveView = () => {
         description: response.message,
       });
       await fetchBufferDiagnostics();
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to reset buffer',
@@ -191,7 +191,7 @@ export const LiveView = () => {
         description: `Deleted ${response.deletedCount} files (${(response.deletedSize / (1024 * 1024)).toFixed(2)} MB)`,
       });
       await fetchBufferDiagnostics();
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to trim buffer',
@@ -224,7 +224,7 @@ export const LiveView = () => {
         variant: response.requiresRestart ? 'default' : 'default',
       });
       await fetchBufferDiagnostics();
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to update buffer configuration',
@@ -249,7 +249,7 @@ export const LiveView = () => {
       if (isAdmin) {
         await fetchBufferDiagnostics();
       }
-    } catch (err) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to restart stream',

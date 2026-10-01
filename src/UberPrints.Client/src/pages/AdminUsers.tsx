@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { AdminUserDto } from '../types/api';
 import { useToast } from '../hooks/use-toast';
@@ -15,11 +15,7 @@ export const AdminUsers = () => {
   const [users, setUsers] = useState<AdminUserDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.getAdminUsers();
@@ -34,7 +30,11 @@ export const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const authenticatedUsers = users.filter(u => !u.isGuest);
   const guestUsers = users.filter(u => u.isGuest);
