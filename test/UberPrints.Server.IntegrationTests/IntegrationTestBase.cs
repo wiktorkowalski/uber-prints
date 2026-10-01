@@ -269,12 +269,13 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
 
   internal sealed class BlockOutboundHttpHandler : HttpMessageHandler
   {
-    public static ConcurrentQueue<Uri> BlockedRequests { get; } = new();
+    public static ConcurrentQueue<(Uri Uri, string Body)> BlockedRequests { get; } = new();
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-      BlockedRequests.Enqueue(request.RequestUri!);
-      return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable));
+      var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
+      BlockedRequests.Enqueue((request.RequestUri!, body));
+      return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable);
     }
   }
 
