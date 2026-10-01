@@ -99,6 +99,11 @@ builder.Services.AddHealthChecks()
         name: "dbcontext",
         tags: new[] { "database", "ef-core" });
 
+// Browsers reach prod over HTTPS via the tunnel; local dev runs plain HTTP
+var cookieSecurePolicy = builder.Environment.IsDevelopment()
+    ? CookieSecurePolicy.None
+    : CookieSecurePolicy.Always;
+
 // Add session support for guest token tracking
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -107,7 +112,7 @@ builder.Services.AddSession(options =>
   options.Cookie.HttpOnly = true;
   options.Cookie.IsEssential = true;
   options.Cookie.SameSite = SameSiteMode.Lax;
-  options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for local development
+  options.Cookie.SecurePolicy = cookieSecurePolicy;
 });
 
 // Configure Authentication with both Cookie and JWT Bearer support
@@ -130,9 +135,7 @@ builder.Services.AddAuthentication(options =>
   options.LoginPath = "/api/auth/login";
   options.Cookie.Name = "UberPrints.Auth";
   options.Cookie.HttpOnly = true;
-  options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-      ? CookieSecurePolicy.None
-      : CookieSecurePolicy.Always;
+  options.Cookie.SecurePolicy = cookieSecurePolicy;
   options.Cookie.SameSite = SameSiteMode.Lax;
   options.ExpireTimeSpan = TimeSpan.FromDays(7);
 

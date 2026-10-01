@@ -10,7 +10,7 @@ namespace UberPrints.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // TODO: Add [Authorize(Roles = "Admin")] when admin authorization is implemented
+[Authorize(Roles = "Admin")]
 public class PrintersController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
@@ -28,7 +28,6 @@ public class PrintersController : ControllerBase
   }
 
   [HttpGet]
-  [AllowAnonymous]
   public async Task<IActionResult> GetPrinter()
   {
     var printer = await _context.Printers.FirstOrDefaultAsync();
@@ -42,7 +41,6 @@ public class PrintersController : ControllerBase
   }
 
   [HttpPost("test-connection")]
-  [AllowAnonymous]
   public async Task<IActionResult> TestConnection()
   {
     var printer = await _context.Printers.FirstOrDefaultAsync();
@@ -146,7 +144,6 @@ public class PrintersController : ControllerBase
   }
 
   [HttpGet("snapshot")]
-  [AllowAnonymous]
   public async Task<IActionResult> GetSnapshot()
   {
     var printer = await _context.Printers.FirstOrDefaultAsync();
