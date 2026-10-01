@@ -1,7 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import {
   PrintRequestDto,
-  PrusaLinkVersion,
   CreatePrintRequestDto,
   UpdatePrintRequestDto,
   UpdatePrintRequestAdminDto,
@@ -18,7 +17,6 @@ import {
   FilamentRequestDto,
   CreateFilamentRequestDto,
   ChangeFilamentRequestStatusDto,
-  PrinterDto,
   PrinterStatusDto,
   PrintQueueItem,
 } from '../types/api';
@@ -442,50 +440,6 @@ class ApiClient {
 
   async getPrintQueue(): Promise<PrintQueueItem[]> {
     const response = await this.client.get<PrintQueueItem[]>('/api/printer/queue');
-    return response.data;
-  }
-
-  async getPrinterDetails(): Promise<PrinterDto> {
-    const response = await this.client.get<PrinterDto>('/api/printers');
-    return response.data;
-  }
-
-  async testPrinterConnection(): Promise<{ connected: boolean; version?: PrusaLinkVersion | null }> {
-    const response = await this.client.post('/api/printers/test-connection');
-    return response.data;
-  }
-
-  async uploadGCode(file: File, startPrint: boolean = false): Promise<{ success: boolean; fileName: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await this.client.post(`/api/printers/upload?startPrint=${startPrint}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  }
-
-  async pausePrint(): Promise<{ success: boolean }> {
-    const response = await this.client.post('/api/printers/pause');
-    return response.data;
-  }
-
-  async resumePrint(): Promise<{ success: boolean }> {
-    const response = await this.client.post('/api/printers/resume');
-    return response.data;
-  }
-
-  async cancelPrint(): Promise<{ success: boolean }> {
-    const response = await this.client.post('/api/printers/cancel');
-    return response.data;
-  }
-
-  async getPrinterSnapshot(): Promise<Blob> {
-    const response = await this.client.get('/api/printers/snapshot', {
-      responseType: 'blob',
-    });
     return response.data;
   }
 }

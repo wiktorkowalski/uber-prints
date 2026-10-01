@@ -125,7 +125,6 @@ The application follows a standard ASP.NET Core Web API architecture:
   - `FilamentRequestsController`: User-submitted requests for new filaments
   - `AdminController`: Admin-only operations for managing requests and filaments
   - `AuthController`: Discord OAuth authentication, JWT token generation, and guest session management
-  - `PrintersController`: Admin endpoints for printer control (upload GCode, pause/resume/cancel, test connection, get snapshot)
   - `PrinterStatusController`: Public endpoints for printer status and print queue monitoring
   - `StreamController`: Camera streaming control (start/stop, viewer management, buffer diagnostics)
   - `ProfileController`: User profile management (display name, Discord info)
@@ -180,7 +179,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 - Printer configuration stored in `Printers` table (IP address, API key, location)
 - Status data cached in database: temperatures, print progress, time remaining, current file
 - `PrinterStatusHistory` maintains audit trail of printer state changes
-- Admin endpoints support GCode upload, print control (pause/resume/cancel), and camera snapshots
+- Monitor-only: the app never controls the printer (no GCode upload, no pause/resume/cancel). `PrusaLinkClient` only reads status
 
 **Camera Streaming**: Live RTSP-to-HLS conversion with DVR functionality:
 - `CameraStreamingService` uses FFmpeg to convert RTSP camera feed to HLS format
