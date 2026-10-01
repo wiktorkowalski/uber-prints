@@ -9,14 +9,15 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Testcontainers.PostgreSql;
 using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
@@ -172,6 +173,8 @@ public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsync
 
 public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+  private const int MaxResetAttempts = 3;
+
   private readonly PostgreSqlContainer _dbContainer;
 
   public IntegrationTestFactory()
@@ -201,6 +204,14 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
   {
     builder.ConfigureServices(services =>
     {
+      // The monitoring worker would write printer rows into the shared test DB on a timer
+      var monitoringWorkers = services
+        .Where(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(PrinterMonitoringService))
+        .ToList();
+      if (monitoringWorkers.Count != 1)
+        throw new InvalidOperationException($"Expected 1 PrinterMonitoringService registration, found {monitoringWorkers.Count}");
+      services.Remove(monitoringWorkers[0]);
+
       // ThermalPrinterService targets the real printer URL and DiscordService the real bot; tests must never reach them
       services.ConfigureHttpClientDefaults(client =>
         client.ConfigurePrimaryHttpMessageHandler(() => new BlockOutboundHttpHandler()));
@@ -256,10 +267,15 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     builder.UseEnvironment("Testing");
   }
 
-  private sealed class BlockOutboundHttpHandler : HttpMessageHandler
+  internal sealed class BlockOutboundHttpHandler : HttpMessageHandler
   {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-      Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable));
+    public static ConcurrentQueue<Uri> BlockedRequests { get; } = new();
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+      BlockedRequests.Enqueue(request.RequestUri!);
+      return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable));
+    }
   }
 
   // Authorization handler that allows all requests (for testing only)
@@ -288,8 +304,9 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
 
   public new async Task DisposeAsync()
   {
-    await _dbContainer.DisposeAsync();
+    // Stop the host first so nothing queries the database after the container is gone
     await base.DisposeAsync();
+    await _dbContainer.DisposeAsync();
   }
 
   public async Task ResetDatabaseAsync()
@@ -297,10 +314,19 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     using var scope = Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    // Delete all data from tables
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"StatusHistories\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"PrintRequests\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Filaments\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Users\" CASCADE");
+    // CreateRequest's fire-and-forget notification task can still hold row locks, so TRUNCATE may deadlock with it
+    for (var attempt = 1; ; attempt++)
+    {
+      try
+      {
+        await dbContext.Database.ExecuteSqlRawAsync(
+          "TRUNCATE TABLE \"StatusHistories\", \"PrintRequests\", \"Filaments\", \"Users\" CASCADE");
+        return;
+      }
+      catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DeadlockDetected && attempt < MaxResetAttempts)
+      {
+        await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt));
+      }
+    }
   }
 }

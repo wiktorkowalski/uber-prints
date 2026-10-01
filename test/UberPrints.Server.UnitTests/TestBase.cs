@@ -71,15 +71,19 @@ public class TestBase
         Mock.Of<IServiceScopeFactory>(),
         Configuration,
         NullLogger<DiscordService>.Instance,
-        new HttpClient());
+        new HttpClient(new BlockOutboundHttpHandler()));
     var thermalPrinterService = new ThermalPrinterService(
         Configuration,
         NullLogger<ThermalPrinterService>.Instance,
-        new HttpClient());
+        new HttpClient(new BlockOutboundHttpHandler()));
     RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService);
     AdminController = new AdminController(Context, ChangeTrackingService, discordService);
     FilamentsController = new FilamentsController(Context);
-    AuthController = new AuthController(Context, Configuration, new ServiceCollection().AddHttpClient().BuildServiceProvider().GetRequiredService<IHttpClientFactory>());
+    var httpClientFactory = new Mock<IHttpClientFactory>();
+    httpClientFactory
+        .Setup(f => f.CreateClient(It.IsAny<string>()))
+        .Returns(() => new HttpClient(new BlockOutboundHttpHandler()));
+    AuthController = new AuthController(Context, Configuration, httpClientFactory.Object, NullLogger<AuthController>.Instance);
 
     // Set up authentication for RequestsController
     SetupControllerContext(RequestsController, TestAuthenticatedUser.Id);
@@ -105,5 +109,12 @@ public class TestBase
     {
       HttpContext = httpContext
     };
+  }
+
+  // ThermalPrinterService and DiscordService target real endpoints; unit tests must never reach them
+  private sealed class BlockOutboundHttpHandler : HttpMessageHandler
+  {
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+      Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable));
   }
 }

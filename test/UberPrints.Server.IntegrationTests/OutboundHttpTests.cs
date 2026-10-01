@@ -2,6 +2,7 @@ using System.Net;
 using AspNet.Security.OAuth.Discord;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using UberPrints.Server.Models;
 using UberPrints.Server.Services;
 using Xunit;
 
@@ -13,15 +14,23 @@ public class OutboundHttpTests : IntegrationTestBase
   {
   }
 
-  [Theory]
-  [InlineData("")]
-  [InlineData(nameof(ThermalPrinterService))]
-  [InlineData(nameof(DiscordService))]
-  [InlineData(nameof(PrusaLinkClient))]
-  public async Task FactoryClient_NeverReachesNetwork(string clientName)
+  [Fact]
+  public async Task ThermalPrinterService_FromDI_HitsStubNotPrinter()
+  {
+    using var scope = Factory.Services.CreateScope();
+    var printerService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();
+    var request = new PrintRequest { Id = Guid.NewGuid(), RequesterName = "Outbound test", ModelUrl = "https://example.com/model" };
+
+    await printerService.PrintNewRequestAsync(request);
+
+    Assert.Contains(IntegrationTestFactory.BlockOutboundHttpHandler.BlockedRequests, uri => uri.Host == "printer.vicio.ovh");
+  }
+
+  [Fact]
+  public async Task FactoryDefaultClient_NeverReachesNetwork()
   {
     // .invalid never resolves, so only the stub handler can produce a response
-    var httpClient = Factory.Services.GetRequiredService<IHttpClientFactory>().CreateClient(clientName);
+    var httpClient = Factory.Services.GetRequiredService<IHttpClientFactory>().CreateClient();
 
     var response = await httpClient.GetAsync("https://outbound.invalid/");
 

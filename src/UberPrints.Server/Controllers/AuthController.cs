@@ -21,12 +21,18 @@ public class AuthController : ControllerBase
   private readonly ApplicationDbContext _context;
   private readonly IConfiguration _configuration;
   private readonly IHttpClientFactory _httpClientFactory;
+  private readonly ILogger<AuthController> _logger;
 
-  public AuthController(ApplicationDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+  public AuthController(
+      ApplicationDbContext context,
+      IConfiguration configuration,
+      IHttpClientFactory httpClientFactory,
+      ILogger<AuthController> logger)
   {
     _context = context;
     _configuration = configuration;
     _httpClientFactory = httpClientFactory;
+    _logger = logger;
   }
 
   [HttpGet("login")]
@@ -83,10 +89,15 @@ public class AuthController : ControllerBase
             avatarHash = userData.Avatar;
           }
         }
+        else
+        {
+          _logger.LogWarning("Discord profile fetch for {DiscordUsername} failed with {StatusCode}; continuing with claims only", username, response.StatusCode);
+        }
       }
-      catch
+      catch (Exception ex)
       {
-        // If we fail to fetch additional data, we'll continue with what we have from claims
+        // Profile extras are optional; login continues with what the claims provide
+        _logger.LogWarning(ex, "Discord profile fetch for {DiscordUsername} failed; continuing with claims only", username);
       }
     }
 
