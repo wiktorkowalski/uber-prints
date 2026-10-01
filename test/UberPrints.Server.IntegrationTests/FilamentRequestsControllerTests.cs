@@ -40,7 +40,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var response = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -65,7 +65,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Hatchbox",
       Colour = "Orange"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -101,7 +101,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Generic",
       Colour = "White"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -126,14 +126,14 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand A",
       Colour = "Red"
-    });
+    }, JsonOptions);
     await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
     {
       RequesterName = "User 1",
       Material = "PETG",
       Brand = "Brand B",
       Colour = "Blue"
-    });
+    }, JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/filamentrequests/my-requests");
@@ -155,14 +155,14 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand A",
       Colour = "Red"
-    });
+    }, JsonOptions);
     await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
     {
       RequesterName = "User B",
       Material = "PETG",
       Brand = "Brand B",
       Colour = "Blue"
-    });
+    }, JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/admin/filament-requests");
@@ -184,7 +184,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Prusament",
       Colour = "Silver"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -195,7 +195,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -211,7 +211,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
   {
     // Arrange
     // Create a filament first
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000));
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000), JsonOptions);
     var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
@@ -222,7 +222,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Prusament",
       Colour = "Orange"
-    });
+    }, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -234,7 +234,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto);
+    var response = await Client.PutAsJsonAsync($"/api/admin/filament-requests/{createdRequest.Id}/status", statusDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -261,7 +261,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
     var unauthClient = Factory.CreateClient();
 
     // Act
-    var response = await unauthClient.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var response = await unauthClient.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -282,7 +282,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Test Brand",
       Colour = "Blue"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -315,7 +315,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Brand A",
       Colour = "Red"
     };
-    var createResponse = await client1.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await client1.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -348,7 +348,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Brand B",
       Colour = "Green"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -376,7 +376,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Brand C",
       Colour = "White"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -401,7 +401,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Brand D",
       Colour = "Black"
     };
-    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
+    var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto, JsonOptions);
     var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
@@ -439,7 +439,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PLA",
       Brand = "Brand A",
       Colour = "Red"
-    });
+    }, JsonOptions);
 
     await Client.PostAsJsonAsync("/api/filamentrequests", new CreateFilamentRequestDto
     {
@@ -447,7 +447,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "PETG",
       Brand = "Brand B",
       Colour = "Blue"
-    });
+    }, JsonOptions);
 
     // Guest 2 creates one request
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
@@ -461,7 +461,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Material = "ABS",
       Brand = "Brand C",
       Colour = "Green"
-    });
+    }, JsonOptions);
 
     // Act - Get Guest 1's requests
     var response = await Client.GetAsync("/api/filamentrequests/my-requests");

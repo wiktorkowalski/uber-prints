@@ -29,8 +29,8 @@ internal sealed class NotificationHandler(
       return;
     }
 
-    await discordService.NotifyAdminsNewRequestAsync(request);
-    await thermalPrinterService.PrintNewRequestAsync(request);
+    await discordService.NotifyAdminsNewRequestAsync(request, cancellationToken);
+    await thermalPrinterService.PrintNewRequestAsync(request, cancellationToken);
   }
 
   private async Task HandleStatusChangedAsync(StatusChangedNotification message, CancellationToken cancellationToken)
@@ -45,6 +45,6 @@ internal sealed class NotificationHandler(
       return;
     }
 
-    await discordService.NotifyRequesterStatusChangeAsync(request, message.OldStatus, message.NewStatus);
+    await discordService.NotifyRequesterStatusChangeAsync(request, message.OldStatus, message.NewStatus, cancellationToken);
   }
 }

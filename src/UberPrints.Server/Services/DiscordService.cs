@@ -34,7 +34,7 @@ public class DiscordService
     }
   }
 
-  public async Task NotifyAdminsNewRequestAsync(PrintRequest request)
+  public async Task NotifyAdminsNewRequestAsync(PrintRequest request, CancellationToken cancellationToken = default)
   {
     try
     {
@@ -52,7 +52,7 @@ public class DiscordService
       // Get all admin users with Discord IDs
       var admins = await context.Users
           .Where(u => u.IsAdmin && u.DiscordId != null)
-          .ToListAsync();
+          .ToListAsync(cancellationToken);
 
       if (admins.Count == 0)
       {
@@ -71,8 +71,13 @@ public class DiscordService
 
       foreach (var admin in admins)
       {
-        await SendDirectMessageAsync(admin.DiscordId!, message);
+        await SendDirectMessageAsync(admin.DiscordId!, message, cancellationToken);
       }
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+      // Shutdown cancelled the call; NotificationWorker logs the abort once
+      throw;
     }
     catch (Exception ex)
     {
@@ -84,7 +89,8 @@ public class DiscordService
   public async Task NotifyRequesterStatusChangeAsync(
       PrintRequest request,
       RequestStatusEnum oldStatus,
-      RequestStatusEnum newStatus)
+      RequestStatusEnum newStatus,
+      CancellationToken cancellationToken = default)
   {
     try
     {
@@ -113,7 +119,7 @@ public class DiscordService
       using var scope = _scopeFactory.CreateScope();
       var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-      var user = await context.Users.FindAsync(request.UserId);
+      var user = await context.Users.FindAsync([request.UserId], cancellationToken);
       if (user?.DiscordId == null)
       {
         _logger.LogDebug("User {UserId} has no Discord ID, skipping notification", request.UserId);
@@ -128,7 +134,12 @@ public class DiscordService
                    $"**{oldStatus}** → **{newStatus}**\n\n" +
                    $"View: {requestUrl}";
 
-      await SendDirectMessageAsync(user.DiscordId, message);
+      await SendDirectMessageAsync(user.DiscordId, message, cancellationToken);
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+      // Shutdown cancelled the call; NotificationWorker logs the abort once
+      throw;
     }
     catch (Exception ex)
     {
@@ -137,7 +148,7 @@ public class DiscordService
     }
   }
 
-  private async Task SendDirectMessageAsync(string discordUserId, string message)
+  private async Task SendDirectMessageAsync(string discordUserId, string message, CancellationToken cancellationToken)
   {
     try
     {
@@ -150,11 +161,12 @@ public class DiscordService
 
       var createDmResponse = await _httpClient.PostAsync(
           "https://discord.com/api/v10/users/@me/channels",
-          createDmContent);
+          createDmContent,
+          cancellationToken);
 
       if (!createDmResponse.IsSuccessStatusCode)
       {
-        var errorContent = await createDmResponse.Content.ReadAsStringAsync();
+        var errorContent = await createDmResponse.Content.ReadAsStringAsync(cancellationToken);
         _logger.LogWarning(
             "Failed to create DM channel with user {DiscordUserId}: {StatusCode} - {Error}",
             discordUserId,
@@ -163,7 +175,7 @@ public class DiscordService
         return;
       }
 
-      var dmChannel = await createDmResponse.Content.ReadFromJsonAsync<DiscordChannel>();
+      var dmChannel = await createDmResponse.Content.ReadFromJsonAsync<DiscordChannel>(cancellationToken);
       if (dmChannel?.Id == null)
       {
         _logger.LogWarning("Failed to parse DM channel response for user {DiscordUserId}", discordUserId);
@@ -179,11 +191,12 @@ public class DiscordService
 
       var sendMessageResponse = await _httpClient.PostAsync(
           $"https://discord.com/api/v10/channels/{dmChannel.Id}/messages",
-          sendMessageContent);
+          sendMessageContent,
+          cancellationToken);
 
       if (!sendMessageResponse.IsSuccessStatusCode)
       {
-        var errorContent = await sendMessageResponse.Content.ReadAsStringAsync();
+        var errorContent = await sendMessageResponse.Content.ReadAsStringAsync(cancellationToken);
         _logger.LogWarning(
             "Failed to send DM to user {DiscordUserId}: {StatusCode} - {Error}",
             discordUserId,
@@ -193,6 +206,11 @@ public class DiscordService
       }
 
       _logger.LogInformation("Successfully sent Discord DM to user {DiscordUserId}", discordUserId);
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+      // Shutdown cancelled the call; NotificationWorker logs the abort once
+      throw;
     }
     catch (Exception ex)
     {

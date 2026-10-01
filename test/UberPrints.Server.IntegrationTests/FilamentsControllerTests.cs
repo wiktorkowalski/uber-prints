@@ -28,9 +28,9 @@ public class FilamentsControllerTests : IntegrationTestBase
   public async Task GetFilaments_ReturnsAllFilaments_WhenFilamentsExist()
   {
     // Arrange
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("PLA White", stockAmount: 1000));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("ABS Black", stockAmount: 500));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("PETG Clear", stockAmount: 0));
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("PLA White", stockAmount: 1000), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("ABS Black", stockAmount: 500), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("PETG Clear", stockAmount: 0), JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/filaments");
@@ -49,9 +49,9 @@ public class FilamentsControllerTests : IntegrationTestBase
   public async Task GetFilaments_ReturnsFilamentsSortedByName()
   {
     // Arrange
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Zebra Filament", stockAmount: 100));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Alpha Filament", stockAmount: 100));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Beta Filament", stockAmount: 100));
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Zebra Filament", stockAmount: 100), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Alpha Filament", stockAmount: 100), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Beta Filament", stockAmount: 100), JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/filaments");
@@ -70,10 +70,10 @@ public class FilamentsControllerTests : IntegrationTestBase
   public async Task GetFilaments_WithInStockFilter_ReturnsOnlyInStockFilaments()
   {
     // Arrange
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock 1", stockAmount: 1000));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock 2", stockAmount: 500));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock 1", stockAmount: 0));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock 2", stockAmount: 0));
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock 1", stockAmount: 1000), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock 2", stockAmount: 500), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock 1", stockAmount: 0), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock 2", stockAmount: 0), JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/filaments?inStock=true");
@@ -92,8 +92,8 @@ public class FilamentsControllerTests : IntegrationTestBase
   public async Task GetFilaments_WithInStockFilterFalse_ReturnsAllFilaments()
   {
     // Arrange
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock", stockAmount: 1000));
-    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock", stockAmount: 0));
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("In Stock", stockAmount: 1000), JsonOptions);
+    await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Out of Stock", stockAmount: 0), JsonOptions);
 
     // Act
     var response = await Client.GetAsync("/api/filaments?inStock=false");
@@ -110,7 +110,7 @@ public class FilamentsControllerTests : IntegrationTestBase
   {
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 750);
-    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
     var createdFilament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(createdFilament);
 
@@ -160,7 +160,7 @@ public class FilamentsControllerTests : IntegrationTestBase
         stockUnit: "grams",
         link: "https://example.com/premium-pla",
         photoUrl: "https://example.com/premium.jpg");
-    await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
+    await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto, JsonOptions);
 
     // Act
     var getResponse = await Client.GetAsync("/api/filaments");

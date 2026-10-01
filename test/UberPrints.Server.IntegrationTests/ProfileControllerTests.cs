@@ -200,7 +200,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -235,7 +235,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -276,7 +276,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
@@ -303,7 +303,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await unauthenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await unauthenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -333,7 +333,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -356,7 +356,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     // [Required] validation should fail for empty strings
@@ -376,7 +376,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -395,7 +395,7 @@ public class ProfileControllerTests : IntegrationTestBase
     };
 
     // Act
-    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto);
+    var response = await authenticatedClient.PutAsJsonAsync("/api/profile/display-name", updateDto, JsonOptions);
 
     // Assert
     response.EnsureSuccessStatusCode();
