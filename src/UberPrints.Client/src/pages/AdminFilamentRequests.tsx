@@ -61,7 +61,8 @@ export const AdminFilamentRequests = () => {
       setLoading(true);
       const data = await api.getAdminFilamentRequests();
       setFilamentRequests(data);
-    } catch {
+    } catch (err) {
+      console.error('Error loading filament requests:', err);
       toast({
         title: "Failed to load filament requests",
         description: "Could not load filament requests",
@@ -80,7 +81,8 @@ export const AdminFilamentRequests = () => {
     try {
       const data = await api.getFilaments();
       setFilaments(data);
-    } catch {
+    } catch (err) {
+      console.error('Error loading filaments:', err);
       toast({
         title: "Failed to load filaments",
         description: "Could not load filament inventory",

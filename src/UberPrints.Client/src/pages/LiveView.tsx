@@ -148,7 +148,8 @@ export const LiveView = () => {
         description: response.message,
       });
       await fetchStatus();
-    } catch {
+    } catch (err) {
+      console.error('Failed to toggle streaming:', err);
       toast({
         title: 'Error',
         description: 'Failed to toggle streaming',
@@ -169,7 +170,8 @@ export const LiveView = () => {
         description: response.message,
       });
       await fetchBufferDiagnostics();
-    } catch {
+    } catch (err) {
+      console.error('Failed to reset buffer:', err);
       toast({
         title: 'Error',
         description: 'Failed to reset buffer',
@@ -191,7 +193,8 @@ export const LiveView = () => {
         description: `Deleted ${response.deletedCount} files (${(response.deletedSize / (1024 * 1024)).toFixed(2)} MB)`,
       });
       await fetchBufferDiagnostics();
-    } catch {
+    } catch (err) {
+      console.error('Failed to trim buffer:', err);
       toast({
         title: 'Error',
         description: 'Failed to trim buffer',
@@ -224,7 +227,8 @@ export const LiveView = () => {
         variant: response.requiresRestart ? 'default' : 'default',
       });
       await fetchBufferDiagnostics();
-    } catch {
+    } catch (err) {
+      console.error('Failed to update buffer configuration:', err);
       toast({
         title: 'Error',
         description: 'Failed to update buffer configuration',
@@ -249,7 +253,8 @@ export const LiveView = () => {
       if (isAdmin) {
         await fetchBufferDiagnostics();
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to restart stream:', err);
       toast({
         title: 'Error',
         description: 'Failed to restart stream',
