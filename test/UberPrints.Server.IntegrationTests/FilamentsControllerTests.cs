@@ -19,7 +19,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     Assert.Empty(filaments);
   }
@@ -37,7 +37,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     Assert.Equal(3, filaments.Count);
     Assert.Contains(filaments, f => f.Name == "PLA White");
@@ -58,7 +58,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     Assert.Equal(3, filaments.Count);
     Assert.Equal("Alpha Filament", filaments[0].Name);
@@ -80,7 +80,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     Assert.Equal(2, filaments.Count);
     Assert.All(filaments, f => Assert.True(f.StockAmount > 0));
@@ -100,7 +100,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await response.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     Assert.Equal(2, filaments.Count);
   }
@@ -111,7 +111,7 @@ public class FilamentsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 750);
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var createdFilament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var createdFilament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(createdFilament);
 
     // Act
@@ -119,7 +119,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var filament = await response.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await response.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
     Assert.Equal(createdFilament.Id, filament.Id);
     Assert.Equal("Test Filament", filament.Name);
@@ -167,7 +167,7 @@ public class FilamentsControllerTests : IntegrationTestBase
 
     // Assert
     getResponse.EnsureSuccessStatusCode();
-    var filaments = await getResponse.Content.ReadFromJsonAsync<List<FilamentDto>>();
+    var filaments = await getResponse.Content.ReadFromJsonAsync<List<FilamentDto>>(JsonOptions);
     Assert.NotNull(filaments);
     var filament = Assert.Single(filaments);
     Assert.Equal("Premium PLA", filament.Name);

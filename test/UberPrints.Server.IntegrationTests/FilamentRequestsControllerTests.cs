@@ -20,7 +20,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Empty(requests);
   }
@@ -44,7 +44,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    var request = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal("Test User", request.RequesterName);
     Assert.Equal("PLA", request.Material);
@@ -66,7 +66,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "Orange"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act
@@ -74,7 +74,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var request = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal(createdRequest.Id, request.Id);
     Assert.Equal("John Doe", request.RequesterName);
@@ -102,7 +102,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "White"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act
@@ -140,7 +140,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Equal(2, requests.Count);
   }
@@ -169,7 +169,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Equal(2, requests.Count);
   }
@@ -185,7 +185,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Prusament",
       Colour = "Silver"
     });
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     var statusDto = new ChangeFilamentRequestStatusDto
@@ -199,7 +199,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(updatedRequest);
     Assert.Equal(FilamentRequestStatusEnum.Approved, updatedRequest.CurrentStatus);
     Assert.Equal(2, updatedRequest.StatusHistory.Count); // Initial + Approved
@@ -212,7 +212,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
     // Arrange
     // Create a filament first
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto("Test Filament", stockAmount: 1000));
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     // Create a filament request
@@ -223,7 +223,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Brand = "Prusament",
       Colour = "Orange"
     });
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     var statusDto = new ChangeFilamentRequestStatusDto
@@ -238,7 +238,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(updatedRequest);
     Assert.Equal(FilamentRequestStatusEnum.Approved, updatedRequest.CurrentStatus);
     Assert.Equal(filament.Id, updatedRequest.FilamentId);
@@ -283,7 +283,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "Blue"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act - Owner deletes their own request
@@ -316,12 +316,12 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "Red"
     };
     var createResponse = await client1.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Create User 2
     var guestResponse2 = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     var (user2, token2) = await CreateAuthenticatedUserWithToken(
         discordId: "222222222",
@@ -349,12 +349,12 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "Green"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Create Guest 2
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -377,7 +377,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "White"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Create unauthenticated client
@@ -402,7 +402,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
       Colour = "Black"
     };
     var createResponse = await Client.PostAsJsonAsync("/api/filamentrequests", createDto);
-    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>();
+    var createdRequest = await createResponse.Content.ReadFromJsonAsync<FilamentRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Create client with invalid guest token
@@ -451,7 +451,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Guest 2 creates one request
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -468,7 +468,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Equal(2, requests.Count);
     Assert.All(requests, r => Assert.StartsWith("Guest 1", r.RequesterName));
@@ -493,7 +493,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
   {
     // Arrange - Create a new guest session (no requests yet)
     var newGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var newGuestResult = await newGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var newGuestResult = await newGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var newGuestClient = Factory.CreateClient();
     newGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", newGuestResult!.guestSessionToken);
 
@@ -502,7 +502,7 @@ public class FilamentRequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<FilamentRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Empty(requests);
   }

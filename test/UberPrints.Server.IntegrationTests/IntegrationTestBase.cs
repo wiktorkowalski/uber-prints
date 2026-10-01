@@ -5,22 +5,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Testcontainers.PostgreSql;
 using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
+using UberPrints.Server.Services;
 using Xunit;
 
 namespace UberPrints.Server.IntegrationTests;
 
 public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsyncLifetime
 {
+  protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+  {
+    Converters = { new JsonStringEnumConverter() }
+  };
+
   protected readonly HttpClient Client;
   protected readonly IntegrationTestFactory Factory;
   protected string? GuestSessionToken;
@@ -37,7 +46,7 @@ public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsync
     var response = await Client.PostAsync("/api/auth/guest", null);
     response.EnsureSuccessStatusCode();
 
-    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     GuestSessionToken = result?.guestSessionToken;
 
     // Add the guest session token to default request headers
@@ -175,6 +184,9 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     Environment.SetEnvironmentVariable("Discord__ClientId", "test-client-id");
     Environment.SetEnvironmentVariable("Discord__ClientSecret", "test-client-secret");
     Environment.SetEnvironmentVariable("Frontend__Url", "http://localhost:5173");
+    Environment.SetEnvironmentVariable("PrusaLink__IpAddress", "127.0.0.1");
+    Environment.SetEnvironmentVariable("PrusaLink__ApiKey", "test-api-key");
+    Environment.SetEnvironmentVariable("Camera__RtspUrl", "rtsp://127.0.0.1/test");
 
     _dbContainer = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("uberprints_test")
@@ -187,6 +199,18 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
   {
     builder.ConfigureServices(services =>
     {
+      // Background workers would poll a fake printer and spawn FFmpeg; the CameraStreamingService singleton stays for StreamController
+      var backgroundWorkers = services
+        .Where(d => d.ServiceType == typeof(IHostedService)
+          && (d.ImplementationType == typeof(PrinterMonitoringService)
+            || d.ImplementationFactory?.Method.ReturnType == typeof(CameraStreamingService)))
+        .ToList();
+
+      foreach (var worker in backgroundWorkers)
+      {
+        services.Remove(worker);
+      }
+
       // Remove the existing DbContext registration
       var descriptor = services.SingleOrDefault(
               d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
