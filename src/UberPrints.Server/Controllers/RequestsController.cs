@@ -15,17 +15,23 @@ public class RequestsController : ControllerBase
   private readonly IChangeTrackingService _changeTrackingService;
   private readonly DiscordService _discordService;
   private readonly ThermalPrinterService _thermalPrinterService;
+  private readonly IServiceScopeFactory _scopeFactory;
+  private readonly ILogger<RequestsController> _logger;
 
   public RequestsController(
       ApplicationDbContext context,
       IChangeTrackingService changeTrackingService,
       DiscordService discordService,
-      ThermalPrinterService thermalPrinterService)
+      ThermalPrinterService thermalPrinterService,
+      IServiceScopeFactory scopeFactory,
+      ILogger<RequestsController> logger)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
     _discordService = discordService;
     _thermalPrinterService = thermalPrinterService;
+    _scopeFactory = scopeFactory;
+    _logger = logger;
   }
 
   [HttpGet]
@@ -173,27 +179,36 @@ public class RequestsController : ControllerBase
     // Reload request with filament data for notifications and printing
     await _context.Entry(request).Reference(r => r.Filament).LoadAsync();
 
-    // Capture data for background tasks before context disposal
+    // Capture locals only, so the background task doesn't keep this controller and its HttpContext alive
     var requestId = request.Id;
+    var scopeFactory = _scopeFactory;
+    var logger = _logger;
 
     // Send notifications and print receipt (fire-and-forget to not block response)
     _ = Task.Run(async () =>
     {
-      // Create new scope for background work to avoid disposed context
-      using var scope = HttpContext.RequestServices.CreateScope();
-      var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-      var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
-      var scopedPrinterService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();
-
-      // Reload request with all needed data
-      var backgroundRequest = await scopedContext.PrintRequests
-          .Include(r => r.Filament)
-          .FirstOrDefaultAsync(r => r.Id == requestId);
-
-      if (backgroundRequest != null)
+      try
       {
-        await scopedDiscordService.NotifyAdminsNewRequestAsync(backgroundRequest);
-        await scopedPrinterService.PrintNewRequestAsync(backgroundRequest);
+        // HttpContext is recycled once the response completes, so the scope must come from the root provider
+        using var scope = scopeFactory.CreateScope();
+        var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
+        var scopedPrinterService = scope.ServiceProvider.GetRequiredService<ThermalPrinterService>();
+
+        // Reload request with all needed data
+        var backgroundRequest = await scopedContext.PrintRequests
+            .Include(r => r.Filament)
+            .FirstOrDefaultAsync(r => r.Id == requestId);
+
+        if (backgroundRequest != null)
+        {
+          await scopedDiscordService.NotifyAdminsNewRequestAsync(backgroundRequest);
+          await scopedPrinterService.PrintNewRequestAsync(backgroundRequest);
+        }
+      }
+      catch (Exception ex)
+      {
+        logger.LogError(ex, "Background notifications failed for new request {RequestId}", requestId);
       }
     });
 

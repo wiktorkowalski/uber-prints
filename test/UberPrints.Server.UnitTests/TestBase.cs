@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Moq;
+using UberPrints.Server.Configuration;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
@@ -75,9 +77,10 @@ public class TestBase
     var thermalPrinterService = new ThermalPrinterService(
         Configuration,
         NullLogger<ThermalPrinterService>.Instance,
-        new HttpClient(new BlockOutboundHttpHandler()));
-    RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService);
-    AdminController = new AdminController(Context, ChangeTrackingService, discordService);
+        new HttpClient(new BlockOutboundHttpHandler()),
+        Options.Create(new ThermalPrinterOptions()));
+    RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService, Mock.Of<IServiceScopeFactory>(), NullLogger<RequestsController>.Instance);
+    AdminController = new AdminController(Context, ChangeTrackingService, discordService, Mock.Of<IServiceScopeFactory>(), NullLogger<AdminController>.Instance);
     FilamentsController = new FilamentsController(Context);
     var httpClientFactory = new Mock<IHttpClientFactory>();
     httpClientFactory

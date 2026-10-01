@@ -25,7 +25,7 @@ public class OutboundHttpTests : IntegrationTestBase
 
     // The queue is shared across parallel test classes, so match this call by its unique request id
     Assert.Contains(IntegrationTestFactory.BlockOutboundHttpHandler.BlockedRequests,
-      blocked => blocked.Uri.Host == "printer.vicio.ovh" && blocked.Body.Contains(request.Id.ToString()));
+      blocked => blocked.Uri.Host == "printer.invalid" && blocked.Body.Contains(request.Id.ToString()));
   }
 
   [Fact]
