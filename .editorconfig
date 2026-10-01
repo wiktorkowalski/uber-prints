@@ -17,3 +17,6 @@ indent_size = 2
 [**/Migrations/*.cs]
 generated_code = true
 charset = unset
+
+[*.md]
+trim_trailing_whitespace = false
