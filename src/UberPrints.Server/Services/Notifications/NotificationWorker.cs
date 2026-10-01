@@ -34,7 +34,7 @@ internal sealed class NotificationWorker(
           _drainTimeout, queue.Reader.Count);
     }
 
-    // Cancels stoppingToken, which aborts the in-flight item after a drain timeout
+    // Cancels stoppingToken after a drain timeout; that stops the item's DB reload, but Discord/printer HTTP calls take no token and run until SIGKILL
     await base.StopAsync(cancellationToken);
   }
 

@@ -192,7 +192,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 **Thermal Printer Integration**: Automatic receipt printing for new print requests:
 - `ThermalPrinterService` posts to `ThermalPrinter:ApiUrl` (`appsettings.json`: `https://printer.vicio.ovh/api/Printer`; `appsettings.Development.json` and `appsettings.Testing.json` set it empty = printing disabled for `dotnet run` and E2E. Integration tests override it with a `.invalid` host and block all outbound HTTP with a stub handler)
-- Fire-and-forget pattern: failures don't block request creation
+- Queued via `NotificationQueue` (bounded channel) and sent by `NotificationWorker`; failures don't block request creation, and the worker drains the queue for up to 8 s on shutdown
 - Prints receipt with request ID, requester name, filament details, QR code linking to request page
 - Triggered automatically on new print request creation
 
@@ -200,7 +200,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 - `DiscordService` sends Discord DMs using bot token
 - Admin notifications: All admin users notified when new print request created
 - Requester notifications: Users notified on status changes (opt-in via `NotifyOnStatusChange` field, defaults to true)
-- Fire-and-forget pattern: notification failures don't block operations
+- Same `NotificationQueue`/`NotificationWorker` path: notification failures don't block operations
 - Requires Discord bot token and users must have Discord authentication
 
 **Filament Request System**: Users can request new filaments to be added:
