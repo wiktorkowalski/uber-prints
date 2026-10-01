@@ -52,34 +52,17 @@ function runMigrations(connectionString: string): void {
   const serverProject = path.join(projectRoot, 'src/UberPrints.Server/UberPrints.Server.csproj');
 
   try {
-    // Update appsettings to use test connection string temporarily
-    const appsettingsPath = path.join(
-      projectRoot,
-      'src/UberPrints.Server/appsettings.json'
-    );
-    const appsettings = JSON.parse(fs.readFileSync(appsettingsPath, 'utf-8'));
-    const originalConnectionString = appsettings.ConnectionStrings.DefaultConnection;
+    // Env var overrides appsettings.json; no need to touch tracked files
+    execSync(`dotnet ef database update --project "${serverProject}"`, {
+      cwd: projectRoot,
+      stdio: 'pipe',
+      env: {
+        ...process.env,
+        ConnectionStrings__DefaultConnection: connectionString,
+      },
+    });
 
-    // Temporarily update connection string for migrations
-    appsettings.ConnectionStrings.DefaultConnection = connectionString;
-    fs.writeFileSync(appsettingsPath, JSON.stringify(appsettings, null, 2));
-
-    try {
-      execSync(`dotnet ef database update --project "${serverProject}"`, {
-        cwd: projectRoot,
-        stdio: 'pipe',
-        env: {
-          ...process.env,
-          ConnectionStrings__DefaultConnection: connectionString,
-        },
-      });
-
-      console.log('  ✓ Migrations applied successfully');
-    } finally {
-      // Restore original connection string
-      appsettings.ConnectionStrings.DefaultConnection = originalConnectionString;
-      fs.writeFileSync(appsettingsPath, JSON.stringify(appsettings, null, 2));
-    }
+    console.log('  ✓ Migrations applied successfully');
   } catch (error) {
     console.error('  ❌ Migration failed:', (error as Error).message);
     throw error;
@@ -137,12 +120,20 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
       JWT_SECRET_KEY: process.env.JWT_SECRET_KEY || 'test-secret-key-minimum-32-characters-long-for-testing',
       DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID || 'test-discord-client-id',
       DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || 'test-discord-client-secret',
+      // Never send real Discord DMs or thermal tickets from E2E runs.
+      // Explicit env vars win over .env (DotNetEnv clobberExistingVars: false).
+      Discord__BotToken: '',
+      ThermalPrinter__ApiUrl: '',
     },
     stdio: 'pipe',
     detached: true, // Create new process group
   });
 
-  // Log backend output for debugging
+  // Full backend output goes to e2e-backend.log for debugging
+  const backendLog = fs.createWriteStream(path.join(__dirname, 'e2e-backend.log'));
+  backendProcess.stdout?.pipe(backendLog);
+  backendProcess.stderr?.pipe(backendLog);
+
   backendProcess.stdout?.on('data', (data) => {
     const message = data.toString();
     if (message.includes('Now listening on')) {
