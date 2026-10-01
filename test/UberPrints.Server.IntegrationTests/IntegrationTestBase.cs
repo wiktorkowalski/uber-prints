@@ -5,22 +5,34 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using AspNet.Security.OAuth.Discord;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using System.Text;
+using System.Text.Json;
 using Testcontainers.PostgreSql;
 using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
+using UberPrints.Server.Services;
 using Xunit;
 
 namespace UberPrints.Server.IntegrationTests;
 
 public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsyncLifetime
 {
+  // Same serializer settings the server uses, so enums and naming match the real client
+  protected JsonSerializerOptions JsonOptions =>
+    Factory.Services.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.JsonOptions>>().Value.JsonSerializerOptions;
+
   protected readonly HttpClient Client;
   protected readonly IntegrationTestFactory Factory;
   protected string? GuestSessionToken;
@@ -37,7 +49,7 @@ public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsync
     var response = await Client.PostAsync("/api/auth/guest", null);
     response.EnsureSuccessStatusCode();
 
-    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     GuestSessionToken = result?.guestSessionToken;
 
     // Add the guest session token to default request headers
@@ -161,6 +173,8 @@ public class IntegrationTestBase : IClassFixture<IntegrationTestFactory>, IAsync
 
 public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+  private const int MaxResetAttempts = 3;
+
   private readonly PostgreSqlContainer _dbContainer;
 
   public IntegrationTestFactory()
@@ -175,6 +189,9 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     Environment.SetEnvironmentVariable("Discord__ClientId", "test-client-id");
     Environment.SetEnvironmentVariable("Discord__ClientSecret", "test-client-secret");
     Environment.SetEnvironmentVariable("Frontend__Url", "http://localhost:5173");
+    Environment.SetEnvironmentVariable("PrusaLink__IpAddress", "127.0.0.1");
+    Environment.SetEnvironmentVariable("PrusaLink__ApiKey", "test-api-key");
+    Environment.SetEnvironmentVariable("Camera__RtspUrl", "rtsp://127.0.0.1/test");
 
     _dbContainer = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("uberprints_test")
@@ -187,14 +204,25 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
   {
     builder.ConfigureServices(services =>
     {
-      // Remove the existing DbContext registration
-      var descriptor = services.SingleOrDefault(
-              d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+      // The monitoring worker would write printer rows into the shared test DB on a timer
+      var monitoringWorkers = services
+        .Where(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(PrinterMonitoringService))
+        .ToList();
+      if (monitoringWorkers.Count != 1)
+        throw new InvalidOperationException($"Expected 1 PrinterMonitoringService registration, found {monitoringWorkers.Count}");
+      services.Remove(monitoringWorkers[0]);
 
-      if (descriptor != null)
-      {
-        services.Remove(descriptor);
-      }
+      // ThermalPrinterService targets the real printer URL and DiscordService the real bot; tests must never reach them
+      services.ConfigureHttpClientDefaults(client =>
+        client.ConfigurePrimaryHttpMessageHandler(() => new BlockOutboundHttpHandler()));
+
+      // The OAuth handler builds its backchannel outside IHttpClientFactory; Configure runs before its PostConfigure creates it
+      services.Configure<DiscordAuthenticationOptions>(DiscordAuthenticationDefaults.AuthenticationScheme, options =>
+        options.BackchannelHttpHandler = new BlockOutboundHttpHandler());
+
+      // AddDbContext also registers an options configuration that would still apply Program's UseNpgsql
+      services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+      services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
 
       // Add DbContext using the test container connection string
       services.AddDbContext<ApplicationDbContext>(options =>
@@ -239,6 +267,18 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     builder.UseEnvironment("Testing");
   }
 
+  internal sealed class BlockOutboundHttpHandler : HttpMessageHandler
+  {
+    public static ConcurrentQueue<(Uri Uri, string Body)> BlockedRequests { get; } = new();
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+      var body = request.Content is null ? string.Empty : await request.Content.ReadAsStringAsync(cancellationToken);
+      BlockedRequests.Enqueue((request.RequestUri!, body));
+      return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable);
+    }
+  }
+
   // Authorization handler that allows all requests (for testing only)
   private class AllowAnonymousAuthorizationHandler : IAuthorizationHandler
   {
@@ -265,8 +305,9 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
 
   public new async Task DisposeAsync()
   {
-    await _dbContainer.DisposeAsync();
+    // Stop the host first so nothing queries the database after the container is gone
     await base.DisposeAsync();
+    await _dbContainer.DisposeAsync();
   }
 
   public async Task ResetDatabaseAsync()
@@ -274,10 +315,19 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
     using var scope = Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    // Delete all data from tables
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"StatusHistories\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"PrintRequests\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Filaments\" CASCADE");
-    await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Users\" CASCADE");
+    // CreateRequest's fire-and-forget notification task can still hold row locks, so TRUNCATE may deadlock with it
+    for (var attempt = 1; ; attempt++)
+    {
+      try
+      {
+        await dbContext.Database.ExecuteSqlRawAsync(
+          "TRUNCATE TABLE \"StatusHistories\", \"PrintRequests\", \"Filaments\", \"Users\" CASCADE");
+        return;
+      }
+      catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.DeadlockDetected && attempt < MaxResetAttempts)
+      {
+        await Task.Delay(TimeSpan.FromMilliseconds(100 * attempt));
+      }
+    }
   }
 }

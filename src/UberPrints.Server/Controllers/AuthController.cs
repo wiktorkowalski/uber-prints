@@ -20,11 +20,19 @@ public class AuthController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IConfiguration _configuration;
+  private readonly IHttpClientFactory _httpClientFactory;
+  private readonly ILogger<AuthController> _logger;
 
-  public AuthController(ApplicationDbContext context, IConfiguration configuration)
+  public AuthController(
+      ApplicationDbContext context,
+      IConfiguration configuration,
+      IHttpClientFactory httpClientFactory,
+      ILogger<AuthController> logger)
   {
     _context = context;
     _configuration = configuration;
+    _httpClientFactory = httpClientFactory;
+    _logger = logger;
   }
 
   [HttpGet("login")]
@@ -67,10 +75,10 @@ public class AuthController : ControllerBase
     {
       try
       {
-        using var httpClient = new HttpClient();
+        using var httpClient = _httpClientFactory.CreateClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
-        var response = await httpClient.GetAsync("https://discord.com/api/users/@me");
+        using var response = await httpClient.GetAsync("https://discord.com/api/users/@me");
 
         if (response.IsSuccessStatusCode)
         {
@@ -81,10 +89,15 @@ public class AuthController : ControllerBase
             avatarHash = userData.Avatar;
           }
         }
+        else
+        {
+          _logger.LogWarning("Discord profile fetch for {DiscordId} failed with {StatusCode}; continuing with claims only", discordId, response.StatusCode);
+        }
       }
-      catch
+      catch (Exception ex)
       {
-        // If we fail to fetch additional data, we'll continue with what we have from claims
+        // Profile extras are optional; login continues with what the claims provide
+        _logger.LogWarning(ex, "Discord profile fetch for {DiscordId} failed; continuing with claims only", discordId);
       }
     }
 

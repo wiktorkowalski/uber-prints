@@ -23,7 +23,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     Assert.NotNull(result);
     Assert.NotNull(result.GuestSessionToken);
     Assert.NotEmpty(result.GuestSessionToken);
@@ -35,7 +35,7 @@ public class AuthControllerTests : IntegrationTestBase
   {
     // Act
     var response = await Client.PostAsync("/api/auth/guest", null);
-    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     Assert.NotNull(result);
 
     // Assert - verify user exists in database
@@ -61,8 +61,8 @@ public class AuthControllerTests : IntegrationTestBase
     response1.EnsureSuccessStatusCode();
     response2.EnsureSuccessStatusCode();
 
-    var result1 = await response1.Content.ReadFromJsonAsync<GuestSessionResponse>();
-    var result2 = await response2.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result1 = await response1.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
+    var result2 = await response2.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     Assert.NotNull(result1);
     Assert.NotNull(result2);
@@ -75,13 +75,13 @@ public class AuthControllerTests : IntegrationTestBase
   {
     // Arrange - create guest session
     var guestResponse = await Client.PostAsync("/api/auth/guest", null);
-    var guestResult = await guestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult = await guestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     Assert.NotNull(guestResult);
 
     // Create filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     // Act - create print request as guest
@@ -90,7 +90,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     requestResponse.EnsureSuccessStatusCode();
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.Equal("Guest User", createdRequest.RequesterName);
     Assert.NotNull(createdRequest.GuestTrackingToken);
@@ -101,17 +101,17 @@ public class AuthControllerTests : IntegrationTestBase
   {
     // Arrange - create guest and print request
     var guestResponse = await Client.PostAsync("/api/auth/guest", null);
-    var guestResult = await guestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult = await guestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     Assert.NotNull(guestResult);
 
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test Guest");
     var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act - track request using guest tracking token
@@ -119,7 +119,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     trackResponse.EnsureSuccessStatusCode();
-    var trackedRequest = await trackResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var trackedRequest = await trackResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(trackedRequest);
     Assert.Equal(createdRequest.Id, trackedRequest.Id);
     Assert.Equal("Test Guest", trackedRequest.RequesterName);
@@ -151,7 +151,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var result = await response.Content.ReadFromJsonAsync<LogoutResponse>();
+    var result = await response.Content.ReadFromJsonAsync<LogoutResponse>(JsonOptions);
     Assert.NotNull(result);
     Assert.Equal("Logged out successfully", result.Message);
   }
@@ -174,7 +174,7 @@ public class AuthControllerTests : IntegrationTestBase
   {
     // Act
     var response = await Client.PostAsync("/api/auth/guest", null);
-    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var result = await response.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     // Assert
     Assert.NotNull(result);
@@ -200,7 +200,7 @@ public class AuthControllerTests : IntegrationTestBase
     Assert.All(responses, r => r.EnsureSuccessStatusCode());
 
     var results = await Task.WhenAll(
-        responses.Select(r => r.Content.ReadFromJsonAsync<GuestSessionResponse>())
+        responses.Select(r => r.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions))
     );
 
     // All tokens should be unique
@@ -234,7 +234,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+    var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>(JsonOptions);
     Assert.NotNull(result);
     Assert.NotNull(result.token);
     Assert.NotEmpty(result.token);
@@ -257,7 +257,7 @@ public class AuthControllerTests : IntegrationTestBase
     // Get new token via refresh
     var refreshResponse = await authenticatedClient.PostAsync("/api/auth/refresh", null);
     refreshResponse.EnsureSuccessStatusCode();
-    var refreshResult = await refreshResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+    var refreshResult = await refreshResponse.Content.ReadFromJsonAsync<RefreshTokenResponse>(JsonOptions);
     Assert.NotNull(refreshResult);
     Assert.NotNull(refreshResult.token);
     Assert.NotEmpty(refreshResult.token);
@@ -279,7 +279,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     profileResponse.EnsureSuccessStatusCode();
-    var profile = await profileResponse.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await profileResponse.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
     Assert.NotNull(profile);
     Assert.Equal(user.Id, profile.Id);
     Assert.Equal("refreshuser", profile.Username);
@@ -356,7 +356,7 @@ public class AuthControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+    var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>(JsonOptions);
     Assert.NotNull(result);
     Assert.NotNull(result.token);
 
@@ -391,7 +391,7 @@ public class AuthControllerTests : IntegrationTestBase
     // Act - Refresh the first time
     var response1 = await client1.PostAsync("/api/auth/refresh", null);
     response1.EnsureSuccessStatusCode();
-    var result1 = await response1.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+    var result1 = await response1.Content.ReadFromJsonAsync<RefreshTokenResponse>(JsonOptions);
     Assert.NotNull(result1);
     var token2 = result1.token;
     Assert.NotEqual(token1, token2);
@@ -402,7 +402,7 @@ public class AuthControllerTests : IntegrationTestBase
     var client2 = CreateAuthenticatedClient(token2);
     var response2 = await client2.PostAsync("/api/auth/refresh", null);
     response2.EnsureSuccessStatusCode();
-    var result2 = await response2.Content.ReadFromJsonAsync<RefreshTokenResponse>();
+    var result2 = await response2.Content.ReadFromJsonAsync<RefreshTokenResponse>(JsonOptions);
     Assert.NotNull(result2);
     var token3 = result2.token;
     Assert.NotEqual(token2, token3);

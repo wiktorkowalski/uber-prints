@@ -35,7 +35,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal(user.Id, profile.Id);
@@ -74,7 +74,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal(user.Id, profile.Id);
@@ -107,7 +107,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal(expectedAvatarUrl, profile.AvatarUrl);
@@ -131,7 +131,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Null(profile.AvatarUrl);
@@ -204,7 +204,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal("New Display Name", profile.GlobalName);
@@ -239,7 +239,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal(user.Id, profile.Id);
@@ -280,7 +280,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
 
     Assert.NotNull(profile);
     Assert.Equal("Changed Name", profile.GlobalName);
@@ -399,7 +399,7 @@ public class ProfileControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>();
+    var profile = await response.Content.ReadFromJsonAsync<ProfileDto>(JsonOptions);
     Assert.NotNull(profile);
     Assert.Equal(100, profile.GlobalName!.Length);
   }

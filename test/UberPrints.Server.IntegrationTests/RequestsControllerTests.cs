@@ -20,7 +20,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Empty(requests);
   }
@@ -31,7 +31,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var request1Dto = TestDataFactory.CreatePrintRequestDto(filament.Id, "User 1");
@@ -47,7 +47,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     Assert.Equal(2, requests.Count);
     Assert.Contains(requests, r => r.RequesterName == "User 1");
@@ -60,12 +60,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
     var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act
@@ -73,7 +73,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal(createdRequest.Id, request.Id);
     Assert.Equal("Test User", request.RequesterName);
@@ -102,12 +102,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
     var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act
@@ -115,7 +115,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal(createdRequest.Id, request.Id);
     Assert.Equal(createdRequest.GuestTrackingToken, request.GuestTrackingToken);
@@ -141,7 +141,7 @@ public class RequestsControllerTests : IntegrationTestBase
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
     filamentResponse.EnsureSuccessStatusCode(); // Add explicit check
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
     var createDto = new CreatePrintRequestDto
     {
@@ -157,7 +157,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    var createdRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
     Assert.Equal("John Doe", createdRequest.RequesterName);
     Assert.Equal("https://example.com/model.stl", createdRequest.ModelUrl);
@@ -205,17 +205,17 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filament1Dto = TestDataFactory.CreateFilamentDto(name: "Filament 1");
     var filament1Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament1Dto);
-    var filament1 = await filament1Response.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament1 = await filament1Response.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament1);
 
     var filament2Dto = TestDataFactory.CreateFilamentDto(name: "Filament 2");
     var filament2Response = await Client.PostAsJsonAsync("/api/admin/filaments", filament2Dto);
-    var filament2 = await filament2Response.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament2 = await filament2Response.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament2);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament1.Id, "Original Name");
     var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     var updateDto = new UpdatePrintRequestDto
@@ -232,7 +232,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(updatedRequest);
     Assert.Equal(createdRequest.Id, updatedRequest.Id);
     Assert.Equal("Updated Name", updatedRequest.RequesterName);
@@ -248,7 +248,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
     var nonExistentId = Guid.NewGuid();
     var updateDto = new UpdatePrintRequestDto
@@ -277,12 +277,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
     var requestResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var createdRequest = await requestResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(createdRequest);
 
     // Act
@@ -317,7 +317,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     // Create public request
@@ -346,7 +346,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     // Should only see public request, not the private one
     Assert.Single(requests);
@@ -359,7 +359,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     // Guest creates own private request
@@ -380,7 +380,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Another guest creates a private request
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -400,7 +400,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     // Should see own private + public, but not other's private
     Assert.Equal(2, requests.Count);
@@ -415,7 +415,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     // Create authenticated user 1
@@ -444,7 +444,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Create authenticated user 2
     var guestResponse2 = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     var (user2, token2) = await CreateAuthenticatedUserWithToken(
         discordId: "222222222",
@@ -469,7 +469,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
     Assert.NotNull(requests);
     // Should see own private + public, but not user 2's private
     Assert.Equal(2, requests.Count);
@@ -484,12 +484,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create public request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var publicDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Public Request");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", publicDto);
-    var publicRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var publicRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(publicRequest);
 
     // Create unauthenticated client
@@ -500,7 +500,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal(publicRequest.Id, request.Id);
   }
@@ -511,7 +511,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create private request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var privateDto = new CreatePrintRequestDto
@@ -524,7 +524,7 @@ public class RequestsControllerTests : IntegrationTestBase
       FilamentId = filament.Id
     };
     var createResponse = await Client.PostAsJsonAsync("/api/requests", privateDto);
-    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(privateRequest);
 
     // Act - Owner tries to view own private request
@@ -532,7 +532,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Equal(privateRequest.Id, request.Id);
     Assert.False(request.IsPublic);
@@ -544,7 +544,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Guest 1 creates private request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var privateDto = new CreatePrintRequestDto
@@ -557,12 +557,12 @@ public class RequestsControllerTests : IntegrationTestBase
       FilamentId = filament.Id
     };
     var createResponse = await Client.PostAsJsonAsync("/api/requests", privateDto);
-    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(privateRequest);
 
     // Create another guest
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -580,7 +580,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create private request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var privateDto = new CreatePrintRequestDto
@@ -593,7 +593,7 @@ public class RequestsControllerTests : IntegrationTestBase
       FilamentId = filament.Id
     };
     var createResponse = await Client.PostAsJsonAsync("/api/requests", privateDto);
-    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var privateRequest = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(privateRequest);
 
     // Create unauthenticated client
@@ -616,7 +616,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - User 1 creates a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var (user1, token1) = await CreateAuthenticatedUserWithToken(
@@ -628,12 +628,12 @@ public class RequestsControllerTests : IntegrationTestBase
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "User 1 Request");
     var createResponse = await client1.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // User 2 tries to update user 1's request
     var guestResponse2 = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     var (user2, token2) = await CreateAuthenticatedUserWithToken(
         discordId: "222222222",
@@ -665,17 +665,17 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Guest 1 creates a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Guest 1 Request");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // Guest 2 tries to update guest 1's request
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -702,12 +702,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test Request");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // Create unauthenticated client
@@ -736,7 +736,7 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - User 1 creates a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var (user1, token1) = await CreateAuthenticatedUserWithToken(
@@ -748,12 +748,12 @@ public class RequestsControllerTests : IntegrationTestBase
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "User 1 Request");
     var createResponse = await client1.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // User 2 tries to delete user 1's request
     var guestResponse2 = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var guestResult2 = await guestResponse2.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
 
     var (user2, token2) = await CreateAuthenticatedUserWithToken(
         discordId: "444444444",
@@ -775,17 +775,17 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Guest 1 creates a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Guest 1 Request");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // Guest 2 tries to delete guest 1's request
     var otherGuestResponse = await Factory.CreateClient().PostAsync("/api/auth/guest", null);
-    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>();
+    var otherGuestResult = await otherGuestResponse.Content.ReadFromJsonAsync<GuestSessionResponse>(JsonOptions);
     var otherGuestClient = Factory.CreateClient();
     otherGuestClient.DefaultRequestHeaders.Add("X-Guest-Session-Token", otherGuestResult!.guestSessionToken);
 
@@ -802,12 +802,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create a request
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var requestDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test Request");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", requestDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
 
     // Create unauthenticated client
@@ -843,7 +843,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.Null(request.FilamentId);
     Assert.Null(request.FilamentName);
@@ -856,12 +856,12 @@ public class RequestsControllerTests : IntegrationTestBase
     // Arrange - Create request with filament
     var filamentDto = TestDataFactory.CreateFilamentDto();
     var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", filamentDto);
-    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>();
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
     Assert.NotNull(filament);
 
     var createDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Test User");
     var createResponse = await Client.PostAsJsonAsync("/api/requests", createDto);
-    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var request = await createResponse.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(request);
     Assert.NotNull(request.FilamentId);
 
@@ -881,7 +881,7 @@ public class RequestsControllerTests : IntegrationTestBase
 
     // Assert
     response.EnsureSuccessStatusCode();
-    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>();
+    var updatedRequest = await response.Content.ReadFromJsonAsync<PrintRequestDto>(JsonOptions);
     Assert.NotNull(updatedRequest);
     Assert.Null(updatedRequest.FilamentId);
     Assert.Null(updatedRequest.FilamentName);
