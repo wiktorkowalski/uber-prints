@@ -124,6 +124,8 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
       // Explicit env vars win over .env (DotNetEnv clobberExistingVars: false).
       Discord__BotToken: '',
       ThermalPrinter__ApiUrl: '',
+      // Keep the monitoring worker off the real LAN printer
+      PrusaLink__IpAddress: '127.0.0.1',
     },
     stdio: 'pipe',
     detached: true, // Create new process group
