@@ -126,6 +126,7 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
       ThermalPrinter__ApiUrl: '',
       // Keep the monitoring worker off the real LAN printer
       PrusaLink__IpAddress: '127.0.0.1',
+      PrusaLink__ApiKey: 'e2e-test-key',
     },
     stdio: 'pipe',
     detached: true, // Create new process group
