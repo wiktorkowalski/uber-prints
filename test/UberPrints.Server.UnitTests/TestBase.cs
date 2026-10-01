@@ -7,13 +7,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
-using UberPrints.Server.Configuration;
 using UberPrints.Server.Controllers;
 using UberPrints.Server.Data;
 using UberPrints.Server.Models;
 using UberPrints.Server.Services;
+using UberPrints.Server.Services.Notifications;
 
 namespace UberPrints.Server.UnitTests;
 
@@ -68,19 +67,10 @@ public class TestBase
     // Create change tracking service
     ChangeTrackingService = new ChangeTrackingService(Context);
 
-    // Create controllers with the real context
-    var discordService = new DiscordService(
-        Mock.Of<IServiceScopeFactory>(),
-        Configuration,
-        NullLogger<DiscordService>.Instance,
-        new HttpClient(new BlockOutboundHttpHandler()));
-    var thermalPrinterService = new ThermalPrinterService(
-        Configuration,
-        NullLogger<ThermalPrinterService>.Instance,
-        new HttpClient(new BlockOutboundHttpHandler()),
-        Options.Create(new ThermalPrinterOptions()));
-    RequestsController = new RequestsController(Context, ChangeTrackingService, discordService, thermalPrinterService, Mock.Of<IServiceScopeFactory>(), NullLogger<RequestsController>.Instance);
-    AdminController = new AdminController(Context, ChangeTrackingService, discordService, Mock.Of<IServiceScopeFactory>(), NullLogger<AdminController>.Instance);
+    // Controllers only enqueue; nothing reads the queue, so no notification leaves the test
+    var notificationQueue = new NotificationQueue(NullLogger<NotificationQueue>.Instance);
+    RequestsController = new RequestsController(Context, ChangeTrackingService, notificationQueue);
+    AdminController = new AdminController(Context, ChangeTrackingService, notificationQueue);
     FilamentsController = new FilamentsController(Context);
     var httpClientFactory = new Mock<IHttpClientFactory>();
     httpClientFactory

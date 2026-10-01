@@ -9,6 +9,7 @@ using System.Text;
 using UberPrints.Server.Configuration;
 using UberPrints.Server.Data;
 using UberPrints.Server.Services;
+using UberPrints.Server.Services.Notifications;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 // Load environment variables from .env file (for local development)
@@ -86,6 +87,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<IChangeTrackingService, ChangeTrackingService>();
 builder.Services.AddHttpClient<DiscordService>();
 builder.Services.AddHttpClient<ThermalPrinterService>();
+
+// Notifications run after the response; the worker drains the queue on shutdown so restarts don't drop them
+builder.Services.AddSingleton<NotificationQueue>();
+builder.Services.AddScoped<INotificationHandler, NotificationHandler>();
+builder.Services.AddHostedService<NotificationWorker>();
 
 // Add camera streaming services
 builder.Services.AddSingleton<StreamStateService>();

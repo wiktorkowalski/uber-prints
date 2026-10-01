@@ -5,6 +5,7 @@ using UberPrints.Server.Data;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
 using UberPrints.Server.Services;
+using UberPrints.Server.Services.Notifications;
 
 namespace UberPrints.Server.Controllers;
 
@@ -15,22 +16,16 @@ public class AdminController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
   private readonly IChangeTrackingService _changeTrackingService;
-  private readonly DiscordService _discordService;
-  private readonly IServiceScopeFactory _scopeFactory;
-  private readonly ILogger<AdminController> _logger;
+  private readonly NotificationQueue _notificationQueue;
 
   public AdminController(
       ApplicationDbContext context,
       IChangeTrackingService changeTrackingService,
-      DiscordService discordService,
-      IServiceScopeFactory scopeFactory,
-      ILogger<AdminController> logger)
+      NotificationQueue notificationQueue)
   {
     _context = context;
     _changeTrackingService = changeTrackingService;
-    _discordService = discordService;
-    _scopeFactory = scopeFactory;
-    _logger = logger;
+    _notificationQueue = notificationQueue;
   }
 
   [HttpGet("requests")]
@@ -84,40 +79,9 @@ public class AdminController : ControllerBase
 
     await _context.SaveChangesAsync();
 
-    // Send notification to requester if opted-in (fire-and-forget)
+    // DiscordService checks the requester's opt-in when it handles the message
     if (oldStatus != dto.Status)
-    {
-      // Capture locals only, so the background task doesn't keep this controller and its HttpContext alive
-      var requestId = request.Id;
-      var newStatus = dto.Status;
-      var scopeFactory = _scopeFactory;
-      var logger = _logger;
-
-      _ = Task.Run(async () =>
-      {
-        try
-        {
-          // HttpContext is recycled once the response completes, so the scope must come from the root provider
-          using var scope = scopeFactory.CreateScope();
-          var scopedContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-          var scopedDiscordService = scope.ServiceProvider.GetRequiredService<DiscordService>();
-
-          // Reload request with user data
-          var backgroundRequest = await scopedContext.PrintRequests
-              .Include(r => r.User)
-              .FirstOrDefaultAsync(r => r.Id == requestId);
-
-          if (backgroundRequest != null)
-          {
-            await scopedDiscordService.NotifyRequesterStatusChangeAsync(backgroundRequest, oldStatus, newStatus);
-          }
-        }
-        catch (Exception ex)
-        {
-          logger.LogError(ex, "Background status-change notification failed for request {RequestId}", requestId);
-        }
-      });
-    }
+      _notificationQueue.Enqueue(new StatusChangedNotification(request.Id, oldStatus, dto.Status));
 
     var responseDto = MapToDto(request);
     return Ok(responseDto);
