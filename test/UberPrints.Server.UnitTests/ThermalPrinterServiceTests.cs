@@ -51,6 +51,37 @@ public sealed class ThermalPrinterServiceTests
     Assert.Equal(expectedCalls, handler.Calls);
   }
 
+  [Fact]
+  public async Task PrintNewRequestAsync_CancelledTokenAbortsPostAndPropagates()
+  {
+    var hanging = new HangingHttpHandler();
+    var service = new ThermalPrinterService(
+        new ConfigurationBuilder().Build(),
+        NullLogger<ThermalPrinterService>.Instance,
+        new HttpClient(hanging),
+        Options.Create(new ThermalPrinterOptions { ApiUrl = "https://printer.invalid/api/Printer" }));
+    using var cts = new CancellationTokenSource();
+
+    var printTask = service.PrintNewRequestAsync(TestDataFactory.CreateTestPrintRequest(), cts.Token);
+    await hanging.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+    await cts.CancelAsync();
+
+    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => printTask.WaitAsync(TimeSpan.FromSeconds(5)));
+  }
+
+  [Fact]
+  public async Task PrintNewRequestAsync_HttpTimeoutIsSwallowed()
+  {
+    // HttpClient.Timeout cancels without the caller's token; that is a printer failure, not shutdown
+    var service = new ThermalPrinterService(
+        new ConfigurationBuilder().Build(),
+        NullLogger<ThermalPrinterService>.Instance,
+        new HttpClient(new HangingHttpHandler()) { Timeout = TimeSpan.FromMilliseconds(50) },
+        Options.Create(new ThermalPrinterOptions { ApiUrl = "https://printer.invalid/api/Printer" }));
+
+    await service.PrintNewRequestAsync(TestDataFactory.CreateTestPrintRequest(), CancellationToken.None);
+  }
+
   private sealed class CountingHandler : HttpMessageHandler
   {
     public int Calls { get; private set; }

@@ -26,7 +26,7 @@ public class ThermalPrinterService
     _options = options.Value;
   }
 
-  public async Task PrintNewRequestAsync(PrintRequest request)
+  public async Task PrintNewRequestAsync(PrintRequest request, CancellationToken cancellationToken = default)
   {
     if (string.IsNullOrEmpty(_options.ApiUrl))
     {
@@ -46,7 +46,7 @@ public class ThermalPrinterService
 
       var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-      var response = await _httpClient.PostAsync(_options.ApiUrl, content);
+      var response = await _httpClient.PostAsync(_options.ApiUrl, content, cancellationToken);
 
       if (response.IsSuccessStatusCode)
       {
@@ -54,13 +54,18 @@ public class ThermalPrinterService
       }
       else
       {
-        var errorContent = await response.Content.ReadAsStringAsync();
+        var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
         _logger.LogWarning(
             "Failed to print request {RequestId} to thermal printer: {StatusCode} - {Error}",
             request.Id,
             response.StatusCode,
             errorContent);
       }
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+      // Shutdown cancelled the call; NotificationWorker logs the abort once
+      throw;
     }
     catch (Exception ex)
     {
