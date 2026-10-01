@@ -12,10 +12,11 @@ public class OutboundHttpTests : IntegrationTestBase
   }
 
   [Theory]
+  [InlineData("")]
   [InlineData(nameof(ThermalPrinterService))]
   [InlineData(nameof(DiscordService))]
   [InlineData(nameof(PrusaLinkClient))]
-  public async Task TypedClient_NeverReachesNetwork(string clientName)
+  public async Task FactoryClient_NeverReachesNetwork(string clientName)
   {
     // .invalid never resolves, so only the stub handler can produce a response
     var httpClient = Factory.Services.GetRequiredService<IHttpClientFactory>().CreateClient(clientName);

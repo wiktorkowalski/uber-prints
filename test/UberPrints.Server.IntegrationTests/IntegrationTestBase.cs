@@ -206,6 +206,10 @@ public class IntegrationTestFactory : WebApplicationFactory<Program>, IAsyncLife
             || d.ImplementationFactory?.Method.ReturnType == typeof(CameraStreamingService)))
         .ToList();
 
+      // A changed registration in Program.cs would otherwise silently bring polling or FFmpeg back
+      if (backgroundWorkers.Count != 2)
+        throw new InvalidOperationException($"Expected 2 background workers to remove, found {backgroundWorkers.Count}");
+
       foreach (var worker in backgroundWorkers)
       {
         services.Remove(worker);
