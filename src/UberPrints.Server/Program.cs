@@ -107,7 +107,9 @@ builder.Services.AddSession(options =>
   options.Cookie.HttpOnly = true;
   options.Cookie.IsEssential = true;
   options.Cookie.SameSite = SameSiteMode.Lax;
-  options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Allow HTTP for local development
+  options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+      ? CookieSecurePolicy.None
+      : CookieSecurePolicy.Always;
 });
 
 // Configure Authentication with both Cookie and JWT Bearer support

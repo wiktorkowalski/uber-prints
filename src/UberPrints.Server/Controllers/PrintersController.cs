@@ -10,7 +10,7 @@ namespace UberPrints.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // TODO: Add [Authorize(Roles = "Admin")] when admin authorization is implemented
+[Authorize(Roles = "Admin")]
 public class PrintersController : ControllerBase
 {
   private readonly ApplicationDbContext _context;
