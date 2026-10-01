@@ -47,6 +47,29 @@ public class RequestsController : ControllerBase
     return Ok(dtos);
   }
 
+  // Guests have no user object client-side, so the server resolves "mine" from the JWT or guest session token
+  [HttpGet("mine")]
+  public async Task<IActionResult> GetMyRequests()
+  {
+    var currentUserId = await GetCurrentUserIdAsync();
+    if (currentUserId == null)
+      return Ok(Array.Empty<PrintRequestDto>());
+
+    var requests = await _context.PrintRequests
+        .Include(r => r.Filament)
+        .Include(r => r.User)
+        .Include(r => r.StatusHistory)
+            .ThenInclude(sh => sh.ChangedByUser)
+        .Where(r => r.UserId == currentUserId)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToListAsync();
+
+    var dtos = requests
+        .Select(r => MapToDto(r, CanSeeTrackingToken(r, currentUserId)))
+        .ToList();
+    return Ok(dtos);
+  }
+
   [HttpGet("{id}")]
   public async Task<IActionResult> GetRequest(Guid id)
   {

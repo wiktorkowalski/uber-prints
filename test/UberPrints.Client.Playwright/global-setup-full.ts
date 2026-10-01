@@ -161,7 +161,8 @@ async function startBackend(connectionString: string): Promise<ChildProcess> {
   // Wait for backend to be ready
   console.log('  ⏳ Waiting for backend to be ready...');
   await waitOn({
-    resources: ['http://localhost:5203/api/filaments'],
+    // wait-on sends HEAD for http:// resources; API routes are GET-only and unknown /api requests now 404
+    resources: ['http-get://localhost:5203/api/filaments'],
     timeout: 60000,
     interval: 1000,
     validateStatus: (status) => status === 200 || status === 401, // Accept 200 or 401 (unauthorized but running)

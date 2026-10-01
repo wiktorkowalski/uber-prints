@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using UberPrints.Server.DTOs;
 using UberPrints.Server.Models;
 using Xunit;
@@ -308,6 +309,55 @@ public class RequestsControllerTests : IntegrationTestBase
     // Assert
     Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
   }
+
+  #region My Requests
+
+  [Fact]
+  public async Task GetMyRequests_ReturnsOwnPublicAndPrivate_ButNotOthers_ForGuest()
+  {
+    var filamentResponse = await Client.PostAsJsonAsync("/api/admin/filaments", TestDataFactory.CreateFilamentDto(), JsonOptions);
+    var filament = await filamentResponse.Content.ReadFromJsonAsync<FilamentDto>(JsonOptions);
+    Assert.NotNull(filament);
+
+    (await Client.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "Mine Public"), JsonOptions)).EnsureSuccessStatusCode();
+    var privateDto = TestDataFactory.CreatePrintRequestDto(filament.Id, "Mine Private");
+    privateDto.IsPublic = false;
+    (await Client.PostAsJsonAsync("/api/requests", privateDto, JsonOptions)).EnsureSuccessStatusCode();
+
+    var otherGuest = Factory.CreateClient();
+    var guestResponse = await otherGuest.PostAsync("/api/auth/guest", null);
+    using var guestJson = JsonDocument.Parse(await guestResponse.Content.ReadAsStringAsync());
+    otherGuest.DefaultRequestHeaders.Add("X-Guest-Session-Token", guestJson.RootElement.GetProperty("guestSessionToken").GetString());
+    (await otherGuest.PostAsJsonAsync("/api/requests", TestDataFactory.CreatePrintRequestDto(filament.Id, "Someone Else"), JsonOptions)).EnsureSuccessStatusCode();
+
+    var response = await Client.GetAsync("/api/requests/mine");
+
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
+    Assert.NotNull(requests);
+    Assert.Equal(["Mine Private", "Mine Public"], requests.Select(r => r.RequesterName).Order());
+  }
+
+  [Fact]
+  public async Task GetMyRequests_ReturnsEmpty_WithoutSessionOrToken()
+  {
+    var response = await Factory.CreateClient().GetAsync("/api/requests/mine");
+
+    response.EnsureSuccessStatusCode();
+    var requests = await response.Content.ReadFromJsonAsync<List<PrintRequestDto>>(JsonOptions);
+    Assert.NotNull(requests);
+    Assert.Empty(requests);
+  }
+
+  [Fact]
+  public async Task UnknownApiRoute_Returns404_NotSpaFallback()
+  {
+    var response = await Client.GetAsync("/api/does-not-exist");
+
+    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+  }
+
+  #endregion
 
   #region Privacy Tests (IsPublic flag)
 

@@ -304,6 +304,9 @@ app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.Health
 });
 app.MapHealthChecks("/health/live");
 
+// Unknown API routes must 404, not fall through to the SPA's index.html with a 200
+app.MapFallback("/api/{**path}", () => Results.NotFound());
+
 // Fallback to index.html for SPA routing (must be after MapControllers)
 app.MapFallbackToFile("index.html");
 
