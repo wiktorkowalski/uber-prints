@@ -13,7 +13,7 @@ UberPrints is a 3D print request management system where users can request 3D pr
 ### Key Technologies & Dependencies
 
 **Backend:**
-- ASP.NET Core 10.0 with minimal APIs and OpenAPI/Scalar documentation
+- ASP.NET Core 10.0 with MVC controllers and OpenAPI/Scalar documentation
 - Entity Framework Core 10.0 with PostgreSQL provider
 - Background services (`IHostedService`) for printer monitoring and camera streaming
 - FFmpeg for RTSP-to-HLS video conversion (external dependency)
@@ -31,7 +31,7 @@ UberPrints is a 3D print request management system where users can request 3D pr
 - Docker & Docker Compose for containerization
 - GitHub Actions for CI/CD
 - Cloudflare Tunnel for secure public access (optional)
-- Watchtower for automated deployments (optional)
+- Self-hosted GitHub Actions runner (`[self-hosted, homelab]`) for deployments
 
 ## Build and Test Commands
 
@@ -51,7 +51,7 @@ dotnet restore
 ```bash
 # Run the API server
 dotnet run --project src/UberPrints.Server/UberPrints.Server.csproj
-# The API will be available at https://localhost:7001 (or http://localhost:5000)
+# The API will be available at https://localhost:7091 (or http://localhost:5203)
 # Scalar API documentation available at /scalar in development mode
 
 # Run the frontend dev server (from src/UberPrints.Client/)
@@ -282,7 +282,7 @@ When writing new tests, follow the existing patterns in controller test files. I
 1. Create/update DTOs in `DTOs/` folder
 2. Add endpoint to appropriate controller
 3. Use `.Include()` for any related entities needed
-4. Check if authentication/authorization should be required (currently not enforced)
+4. Check if authentication/authorization should be required (`[Authorize]` attributes on controllers and actions)
 5. Add unit tests and integration tests following existing patterns
 
 ### Database Changes
@@ -391,7 +391,7 @@ cp .env.example .env
 }
 ```
 
-**Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7001/api/auth/discord/callback`
+**Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7091/api/auth/discord/callback`
 
 **Required for Discord Notifications**: Discord bot must be created at https://discord.com/developers/applications with bot token and DM permissions
 
@@ -430,12 +430,10 @@ The project supports automated continuous deployment:
 - Pushes images to GitHub Container Registry (ghcr.io)
 - Configured in `.github/workflows/` directory
 
-**Watchtower Auto-Deployment** (optional):
-- Monitors running Docker containers for new images
-- Automatically updates and restarts containers when new builds are available
-- Polls GHCR every 5 minutes by default
-- See `WATCHTOWER.md` for detailed setup instructions
-- Deployment flow: Push to GitHub → Actions builds → Watchtower deploys (within 5 minutes)
+**Automatic Deployment**:
+- The `deploy` job in `.github/workflows/docker-publish.yml` runs on the `[self-hosted, homelab]` runner after `build-and-push`, except on pull requests
+- It runs `docker compose pull` and `docker compose up -d` in the homelab compose directory
+- Deployment flow: Push to GitHub → Actions builds → the `deploy` job updates the containers
 
 **Manual Deployment**:
 - `docker compose pull` to pull latest images
