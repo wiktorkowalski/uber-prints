@@ -65,7 +65,7 @@ npm run build
 
 ### Deployment
 ```bash
-# Build and run with Docker Compose (includes database, server, cloudflared)
+# Build and run with Docker Compose (database + server; the cloudflared service is commented out)
 docker compose up -d --build
 
 # Run database migrations (for Docker deployment)
@@ -156,7 +156,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 **Authentication**: The system uses Discord OAuth with JWT tokens and cookie-based authentication:
 - Discord OAuth flow handled by `AuthController` with callback at `/api/auth/discord/callback`
 - JWT tokens generated after successful OAuth, returned to frontend via redirect
-- Cookie authentication for session persistence (30-day expiration)
+- Cookie authentication for session persistence (7-day expiration)
 - Guest sessions supported via `GuestSessionToken` on User model
 - Authentication configured in `Program.cs` with both JWT Bearer and Cookie schemes
 - Admin authorization enforced via `[Authorize(Roles = "Admin")]` on `AdminController` and admin endpoints
@@ -171,9 +171,9 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 **Status History Pattern**: Print requests maintain an audit trail through `StatusHistory` entities. When status changes, a new history entry is created (see `AdminController.ChangeRequestStatus`).
 
-**Include Pattern**: Controllers use EF Core's `.Include()` extensively to eager-load related entities and avoid N+1 queries. Always check existing patterns when adding new queries.
+**Include Pattern**: Controllers use EF Core's `.Include()` extensively to eager-load related entities and avoid N+1 queries.
 
-**Prusa Link Integration**: Real-time printer monitoring and control:
+**Prusa Link Integration**: Real-time printer monitoring (read-only):
 - `PrusaLinkClient` service communicates with Prusa printers via HTTP API
 - `PrinterMonitoringService` polls printer status at adaptive intervals (5s when printing, 30s when idle)
 - Printer configuration stored in `Printers` table (IP address, API key, location)
@@ -277,26 +277,10 @@ When writing new tests, follow the existing patterns in controller test files. I
 
 ## Development Workflow
 
-### Adding New Endpoints
-
-1. Create/update DTOs in `DTOs/` folder
-2. Add endpoint to appropriate controller
-3. Use `.Include()` for any related entities needed
-4. Check if authentication/authorization should be required (`[Authorize]` attributes on controllers and actions)
-5. Add unit tests and integration tests following existing patterns
-
-### Database Changes
-
-1. Modify model classes in `Models/`
-2. Update `ApplicationDbContext` if adding new DbSets or relationships
-3. Create migration: `dotnet ef migrations add DescriptiveName --project src/UberPrints.Server`
-4. Review generated migration code
-5. Apply migration: `dotnet ef database update --project src/UberPrints.Server`
-
 ### Frontend Development
 
 The React frontend (`src/UberPrints.Client/`) uses:
-- **React Router** for navigation with protected routes (`ProtectedRoute.tsx`)
+- **React Router** for navigation (routes in `App.tsx`) with protected routes (`ProtectedRoute.tsx`)
 - **AuthContext** (`contexts/AuthContext.tsx`) for global auth state management
 - **Axios** for API communication (configured in `lib/api.ts`)
 - **shadcn/ui** components in `components/ui/` (built on Radix UI)
@@ -322,12 +306,6 @@ Key frontend components:
 - `TemperatureDisplay.tsx`: Shows nozzle/bed temperatures with gauges
 - `PrintProgress.tsx`: Progress bar for active prints
 - `VideoPlayer.tsx`: HLS video player with retry logic and error handling
-
-When adding new features:
-1. Create API client functions in `lib/api.ts`
-2. Add new routes in `App.tsx`
-3. Use existing UI components from `components/ui/`
-4. Follow the existing patterns for auth-protected routes
 
 ## Configuration
 
