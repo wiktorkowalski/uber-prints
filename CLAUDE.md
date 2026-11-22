@@ -13,7 +13,7 @@ UberPrints is a 3D print request management system where users can request 3D pr
 ### Key Technologies & Dependencies
 
 **Backend:**
-- ASP.NET Core 10.0 with minimal APIs and OpenAPI/Scalar documentation
+- ASP.NET Core 10.0 with MVC controllers and OpenAPI/Scalar documentation
 - Entity Framework Core 10.0 with PostgreSQL provider
 - Background services (`IHostedService`) for printer monitoring and camera streaming
 - FFmpeg for RTSP-to-HLS video conversion (external dependency)
@@ -31,7 +31,7 @@ UberPrints is a 3D print request management system where users can request 3D pr
 - Docker & Docker Compose for containerization
 - GitHub Actions for CI/CD
 - Cloudflare Tunnel for secure public access (optional)
-- Watchtower for automated deployments (optional)
+- Self-hosted GitHub Actions runner (`[self-hosted, homelab]`) for deployments
 
 ## Build and Test Commands
 
@@ -51,7 +51,7 @@ dotnet restore
 ```bash
 # Run the API server
 dotnet run --project src/UberPrints.Server/UberPrints.Server.csproj
-# The API will be available at https://localhost:7001 (or http://localhost:5000)
+# The API will be available at https://localhost:7091 (or http://localhost:5203)
 # Scalar API documentation available at /scalar in development mode
 
 # Run the frontend dev server (from src/UberPrints.Client/)
@@ -65,7 +65,7 @@ npm run build
 
 ### Deployment
 ```bash
-# Build and run with Docker Compose (includes database, server, cloudflared)
+# Build and run with Docker Compose (database + server; the cloudflared service is commented out)
 docker compose up -d --build
 
 # Run database migrations (for Docker deployment)
@@ -156,7 +156,7 @@ The application follows a standard ASP.NET Core Web API architecture:
 **Authentication**: The system uses Discord OAuth with JWT tokens and cookie-based authentication:
 - Discord OAuth flow handled by `AuthController` with callback at `/api/auth/discord/callback`
 - JWT tokens generated after successful OAuth, returned to frontend via redirect
-- Cookie authentication for session persistence (30-day expiration)
+- Cookie authentication for session persistence (7-day expiration)
 - Guest sessions supported via `GuestSessionToken` on User model
 - Authentication configured in `Program.cs` with both JWT Bearer and Cookie schemes
 - Admin authorization enforced via `[Authorize(Roles = "Admin")]` on `AdminController` and admin endpoints
@@ -171,9 +171,9 @@ The application follows a standard ASP.NET Core Web API architecture:
 
 **Status History Pattern**: Print requests maintain an audit trail through `StatusHistory` entities. When status changes, a new history entry is created (see `AdminController.ChangeRequestStatus`).
 
-**Include Pattern**: Controllers use EF Core's `.Include()` extensively to eager-load related entities and avoid N+1 queries. Always check existing patterns when adding new queries.
+**Include Pattern**: Controllers use EF Core's `.Include()` extensively to eager-load related entities and avoid N+1 queries.
 
-**Prusa Link Integration**: Real-time printer monitoring and control:
+**Prusa Link Integration**: Real-time printer monitoring (read-only):
 - `PrusaLinkClient` service communicates with Prusa printers via HTTP API
 - `PrinterMonitoringService` polls printer status at adaptive intervals (5s when printing, 30s when idle)
 - Printer configuration stored in `Printers` table (IP address, API key, location)
@@ -277,26 +277,10 @@ When writing new tests, follow the existing patterns in controller test files. I
 
 ## Development Workflow
 
-### Adding New Endpoints
-
-1. Create/update DTOs in `DTOs/` folder
-2. Add endpoint to appropriate controller
-3. Use `.Include()` for any related entities needed
-4. Check if authentication/authorization should be required (currently not enforced)
-5. Add unit tests and integration tests following existing patterns
-
-### Database Changes
-
-1. Modify model classes in `Models/`
-2. Update `ApplicationDbContext` if adding new DbSets or relationships
-3. Create migration: `dotnet ef migrations add DescriptiveName --project src/UberPrints.Server`
-4. Review generated migration code
-5. Apply migration: `dotnet ef database update --project src/UberPrints.Server`
-
 ### Frontend Development
 
 The React frontend (`src/UberPrints.Client/`) uses:
-- **React Router** for navigation with protected routes (`ProtectedRoute.tsx`)
+- **React Router** for navigation (routes in `App.tsx`) with protected routes (`ProtectedRoute.tsx`)
 - **AuthContext** (`contexts/AuthContext.tsx`) for global auth state management
 - **Axios** for API communication (configured in `lib/api.ts`)
 - **shadcn/ui** components in `components/ui/` (built on Radix UI)
@@ -322,12 +306,6 @@ Key frontend components:
 - `TemperatureDisplay.tsx`: Shows nozzle/bed temperatures with gauges
 - `PrintProgress.tsx`: Progress bar for active prints
 - `VideoPlayer.tsx`: HLS video player with retry logic and error handling
-
-When adding new features:
-1. Create API client functions in `lib/api.ts`
-2. Add new routes in `App.tsx`
-3. Use existing UI components from `components/ui/`
-4. Follow the existing patterns for auth-protected routes
 
 ## Configuration
 
@@ -391,7 +369,7 @@ cp .env.example .env
 }
 ```
 
-**Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7001/api/auth/discord/callback`
+**Required for OAuth**: Discord OAuth application must be configured at https://discord.com/developers/applications with redirect URI: `https://localhost:7091/api/auth/discord/callback`
 
 **Required for Discord Notifications**: Discord bot must be created at https://discord.com/developers/applications with bot token and DM permissions
 
@@ -430,12 +408,10 @@ The project supports automated continuous deployment:
 - Pushes images to GitHub Container Registry (ghcr.io)
 - Configured in `.github/workflows/` directory
 
-**Watchtower Auto-Deployment** (optional):
-- Monitors running Docker containers for new images
-- Automatically updates and restarts containers when new builds are available
-- Polls GHCR every 5 minutes by default
-- See `WATCHTOWER.md` for detailed setup instructions
-- Deployment flow: Push to GitHub → Actions builds → Watchtower deploys (within 5 minutes)
+**Automatic Deployment**:
+- The `deploy` job in `.github/workflows/docker-publish.yml` runs on the `[self-hosted, homelab]` runner after `build-and-push`, except on pull requests
+- It runs `docker compose pull` and `docker compose up -d` in the homelab compose directory
+- Deployment flow: Push to GitHub → Actions builds → the `deploy` job updates the containers
 
 **Manual Deployment**:
 - `docker compose pull` to pull latest images
